@@ -1,9 +1,10 @@
 /**
  * Simulador CC2 - Módulo de Búsquedas
  * Búsqueda Secuencial y Binaria
+ * Soporta claves alfanuméricas
  */
 
-// Estructura de datos compartida
+// Estructura de datos compartida (ahora almacena strings)
 let estructuraDatos = [];
 
 // Variable para controlar la animación
@@ -18,6 +19,11 @@ function limpiarTimeouts() {
     animacionEnCurso = false;
 }
 
+// Función de comparación para ordenar alfanuméricamente
+function compararAlfanumerico(a, b) {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
 function renderizarEstructura(tipo) {
     const container = document.getElementById(`visualizacion${tipo}`);
 
@@ -26,50 +32,74 @@ function renderizarEstructura(tipo) {
         return;
     }
 
-    // Ordenar los datos para ambas búsquedas
-    let datosRender = [...estructuraDatos].sort((a, b) => a - b);
+    // Ordenar los datos alfanuméricamente
+    let datosRender = [...estructuraDatos].sort(compararAlfanumerico);
 
-    let html = '<div class="d-flex flex-wrap gap-2">';
-    datosRender.forEach((valor, index) => {
-        html += `<div class="clave-box" data-index="${index}">
-                    <span class="clave-index">${index + 1}</span>
-                    <span class="clave-valor">${valor}</span>
-                 </div>`;
-    });
-    html += '</div>';
-    html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
-    container.innerHTML = html;
+    // Renderizado diferente para Secuencial (vertical) y Binaria (horizontal)
+    if (tipo === 'Secuencial') {
+        let html = '<div class="estructura-vertical">';
+        datosRender.forEach((valor, index) => {
+            html += `<div class="clave-row" data-index="${index}">
+                        <span class="clave-index-left">${index + 1}</span>
+                        <span class="clave-valor-vertical">${valor}</span>
+                     </div>`;
+        });
+        html += '</div>';
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        container.innerHTML = html;
+    } else {
+        let html = '<div class="estructura-horizontal">';
+        datosRender.forEach((valor, index) => {
+            html += `<div class="clave-box" data-index="${index}">
+                        <span class="clave-index">${index + 1}</span>
+                        <span class="clave-valor">${valor}</span>
+                     </div>`;
+        });
+        html += '</div>';
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        container.innerHTML = html;
+    }
 }
 
 function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
     const container = document.getElementById(`visualizacion${tipo}`);
 
-    // Ordenar los datos
-    let datosRender = [...estructuraDatos].sort((a, b) => a - b);
+    // Ordenar los datos alfanuméricamente
+    let datosRender = [...estructuraDatos].sort(compararAlfanumerico);
 
-    // Encontrar la posición de la clave nueva/eliminada
+    // Encontrar la posición de la clave nueva
     let posicionClave = datosRender.indexOf(claveNueva);
-    if (!esInsercion) {
-        // Para eliminación, buscar donde estaba antes
-        let datosAntes = [...estructuraDatos, claveNueva].sort((a, b) => a - b);
-        posicionClave = datosAntes.indexOf(claveNueva);
-    }
 
-    let html = '<div class="d-flex flex-wrap gap-2">';
-    datosRender.forEach((valor, index) => {
-        const esNuevo = esInsercion && valor === claveNueva;
-        html += `<div class="clave-box ${esNuevo ? 'clave-insertando' : ''}" data-index="${index}">
-                    <span class="clave-index">${index + 1}</span>
-                    <span class="clave-valor">${valor}</span>
-                 </div>`;
-    });
-    html += '</div>';
-    html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
-    container.innerHTML = html;
+    if (tipo === 'Secuencial') {
+        let html = '<div class="estructura-vertical">';
+        datosRender.forEach((valor, index) => {
+            const esNuevo = esInsercion && valor === claveNueva;
+            html += `<div class="clave-row ${esNuevo ? 'clave-insertando' : ''}" data-index="${index}">
+                        <span class="clave-index-left">${index + 1}</span>
+                        <span class="clave-valor-vertical">${valor}</span>
+                     </div>`;
+        });
+        html += '</div>';
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        container.innerHTML = html;
+    } else {
+        let html = '<div class="estructura-horizontal">';
+        datosRender.forEach((valor, index) => {
+            const esNuevo = esInsercion && valor === claveNueva;
+            html += `<div class="clave-box ${esNuevo ? 'clave-insertando' : ''}" data-index="${index}">
+                        <span class="clave-index">${index + 1}</span>
+                        <span class="clave-valor">${valor}</span>
+                     </div>`;
+        });
+        html += '</div>';
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        container.innerHTML = html;
+    }
 
     // Animación de reordenamiento
     if (esInsercion) {
-        const boxes = container.querySelectorAll('.clave-box');
+        const selector = tipo === 'Secuencial' ? '.clave-row' : '.clave-box';
+        const boxes = container.querySelectorAll(selector);
         boxes.forEach((box, idx) => {
             if (idx >= posicionClave) {
                 box.classList.add('clave-moviendo');
@@ -111,14 +141,25 @@ function ocultarMensaje(tipo) {
     alertDiv.classList.add('d-none');
 }
 
-function validarClave(valor, tamanoDigitos) {
-    const claveStr = valor.toString();
-    if (claveStr.length !== tamanoDigitos) {
-        const min = Math.pow(10, tamanoDigitos - 1);
-        const max = Math.pow(10, tamanoDigitos) - 1;
-        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoDigitos} dígitos (${min} - ${max})` };
+function validarClave(valor, tamanoCaracteres) {
+    const claveStr = valor.toString().trim();
+
+    // Validar que no esté vacía
+    if (claveStr.length === 0) {
+        return { valido: false, mensaje: 'La clave no puede estar vacía' };
     }
-    return { valido: true };
+
+    // Validar que sea alfanumérica
+    if (!/^[a-zA-Z0-9]+$/.test(claveStr)) {
+        return { valido: false, mensaje: 'La clave solo puede contener letras y números' };
+    }
+
+    // Validar el tamaño exacto de caracteres
+    if (claveStr.length !== tamanoCaracteres) {
+        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoCaracteres} caracteres` };
+    }
+
+    return { valido: true, clave: claveStr.toUpperCase() };
 }
 
 // ==================== BÚSQUEDA SECUENCIAL ====================
@@ -137,19 +178,21 @@ function insertarSecuencial() {
     }
 
     const claveInput = document.getElementById('claveSecuencial');
-    const clave = parseInt(claveInput.value);
-    const tamanoMax = parseInt(document.getElementById('tamanoSecuencial').value) || 2;
+    const claveValor = claveInput.value.trim();
+    const tamanoMax = parseInt(document.getElementById('tamanoSecuencial').value) || 3;
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const validacion = validarClave(clave, tamanoMax);
+    const validacion = validarClave(claveValor, tamanoMax);
     if (!validacion.valido) {
         mostrarMensajeSecuencial(validacion.mensaje, 'warning');
         return;
     }
+
+    const clave = validacion.clave;
 
     if (estructuraDatos.includes(clave)) {
         mostrarMensajeSecuencial('La clave ya existe en la estructura', 'warning');
@@ -164,8 +207,8 @@ function insertarSecuencial() {
     renderizarEstructura('Binaria');
 
     // Encontrar posición final
-    const posicion = [...estructuraDatos].sort((a, b) => a - b).indexOf(clave) + 1;
-    mostrarMensajeSecuencial(`Clave ${clave} insertada en posición ${posicion}`, 'success');
+    const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(clave) + 1;
+    mostrarMensajeSecuencial(`Clave "${clave}" insertada en posición ${posicion}`, 'success');
 }
 
 function buscarSecuencial() {
@@ -173,19 +216,19 @@ function buscarSecuencial() {
         limpiarTimeouts();
     }
 
-    const clave = parseInt(document.getElementById('claveSecuencial').value);
+    const claveValor = document.getElementById('claveSecuencial').value.trim().toUpperCase();
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
         return;
     }
 
     // Limpiar resaltados anteriores
-    document.querySelectorAll('#visualizacionSecuencial .clave-box').forEach(el => {
+    document.querySelectorAll('#visualizacionSecuencial .clave-row').forEach(el => {
         el.classList.remove('clave-encontrada', 'clave-buscando');
     });
 
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-box');
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row');
 
     if (boxes.length === 0) {
         mostrarMensajeSecuencial('La estructura está vacía', 'warning');
@@ -211,20 +254,20 @@ function buscarSecuencial() {
 
             box.classList.add('clave-buscando');
 
-            const valorBox = parseInt(box.querySelector('.clave-valor').textContent);
+            const valorBox = box.querySelector('.clave-valor-vertical').textContent;
 
-            if (valorBox === clave) {
+            if (valorBox === claveValor) {
                 encontrado = true;
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
                     box.classList.add('clave-encontrada');
-                    mostrarMensajeSecuencial(`Clave ${clave} encontrada en posición ${index + 1} (${pasos} pasos)`, 'success');
+                    mostrarMensajeSecuencial(`Clave "${claveValor}" encontrada en posición ${index + 1} (${pasos} pasos)`, 'success');
                     animacionEnCurso = false;
                 }, 200);
             } else if (index === boxes.length - 1) {
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
-                    mostrarMensajeSecuencial(`Clave ${clave} no encontrada (${pasos} pasos)`, 'danger');
+                    mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada (${pasos} pasos)`, 'danger');
                     animacionEnCurso = false;
                 }, 200);
             }
@@ -239,24 +282,29 @@ function eliminarSecuencial() {
         limpiarTimeouts();
     }
 
-    const clave = parseInt(document.getElementById('claveSecuencial').value);
+    const claveValor = document.getElementById('claveSecuencial').value.trim().toUpperCase();
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const index = estructuraDatos.indexOf(clave);
+    const index = estructuraDatos.indexOf(claveValor);
     if (index === -1) {
-        mostrarMensajeSecuencial(`Clave ${clave} no encontrada`, 'danger');
+        mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada`, 'danger');
+        return;
+    }
+
+    // Confirmación antes de eliminar
+    if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
         return;
     }
 
     // Encontrar posición antes de eliminar
-    const posicion = [...estructuraDatos].sort((a, b) => a - b).indexOf(clave) + 1;
+    const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(claveValor) + 1;
 
     // Animación de búsqueda antes de eliminar
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-box');
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row');
     animacionEnCurso = true;
     let encontrado = false;
 
@@ -270,9 +318,9 @@ function eliminarSecuencial() {
             }
             box.classList.add('clave-buscando');
 
-            const valorBox = parseInt(box.querySelector('.clave-valor').textContent);
+            const valorBox = box.querySelector('.clave-valor-vertical').textContent;
 
-            if (valorBox === clave) {
+            if (valorBox === claveValor) {
                 encontrado = true;
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
@@ -282,7 +330,7 @@ function eliminarSecuencial() {
                         estructuraDatos.splice(index, 1);
                         sincronizarVisualizaciones();
                         document.getElementById('claveSecuencial').value = '';
-                        mostrarMensajeSecuencial(`Clave ${clave} eliminada de posición ${posicion}`, 'success');
+                        mostrarMensajeSecuencial(`Clave "${claveValor}" eliminada de posición ${posicion}`, 'success');
                         animacionEnCurso = false;
                     }, 500);
                 }, 200);
@@ -294,6 +342,11 @@ function eliminarSecuencial() {
 }
 
 function limpiarSecuencial() {
+    // Confirmación antes de limpiar
+    if (!confirm('¿Está seguro de limpiar toda la estructura?')) {
+        return;
+    }
+
     limpiarTimeouts();
     estructuraDatos = [];
     sincronizarVisualizaciones();
@@ -333,19 +386,21 @@ function insertarBinaria() {
     }
 
     const claveInput = document.getElementById('claveBinaria');
-    const clave = parseInt(claveInput.value);
-    const tamanoMax = parseInt(document.getElementById('tamanoBinaria').value) || 2;
+    const claveValor = claveInput.value.trim();
+    const tamanoMax = parseInt(document.getElementById('tamanoBinaria').value) || 3;
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const validacion = validarClave(clave, tamanoMax);
+    const validacion = validarClave(claveValor, tamanoMax);
     if (!validacion.valido) {
         mostrarMensajeBinaria(validacion.mensaje, 'warning');
         return;
     }
+
+    const clave = validacion.clave;
 
     if (estructuraDatos.includes(clave)) {
         mostrarMensajeBinaria('La clave ya existe en la estructura', 'warning');
@@ -360,8 +415,8 @@ function insertarBinaria() {
     renderizarEstructura('Secuencial');
 
     // Encontrar posición final
-    const posicion = [...estructuraDatos].sort((a, b) => a - b).indexOf(clave) + 1;
-    mostrarMensajeBinaria(`Clave ${clave} insertada en posición ${posicion}`, 'success');
+    const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(clave) + 1;
+    mostrarMensajeBinaria(`Clave "${clave}" insertada en posición ${posicion}`, 'success');
 }
 
 function buscarBinaria() {
@@ -369,9 +424,9 @@ function buscarBinaria() {
         limpiarTimeouts();
     }
 
-    const clave = parseInt(document.getElementById('claveBinaria').value);
+    const claveValor = document.getElementById('claveBinaria').value.trim().toUpperCase();
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
         return;
     }
@@ -381,7 +436,7 @@ function buscarBinaria() {
         el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada');
     });
 
-    const arr = [...estructuraDatos].sort((a, b) => a - b);
+    const arr = [...estructuraDatos].sort(compararAlfanumerico);
 
     if (arr.length === 0) {
         mostrarMensajeBinaria('La estructura está vacía', 'warning');
@@ -396,10 +451,11 @@ function buscarBinaria() {
         const mid = Math.floor((izq + der) / 2);
         pasos.push({ mid, izq, der, valor: arr[mid] });
 
-        if (arr[mid] === clave) {
+        const comparacion = compararAlfanumerico(arr[mid], claveValor);
+        if (comparacion === 0) {
             pasos[pasos.length - 1].encontrado = true;
             break;
-        } else if (arr[mid] < clave) {
+        } else if (comparacion < 0) {
             izq = mid + 1;
         } else {
             der = mid - 1;
@@ -414,7 +470,7 @@ function buscarBinaria() {
             boxes.forEach((box, idx) => {
                 box.classList.remove('clave-buscando');
                 if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartada');
+                    box.classList.add('clave-descartado');
                 }
             });
             boxes[paso.mid].classList.add('clave-buscando');
@@ -423,13 +479,13 @@ function buscarBinaria() {
                 setTimeout(() => {
                     boxes[paso.mid].classList.remove('clave-buscando');
                     boxes[paso.mid].classList.add('clave-encontrada');
-                    mostrarMensajeBinaria(`Clave ${clave} encontrada en posición ${paso.mid + 1} (${i + 1} pasos)`, 'success');
+                    mostrarMensajeBinaria(`Clave "${claveValor}" encontrada en posición ${paso.mid + 1} (${i + 1} pasos)`, 'success');
                     animacionEnCurso = false;
                 }, 300);
             } else if (i === pasos.length - 1) {
                 setTimeout(() => {
                     boxes[paso.mid].classList.remove('clave-buscando');
-                    mostrarMensajeBinaria(`Clave ${clave} no encontrada (${pasos.length} pasos)`, 'danger');
+                    mostrarMensajeBinaria(`Clave "${claveValor}" no encontrada (${pasos.length} pasos)`, 'danger');
                     animacionEnCurso = false;
                 }, 300);
             }
@@ -444,22 +500,27 @@ function eliminarBinaria() {
         limpiarTimeouts();
     }
 
-    const clave = parseInt(document.getElementById('claveBinaria').value);
+    const claveValor = document.getElementById('claveBinaria').value.trim().toUpperCase();
 
-    if (isNaN(clave)) {
+    if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const index = estructuraDatos.indexOf(clave);
+    const index = estructuraDatos.indexOf(claveValor);
     if (index === -1) {
-        mostrarMensajeBinaria(`Clave ${clave} no encontrada`, 'danger');
+        mostrarMensajeBinaria(`Clave "${claveValor}" no encontrada`, 'danger');
+        return;
+    }
+
+    // Confirmación antes de eliminar
+    if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
         return;
     }
 
     // Encontrar posición antes de eliminar
-    const arr = [...estructuraDatos].sort((a, b) => a - b);
-    const posicion = arr.indexOf(clave) + 1;
+    const arr = [...estructuraDatos].sort(compararAlfanumerico);
+    const posicion = arr.indexOf(claveValor) + 1;
 
     // Animación de búsqueda binaria antes de eliminar
     let izq = 0;
@@ -470,10 +531,11 @@ function eliminarBinaria() {
         const mid = Math.floor((izq + der) / 2);
         pasos.push({ mid, izq, der });
 
-        if (arr[mid] === clave) {
+        const comparacion = compararAlfanumerico(arr[mid], claveValor);
+        if (comparacion === 0) {
             pasos[pasos.length - 1].encontrado = true;
             break;
-        } else if (arr[mid] < clave) {
+        } else if (comparacion < 0) {
             izq = mid + 1;
         } else {
             der = mid - 1;
@@ -488,7 +550,7 @@ function eliminarBinaria() {
             boxes.forEach((box, idx) => {
                 box.classList.remove('clave-buscando');
                 if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartada');
+                    box.classList.add('clave-descartado');
                 }
             });
             boxes[paso.mid].classList.add('clave-buscando');
@@ -502,7 +564,7 @@ function eliminarBinaria() {
                         estructuraDatos.splice(index, 1);
                         sincronizarVisualizaciones();
                         document.getElementById('claveBinaria').value = '';
-                        mostrarMensajeBinaria(`Clave ${clave} eliminada de posición ${posicion}`, 'success');
+                        mostrarMensajeBinaria(`Clave "${claveValor}" eliminada de posición ${posicion}`, 'success');
                         animacionEnCurso = false;
                     }, 500);
                 }, 300);
@@ -514,6 +576,11 @@ function eliminarBinaria() {
 }
 
 function limpiarBinaria() {
+    // Confirmación antes de limpiar
+    if (!confirm('¿Está seguro de limpiar toda la estructura?')) {
+        return;
+    }
+
     limpiarTimeouts();
     estructuraDatos = [];
     sincronizarVisualizaciones();
@@ -581,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Limpiar resaltados al cerrar modal secuencial
     document.getElementById('modalSecuencial').addEventListener('hidden.bs.modal', function() {
         limpiarTimeouts();
-        document.querySelectorAll('#visualizacionSecuencial .clave-box').forEach(el => {
+        document.querySelectorAll('#visualizacionSecuencial .clave-row').forEach(el => {
             el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-eliminando');
         });
         ocultarMensaje('Secuencial');

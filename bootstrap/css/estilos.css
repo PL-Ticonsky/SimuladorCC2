@@ -343,6 +343,145 @@ body {
     overflow-y: auto;
 }
 
+/* Estructura Vertical para Búsqueda Secuencial */
+.estructura-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.clave-row {
+    display: flex;
+    align-items: center;
+    border: 2px solid #dee2e6;
+    border-bottom: none;
+    background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.clave-row:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.clave-row:last-child {
+    border-bottom: 2px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+}
+
+.clave-row:only-child {
+    border-radius: 8px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.clave-index-left {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    margin-right: 12px;
+}
+
+.clave-valor-vertical {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 0.5px;
+}
+
+.clave-row:hover {
+    border-color: #667eea;
+    background: linear-gradient(145deg, #f0f4ff 0%, #e8ecff 100%);
+    transform: scale(1.05);
+}
+
+.clave-row:hover + .clave-row {
+    border-top-color: #667eea;
+}
+
+.clave-row.clave-buscando {
+    background: linear-gradient(145deg, #fff3cd 0%, #ffeeba 100%);
+    border-color: #ffc107;
+    animation: pulse 0.5s ease infinite;
+}
+
+.clave-row.clave-buscando .clave-valor-vertical,
+.clave-row.clave-buscando .clave-index-left {
+    color: #856404;
+}
+
+.clave-row.clave-buscando .clave-index-left {
+    background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+}
+
+.clave-row.clave-encontrada {
+    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    transform: scale(1.02);
+}
+
+.clave-row.clave-encontrada .clave-valor-vertical {
+    color: #155724;
+}
+
+.clave-row.clave-encontrada .clave-index-left {
+    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+}
+
+.clave-row.clave-insertando {
+    background: linear-gradient(145deg, #cce5ff 0%, #b8daff 100%);
+    border-color: #007bff;
+    animation: slideIn 0.4s ease;
+}
+
+.clave-row.clave-insertada {
+    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    animation: highlight 0.5s ease;
+}
+
+.clave-row.clave-moviendo {
+    animation: moveDown 0.4s ease;
+}
+
+.clave-row.clave-eliminando {
+    background: linear-gradient(145deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #dc3545;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.clave-row.clave-eliminando .clave-valor-vertical {
+    color: #721c24;
+}
+
+.clave-row.clave-eliminando .clave-index-left {
+    background: linear-gradient(135deg, #dc3545 0%, #e4606d 100%);
+}
+
+@keyframes moveDown {
+    0% {
+        transform: translateY(-10px);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Estructura Horizontal Continua para Búsqueda Binaria */
+.estructura-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 .clave-box {
     display: inline-flex;
     flex-direction: column;
@@ -353,12 +492,26 @@ body {
     padding: 5px 10px;
     background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
     border: 2px solid #dee2e6;
-    border-radius: 8px;
+    border-right: none;
     font-weight: 600;
     font-size: 1rem;
     color: #333;
     transition: all 0.3s ease;
     position: relative;
+}
+
+.clave-box:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.clave-box:last-child {
+    border-right: 2px solid #dee2e6;
+    border-radius: 0 8px 8px 0;
+}
+
+.clave-box:only-child {
+    border-radius: 8px;
+    border-right: 2px solid #dee2e6;
 }
 
 .clave-index {
@@ -376,7 +529,13 @@ body {
 
 .clave-box:hover {
     border-color: #667eea;
+    background: linear-gradient(145deg, #f0f4ff 0%, #e8ecff 100%);
     transform: scale(1.05);
+    z-index: 1;
+}
+
+.clave-box:hover + .clave-box {
+    border-left-color: #667eea;
 }
 
 .clave-buscando {
@@ -401,14 +560,17 @@ body {
     color: #155724;
 }
 
-.clave-descartada {
+.clave-descartada,
+.clave-descartado {
     background: #e9ecef;
     border-color: #adb5bd;
     opacity: 0.5;
 }
 
 .clave-descartada .clave-valor,
-.clave-descartada .clave-index {
+.clave-descartada .clave-index,
+.clave-descartado .clave-valor,
+.clave-descartado .clave-index {
     color: #adb5bd;
 }
 
