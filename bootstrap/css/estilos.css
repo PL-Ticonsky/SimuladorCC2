@@ -1,0 +1,520 @@
+/*
+ * Simulador CC2 - Estilos Personalizados
+ * Estructuras de Datos y Algoritmos
+ */
+
+/* ============================================
+   Variables CSS
+   ============================================ */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Estilos Generales
+   ============================================ */
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header-section {
+    background: var(--primary-gradient);
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.header-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   Cards de Temas (Menú Principal)
+   ============================================ */
+.card-tema {
+    min-height: 150px;
+    flex-direction: column;
+}
+
+.card-tema small {
+    font-size: 0.8rem;
+}
+
+.card-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.card-disabled:hover {
+    transform: none;
+    box-shadow: var(--card-shadow);
+}
+
+/* ============================================
+   Integrantes
+   ============================================ */
+.integrante-avatar {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================
+   Navigation Pills
+   ============================================ */
+.nav-pills-custom {
+    background: white;
+    border-radius: 50px;
+    padding: 8px;
+    box-shadow: var(--card-shadow);
+}
+
+.nav-pills-custom .nav-link {
+    border-radius: 50px;
+    padding: 12px 20px;
+    color: #555;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.nav-pills-custom .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.nav-pills-custom .nav-link.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.nav-pills-custom .nav-link i {
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   Panel Section
+   ============================================ */
+.panel-section {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: var(--card-shadow);
+    border: none;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.panel-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.panel-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.panel-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.panel-subtitle {
+    font-size: 0.9rem;
+    color: #888;
+    margin: 0;
+}
+
+/* ============================================
+   Algorithm Cards
+   ============================================ */
+.card-algoritmo {
+    height: 200px;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fc 100%);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #444;
+    border: 2px solid transparent;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-algoritmo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.card-algoritmo:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--card-hover-shadow);
+    border-color: #667eea;
+}
+
+.card-algoritmo:hover::before {
+    transform: scaleX(1);
+}
+
+.card-algoritmo .card-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.card-algoritmo:hover .card-icon {
+    background: var(--primary-gradient);
+    transform: scale(1.1);
+}
+
+.card-algoritmo .card-icon i {
+    font-size: 1.5rem;
+    color: #667eea;
+    transition: color 0.3s ease;
+}
+
+.card-algoritmo:hover .card-icon i {
+    color: white;
+}
+
+.card-algoritmo .card-label {
+    text-align: center;
+    padding: 0 10px;
+}
+
+/* ============================================
+   Hash Cards - Different Colors
+   ============================================ */
+
+/* Hash Mod - Verde */
+.card-hash-mod .card-icon {
+    background: linear-gradient(135deg, #11998e20 0%, #38ef7d20 100%);
+}
+.card-hash-mod .card-icon i {
+    color: #11998e;
+}
+.card-hash-mod:hover .card-icon {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+.card-hash-mod:hover {
+    border-color: #11998e;
+}
+
+/* Hash Cuadrado - Rosa/Naranja */
+.card-hash-cuadrado .card-icon {
+    background: linear-gradient(135deg, #ee097920 0%, #ff6a0020 100%);
+}
+.card-hash-cuadrado .card-icon i {
+    color: #ee0979;
+}
+.card-hash-cuadrado:hover .card-icon {
+    background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+}
+.card-hash-cuadrado:hover {
+    border-color: #ee0979;
+}
+
+/* Hash Plegamiento - Azul/Púrpura */
+.card-hash-plegamiento .card-icon {
+    background: linear-gradient(135deg, #4776E620 0%, #8E54E920 100%);
+}
+.card-hash-plegamiento .card-icon i {
+    color: #4776E6;
+}
+.card-hash-plegamiento:hover .card-icon {
+    background: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%);
+}
+.card-hash-plegamiento:hover {
+    border-color: #4776E6;
+}
+
+/* Hash Truncamiento - Amarillo/Dorado */
+.card-hash-truncamiento .card-icon {
+    background: linear-gradient(135deg, #F7971E20 0%, #FFD20020 100%);
+}
+.card-hash-truncamiento .card-icon i {
+    color: #F7971E;
+}
+.card-hash-truncamiento:hover .card-icon {
+    background: linear-gradient(135deg, #F7971E 0%, #FFD200 100%);
+}
+.card-hash-truncamiento:hover {
+    border-color: #F7971E;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.footer-section {
+    background: white;
+    padding: 20px 0;
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 992px) {
+    .nav-pills-custom {
+        border-radius: 20px;
+    }
+    .nav-pills-custom .nav-link {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
+    .nav-pills-custom .nav-link span {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 1.8rem;
+    }
+    .card-algoritmo {
+        height: 160px;
+    }
+}
+
+/* ============================================
+   Visualización de Estructuras
+   ============================================ */
+.estructura-container {
+    min-height: 80px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.clave-box {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 55px;
+    height: 65px;
+    padding: 5px 10px;
+    background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.clave-index {
+    font-size: 0.65rem;
+    color: #888;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.clave-valor {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.clave-box:hover {
+    border-color: #667eea;
+    transform: scale(1.05);
+}
+
+.clave-buscando {
+    background: linear-gradient(145deg, #fff3cd 0%, #ffeeba 100%);
+    border-color: #ffc107;
+    animation: pulse 0.5s ease infinite;
+}
+
+.clave-buscando .clave-valor,
+.clave-buscando .clave-index {
+    color: #856404;
+}
+
+.clave-encontrada {
+    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    transform: scale(1.1);
+}
+
+.clave-encontrada .clave-valor,
+.clave-encontrada .clave-index {
+    color: #155724;
+}
+
+.clave-descartada {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    opacity: 0.5;
+}
+
+.clave-descartada .clave-valor,
+.clave-descartada .clave-index {
+    color: #adb5bd;
+}
+
+.clave-insertando {
+    background: linear-gradient(145deg, #cce5ff 0%, #b8daff 100%);
+    border-color: #007bff;
+    animation: slideIn 0.4s ease;
+}
+
+.clave-insertada {
+    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    animation: highlight 0.5s ease;
+}
+
+.clave-moviendo {
+    animation: moveRight 0.4s ease;
+}
+
+.clave-eliminando {
+    background: linear-gradient(145deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #dc3545;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.clave-eliminando .clave-valor,
+.clave-eliminando .clave-index {
+    color: #721c24;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes highlight {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+@keyframes moveRight {
+    0% {
+        transform: translateX(-10px);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+}
+
+/* ============================================
+   Modal Estilos
+   ============================================ */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    background: var(--primary-gradient);
+}
+
+.modal-header .modal-title {
+    color: white;
+    font-weight: 600;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+}
+
