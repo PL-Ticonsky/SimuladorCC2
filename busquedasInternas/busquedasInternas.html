@@ -77,7 +77,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="card card-algoritmo">
+                <div class="card card-algoritmo" data-bs-toggle="modal" data-bs-target="#modalHash">
                     <span class="card-label">Búsqueda Hash</span>
                 </div>
             </div>
@@ -192,6 +192,89 @@
 <!-- Input oculto para cargar archivos -->
 <input type="file" id="fileInputSecuencial" accept=".json" style="display: none;">
 <input type="file" id="fileInputBinaria" accept=".json" style="display: none;">
+<input type="file" id="fileInputHash" accept=".json" style="display: none;">
+
+<!-- Modal Búsqueda Hash -->
+<div class="modal fade" id="modalHash" tabindex="-1" aria-labelledby="modalHashLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalHashLabel">Búsqueda Hash</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Configuración -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="tamanoEstructuraHash" class="form-label fw-semibold">Tamaño de estructura</label>
+                        <input type="number" class="form-control" id="tamanoEstructuraHash" min="5" max="20" value="10">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tamanoClaveHash" class="form-label fw-semibold">Cantidad de caracteres por clave</label>
+                        <input type="number" class="form-control" id="tamanoClaveHash" min="1" max="10" value="3">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="claveHash" class="form-label fw-semibold">Clave</label>
+                        <input type="text" class="form-control" id="claveHash" placeholder="Ingrese una clave alfanumérica">
+                    </div>
+                </div>
+
+                <!-- Selectores de método y colisión -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="metodoHash" class="form-label fw-semibold">Función Hash</label>
+                        <select class="form-select" id="metodoHash" onchange="actualizarDescripcionHash()">
+                            <option value="modulo">Módulo</option>
+                            <option value="cuadrado">Cuadrado</option>
+                            <option value="truncamiento">Truncamiento</option>
+                            <option value="plegamiento">Plegamiento</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="metodoColision" class="form-label fw-semibold">Solución de Colisiones</label>
+                        <select class="form-select" id="metodoColision" onchange="cambiarMetodoColision()">
+                            <option value="lineal">Prueba Lineal</option>
+                            <option value="cuadratica">Prueba Cuadrática</option>
+                            <option value="dobleHash">Función Hash Doble</option>
+                            <option value="anidados">Arreglos Anidados</option>
+                            <option value="enlazada">Lista Enlazada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Descripción del método hash -->
+                <div class="alert alert-info mb-3" id="descripcionHash">
+                    <strong>Método del Módulo:</strong> Calcula el hash como <code>h(k) = k mod m</code>, donde <code>m</code> es el tamaño de la tabla. Es el método más simple y común.
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="d-flex gap-2 mb-4 flex-wrap">
+                    <button class="btn btn-success" onclick="insertarHash()">Insertar</button>
+                    <button class="btn btn-primary" onclick="buscarHash()">Buscar</button>
+                    <button class="btn btn-danger" onclick="eliminarHash()">Eliminar</button>
+                    <button class="btn btn-warning" onclick="limpiarHash()">Limpiar</button>
+                    <button class="btn btn-secondary" onclick="inicializarEstructuraHash()">Iniciar Estructura</button>
+                </div>
+
+                <!-- Visualización de la estructura -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura Hash</label>
+                    <div id="visualizacionHash" class="estructura-container border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Iniciar Estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <!-- Mensaje de resultado -->
+                <div id="mensajeHash" class="alert d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" onclick="cargarHash()">Cargar</button>
+                <button class="btn btn-outline-secondary" onclick="guardarHash()">Guardar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Footer -->
 <footer class="footer-section">
@@ -209,6 +292,7 @@
 
 <!-- Script de Búsquedas -->
 <script src="busquedaSecuencialYBinaria.js"></script>
+<script src="busquedaHash.js"></script>
 
 </body>
 </html>

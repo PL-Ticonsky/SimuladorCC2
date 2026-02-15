@@ -1,5 +1,6 @@
 /*
  * Búsquedas Internas - Estilos Específicos
+ * Paleta de colores: Pastel, sobrios, grises y azules desvanecidos (estilo Word)
  */
 
 /* ============================================
@@ -21,26 +22,26 @@
 .clave-row {
     display: flex;
     align-items: center;
-    border: 2px solid #dee2e6;
+    border: 1px solid #D6DCE5;
     border-bottom: none;
-    background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+    background: #FFFFFF;
     padding: 8px 12px;
     transition: all 0.3s ease;
     position: relative;
 }
 
 .clave-row:first-child {
-    border-radius: 8px 8px 0 0;
+    border-radius: 6px 6px 0 0;
 }
 
 .clave-row:last-child {
-    border-bottom: 2px solid #dee2e6;
-    border-radius: 0 0 8px 8px;
+    border-bottom: 1px solid #D6DCE5;
+    border-radius: 0 0 6px 6px;
 }
 
 .clave-row:only-child {
-    border-radius: 8px;
-    border-bottom: 2px solid #dee2e6;
+    border-radius: 6px;
+    border-bottom: 1px solid #D6DCE5;
 }
 
 .clave-index-left {
@@ -49,7 +50,7 @@
     justify-content: center;
     min-width: 30px;
     height: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
     border-radius: 50%;
     font-size: 0.75rem;
     font-weight: 600;
@@ -59,59 +60,61 @@
 
 .clave-valor-vertical {
     font-size: 1rem;
-    font-weight: 700;
-    color: #333;
+    font-weight: 600;
+    color: #44546A;
     letter-spacing: 0.5px;
 }
 
 .clave-row:hover {
-    border-color: #667eea;
-    background: linear-gradient(145deg, #f0f4ff 0%, #e8ecff 100%);
-    transform: scale(1.05);
+    border-color: #BDD7EE;
+    background: #DEEBF7;
 }
 
 .clave-row:hover + .clave-row {
-    border-top-color: #667eea;
+    border-top-color: #BDD7EE;
 }
 
+/* Estado: Buscando - Amarillo Pastel */
 .clave-row.clave-buscando {
-    background: linear-gradient(145deg, #fff3cd 0%, #ffeeba 100%);
-    border-color: #ffc107;
+    background: #FFF2CC;
+    border-color: #FFD966;
     animation: pulse 0.5s ease infinite;
 }
 
 .clave-row.clave-buscando .clave-valor-vertical,
 .clave-row.clave-buscando .clave-index-left {
-    color: #856404;
+    color: #806000;
 }
 
 .clave-row.clave-buscando .clave-index-left {
-    background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%);
 }
 
+/* Estado: Encontrada - Verde Pastel */
 .clave-row.clave-encontrada {
-    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
-    border-color: #28a745;
-    transform: scale(1.02);
+    background: #E2F0D9;
+    border-color: #A9D18E;
 }
 
 .clave-row.clave-encontrada .clave-valor-vertical {
-    color: #155724;
+    color: #375623;
 }
 
 .clave-row.clave-encontrada .clave-index-left {
-    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+    background: linear-gradient(135deg, #A9D18E 0%, #70AD47 100%);
 }
 
+/* Estado: Insertando - Azul Pastel */
 .clave-row.clave-insertando {
-    background: linear-gradient(145deg, #cce5ff 0%, #b8daff 100%);
-    border-color: #007bff;
+    background: #DEEBF7;
+    border-color: #BDD7EE;
     animation: slideIn 0.4s ease;
 }
 
+/* Estado: Insertada - Verde Pastel */
 .clave-row.clave-insertada {
-    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
-    border-color: #28a745;
+    background: #E2F0D9;
+    border-color: #A9D18E;
     animation: highlight 0.5s ease;
 }
 
@@ -119,18 +122,19 @@
     animation: moveDown 0.4s ease;
 }
 
+/* Estado: Eliminando - Naranja/Rojo Pastel */
 .clave-row.clave-eliminando {
-    background: linear-gradient(145deg, #f8d7da 0%, #f5c6cb 100%);
-    border-color: #dc3545;
+    background: #FCE4D6;
+    border-color: #F4B183;
     animation: fadeOut 0.5s ease forwards;
 }
 
 .clave-row.clave-eliminando .clave-valor-vertical {
-    color: #721c24;
+    color: #843C0C;
 }
 
 .clave-row.clave-eliminando .clave-index-left {
-    background: linear-gradient(135deg, #dc3545 0%, #e4606d 100%);
+    background: linear-gradient(135deg, #F4B183 0%, #C65911 100%);
 }
 
 @keyframes moveDown {
@@ -158,80 +162,81 @@
     min-width: 55px;
     height: 65px;
     padding: 5px 10px;
-    background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
-    border: 2px solid #dee2e6;
+    background: #FFFFFF;
+    border: 1px solid #D6DCE5;
     border-right: none;
     font-weight: 600;
     font-size: 1rem;
-    color: #333;
+    color: #44546A;
     transition: all 0.3s ease;
     position: relative;
 }
 
 .clave-box:first-child {
-    border-radius: 8px 0 0 8px;
+    border-radius: 6px 0 0 6px;
 }
 
 .clave-box:last-child {
-    border-right: 2px solid #dee2e6;
-    border-radius: 0 8px 8px 0;
+    border-right: 1px solid #D6DCE5;
+    border-radius: 0 6px 6px 0;
 }
 
 .clave-box:only-child {
-    border-radius: 8px;
-    border-right: 2px solid #dee2e6;
+    border-radius: 6px;
+    border-right: 1px solid #D6DCE5;
 }
 
 .clave-index {
     font-size: 0.65rem;
-    color: #888;
+    color: #8497B0;
     font-weight: 500;
     margin-bottom: 2px;
 }
 
 .clave-valor {
     font-size: 1rem;
-    font-weight: 700;
-    color: #333;
+    font-weight: 600;
+    color: #44546A;
 }
 
 .clave-box:hover {
-    border-color: #667eea;
-    background: linear-gradient(145deg, #f0f4ff 0%, #e8ecff 100%);
-    transform: scale(1.05);
+    border-color: #BDD7EE;
+    background: #DEEBF7;
     z-index: 1;
 }
 
 .clave-box:hover + .clave-box {
-    border-left-color: #667eea;
+    border-left-color: #BDD7EE;
 }
 
+/* Estado: Buscando */
 .clave-buscando {
-    background: linear-gradient(145deg, #fff3cd 0%, #ffeeba 100%);
-    border-color: #ffc107;
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
     animation: pulse 0.5s ease infinite;
 }
 
 .clave-buscando .clave-valor,
 .clave-buscando .clave-index {
-    color: #856404;
+    color: #806000;
 }
 
+/* Estado: Encontrada */
 .clave-encontrada {
-    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
-    border-color: #28a745;
-    transform: scale(1.1);
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
 }
 
 .clave-encontrada .clave-valor,
 .clave-encontrada .clave-index {
-    color: #155724;
+    color: #375623;
 }
 
+/* Estado: Descartada */
 .clave-descartada,
 .clave-descartado {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: #F2F2F2;
+    border-color: #D6DCE5;
     opacity: 0.5;
 }
 
@@ -239,18 +244,20 @@
 .clave-descartada .clave-index,
 .clave-descartado .clave-valor,
 .clave-descartado .clave-index {
-    color: #adb5bd;
+    color: #8497B0;
 }
 
+/* Estado: Insertando */
 .clave-insertando {
-    background: linear-gradient(145deg, #cce5ff 0%, #b8daff 100%);
-    border-color: #007bff;
+    background: #DEEBF7 !important;
+    border-color: #BDD7EE !important;
     animation: slideIn 0.4s ease;
 }
 
+/* Estado: Insertada */
 .clave-insertada {
-    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
-    border-color: #28a745;
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
     animation: highlight 0.5s ease;
 }
 
@@ -258,15 +265,16 @@
     animation: moveRight 0.4s ease;
 }
 
+/* Estado: Eliminando */
 .clave-eliminando {
-    background: linear-gradient(145deg, #f8d7da 0%, #f5c6cb 100%);
-    border-color: #dc3545;
+    background: #FCE4D6 !important;
+    border-color: #F4B183 !important;
     animation: fadeOut 0.5s ease forwards;
 }
 
 .clave-eliminando .clave-valor,
 .clave-eliminando .clave-index {
-    color: #721c24;
+    color: #843C0C;
 }
 
 @keyframes pulse {
@@ -274,14 +282,14 @@
         transform: scale(1);
     }
     50% {
-        transform: scale(1.08);
+        transform: scale(1.05);
     }
 }
 
 @keyframes slideIn {
     0% {
         opacity: 0;
-        transform: translateY(-20px) scale(0.8);
+        transform: translateY(-15px) scale(0.9);
     }
     100% {
         opacity: 1;
@@ -294,7 +302,7 @@
         transform: scale(1);
     }
     50% {
-        transform: scale(1.15);
+        transform: scale(1.08);
     }
 }
 
@@ -318,5 +326,358 @@
         opacity: 0;
         transform: scale(0.5);
     }
+}
+
+/* ============================================
+   Estilos para Búsqueda Hash
+   ============================================ */
+
+/* Estilos de fila hash (reutiliza clave-row) */
+.hash-row {
+    min-height: 45px;
+}
+
+/* ============================================
+   Matriz Hash (Arreglos Anidados)
+   ============================================ */
+.matriz-hash-container {
+    overflow-x: auto;
+}
+
+.tabla-matriz-hash {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 100%;
+}
+
+.tabla-matriz-hash th,
+.tabla-matriz-hash td {
+    border: 1px solid #D6DCE5;
+    text-align: center;
+    padding: 8px;
+    min-width: 45px;
+    height: 45px;
+}
+
+.matriz-header {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.matriz-index {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    min-width: 40px;
+}
+
+.matriz-celda {
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.matriz-vacia {
+    background: #F2F2F2;
+    color: #8497B0;
+}
+
+.matriz-ocupada {
+    background: #FFFFFF;
+    color: #44546A;
+}
+
+.matriz-celda:hover {
+    background: #DEEBF7;
+}
+
+.matriz-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    animation: pulse 0.5s ease infinite;
+}
+
+.matriz-encontrada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    color: #375623 !important;
+}
+
+.matriz-insertada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    animation: highlight 0.5s ease;
+}
+
+.matriz-eliminando {
+    background: #FCE4D6 !important;
+    border-color: #F4B183 !important;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+/* ============================================
+   Lista Enlazada Hash
+   ============================================ */
+.lista-enlazada-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lista-fila {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    transition: all 0.3s ease;
+}
+
+.lista-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    border-radius: 6px 0 0 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    margin-right: 0;
+}
+
+.lista-contenido {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    min-height: 40px;
+    padding: 5px 10px;
+    background: #F2F2F2;
+    border: 1px solid #D6DCE5;
+    border-left: none;
+    border-radius: 0 6px 6px 0;
+    flex-grow: 1;
+}
+
+.lista-nodo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.lista-vacia,
+.lista-null {
+    background: #F2F2F2;
+    color: #8497B0;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.lista-ocupada {
+    background: #FFFFFF;
+    border: 1px solid #D6DCE5;
+    color: #44546A;
+}
+
+.lista-ocupada:hover {
+    border-color: #BDD7EE;
+    background: #DEEBF7;
+}
+
+.lista-flecha {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #5B9BD5;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+.lista-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    color: #806000 !important;
+    animation: pulse 0.5s ease infinite;
+}
+
+.lista-encontrada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    color: #375623 !important;
+}
+
+.lista-insertada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    animation: slideIn 0.4s ease;
+}
+
+.lista-eliminando {
+    background: #FCE4D6 !important;
+    border-color: #F4B183 !important;
+    color: #843C0C !important;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.lista-fila.lista-buscando {
+    background: #FFF2CC;
+}
+
+.lista-fila.lista-buscando .lista-contenido {
+    border-color: #FFD966;
+}
+
+/* ============================================
+   Lista Enlazada Vertical (Nueva estructura)
+   ============================================ */
+.lista-enlazada-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.lista-fila-vertical {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.lista-celda-principal {
+    display: flex;
+    align-items: center;
+    border: 1px solid #D6DCE5;
+    border-bottom: none;
+    background: #FFFFFF;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.lista-fila-vertical:first-child .lista-celda-principal {
+    border-radius: 6px 6px 0 0;
+}
+
+.lista-fila-vertical:last-child .lista-celda-principal {
+    border-bottom: 1px solid #D6DCE5;
+    border-radius: 0 0 6px 6px;
+}
+
+.lista-fila-vertical:only-child .lista-celda-principal {
+    border-radius: 6px;
+    border-bottom: 1px solid #D6DCE5;
+}
+
+.lista-valor-principal {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #44546A;
+    letter-spacing: 0.5px;
+    min-width: 50px;
+}
+
+.lista-celda-principal:hover {
+    border-color: #BDD7EE;
+    background: #DEEBF7;
+}
+
+/* Nodos enlazados externos */
+.lista-nodos-enlazados {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.lista-flecha-externa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #5B9BD5;
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+.lista-nodo-externo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 38px;
+    padding: 0 12px;
+    background: #FFFFFF;
+    border: 1px solid #5B9BD5;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #44546A;
+    transition: all 0.3s ease;
+}
+
+.lista-nodo-externo:hover {
+    background: #DEEBF7;
+}
+
+/* Estados para lista enlazada vertical */
+.lista-celda-principal.lista-buscando,
+.lista-nodo-externo.lista-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    animation: pulse 0.5s ease infinite;
+}
+
+.lista-celda-principal.lista-buscando .lista-valor-principal,
+.lista-celda-principal.lista-buscando .clave-index-left {
+    color: #806000;
+}
+
+.lista-celda-principal.lista-buscando .clave-index-left {
+    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%);
+}
+
+.lista-celda-principal.lista-encontrada,
+.lista-nodo-externo.lista-encontrada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+}
+
+.lista-celda-principal.lista-encontrada .lista-valor-principal {
+    color: #375623;
+}
+
+.lista-celda-principal.lista-encontrada .clave-index-left {
+    background: linear-gradient(135deg, #A9D18E 0%, #70AD47 100%);
+}
+
+.lista-celda-principal.lista-insertada,
+.lista-nodo-externo.lista-insertada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    animation: slideIn 0.4s ease;
+}
+
+.lista-celda-principal.lista-eliminando,
+.lista-nodo-externo.lista-eliminando {
+    background: #FCE4D6 !important;
+    border-color: #F4B183 !important;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.lista-celda-principal.lista-eliminando .lista-valor-principal {
+    color: #843C0C;
+}
+
+.lista-celda-principal.lista-eliminando .clave-index-left {
+    background: linear-gradient(135deg, #F4B183 0%, #C65911 100%);
 }
 
