@@ -12,99 +12,36 @@
     <link rel="stylesheet" href="css/global.css">
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
 
 <!-- Header -->
 <header class="header-section">
     <div class="container">
         <div class="text-white text-center py-3">
-            <h1 class="header-title mb-2">Simulador CC2</h1>
-            <p class="header-subtitle mb-0">Ciencias de la Computación 2</p>
+            <h1 class="header-title mb-2">Ciencias de la Computación 2</h1>
         </div>
     </div>
 </header>
 
-<div class="container my-5">
+<div class="container flex-grow-1 d-flex align-items-center justify-content-center">
 
-    <!-- Descripción del Aplicativo -->
-    <section class="panel-section mb-5">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold text-dark mb-3">¿Qué es este simulador?</h2>
-        </div>
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <p class="lead text-center text-muted">
-                    Este simulador interactivo está diseñado para facilitar el aprendizaje de los temas
-                    fundamentales de la materia <strong>Ciencias de la Computación 2</strong>.
-                </p>
-            </div>
-        </div>
-    </section>
+    <!-- Busquedas y Grafos -->
+    <section class="w-100">
 
-    <!-- Temas Disponibles -->
-    <section class="mb-5">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold text-dark mb-2">Temas Disponibles</h2>
-            <p class="text-muted">Selecciona un tema para comenzar a explorar</p>
-        </div>
-
-        <div class="row g-4">
+        <div class="row g-4 justify-content-center">
             <!-- Búsquedas Internas -->
-            <div class="col-lg-3 col-md-6">
-                <a href="busquedasInternas/busquedasInternas.html" class="text-decoration-none">
+            <div class="col-lg-5 col-md-6">
+                <a href="busquedas/busquedas.html" class="text-decoration-none">
                     <div class="card card-algoritmo card-tema">
-                        <span class="card-label">Búsquedas Internas</span>
-                        <small class="text-muted mt-2">Secuencial, Binaria, Hash, Residuos</small>
+                        <span class="card-label">Búsquedas</span>
                     </div>
                 </a>
             </div>
 
-            <!-- Búsquedas Externas -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card card-algoritmo card-tema card-disabled">
-                    <span class="card-label">Búsquedas Externas</span>
-                    <small class="text-muted mt-2">Próximamente</small>
-                </div>
-            </div>
-
-            <!-- Búsquedas por Índices -->
-            <div class="col-lg-3 col-md-6">
-                <div class="card card-algoritmo card-tema card-disabled">
-                    <span class="card-label">Búsquedas por Índices</span>
-                    <small class="text-muted mt-2">Próximamente</small>
-                </div>
-            </div>
-
             <!-- Grafos -->
-            <div class="col-lg-3 col-md-6">
+            <div class="col-lg-5 col-md-6">
                 <div class="card card-algoritmo card-tema card-disabled">
                     <span class="card-label">Grafos</span>
-                    <small class="text-muted mt-2">Próximamente</small>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Integrantes -->
-    <section class="panel-section">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold text-dark mb-2">Integrantes del Equipo</h2>
-            <p class="text-muted">Desarrollado por estudiantes de Ciencias de la Computación 2</p>
-        </div>
-
-        <div class="row g-4 justify-content-center">
-            <div class="col-lg-4 col-md-6">
-                <div class="card text-center p-4 border-0 shadow-sm">
-                    <div class="integrante-avatar mx-auto mb-3">D</div>
-                    <h5 class="fw-semibold mb-1">Duvan Santiago Gil Salinas</h5>
-                    <p class="text-muted small mb-0">20232020009</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-                <div class="card text-center p-4 border-0 shadow-sm">
-                    <div class="integrante-avatar mx-auto mb-3">J</div>
-                    <h5 class="fw-semibold mb-1">Jesus Mateo Munevar Mendez</h5>
-                    <p class="text-muted small mb-0">20232020042</p>
                 </div>
             </div>
         </div>
@@ -113,14 +50,14 @@
 </div>
 
 <!-- Footer -->
-<footer class="footer-section">
+<footer class="footer-section mt-auto">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <p class="text-muted mb-0">
-                Simulador CC2 &copy; 2026
+                Ciencias de la Computación 2 &copy; 2026
             </p>
             <p class="text-muted mb-0">
-                Universidad Distrital Francisco José de Caldas - Ciencias de la Computación 2
+                Universidad Distrital Francisco José de Caldas
             </p>
         </div>
     </div>

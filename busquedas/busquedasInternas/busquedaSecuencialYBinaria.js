@@ -149,17 +149,17 @@ function validarClave(valor, tamanoCaracteres) {
         return { valido: false, mensaje: 'La clave no puede estar vacía' };
     }
 
-    // Validar que sea alfanumérica
-    if (!/^[a-zA-Z0-9]+$/.test(claveStr)) {
-        return { valido: false, mensaje: 'La clave solo puede contener letras y números' };
+    // Validar que solo contenga números
+    if (!/^[0-9]+$/.test(claveStr)) {
+        return { valido: false, mensaje: 'La clave solo puede contener números' };
     }
 
-    // Validar el tamaño exacto de caracteres
+    // Validar el tamaño exacto de dígitos
     if (claveStr.length !== tamanoCaracteres) {
-        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoCaracteres} caracteres` };
+        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoCaracteres} dígitos` };
     }
 
-    return { valido: true, clave: claveStr.toUpperCase() };
+    return { valido: true, clave: claveStr };
 }
 
 // ==================== BÚSQUEDA SECUENCIAL ====================
@@ -172,10 +172,17 @@ function mostrarMensajeSecuencial(mensaje, tipo) {
     mostrarMensaje('Secuencial', mensaje, tipo);
 }
 
+function limpiarResaltadosSecuencial() {
+    document.querySelectorAll('#visualizacionSecuencial .clave-row').forEach(el => {
+        el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-eliminando', 'clave-insertando', 'clave-insertada', 'clave-moviendo');
+    });
+}
+
 function insertarSecuencial() {
     if (animacionEnCurso) {
         limpiarTimeouts();
     }
+    limpiarResaltadosSecuencial();
 
     const claveInput = document.getElementById('claveSecuencial');
     const claveValor = claveInput.value.trim();
@@ -216,10 +223,16 @@ function buscarSecuencial() {
         limpiarTimeouts();
     }
 
-    const claveValor = document.getElementById('claveSecuencial').value.trim().toUpperCase();
+    const claveValor = document.getElementById('claveSecuencial').value.trim();
 
     if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
+        return;
+    }
+
+    // Validar que solo contenga números
+    if (!/^[0-9]+$/.test(claveValor)) {
+        mostrarMensajeSecuencial('La clave solo puede contener números', 'warning');
         return;
     }
 
@@ -237,12 +250,13 @@ function buscarSecuencial() {
 
     animacionEnCurso = true;
     let encontrado = false;
+    let terminado = false;
     let pasos = 0;
 
-    // Animación de búsqueda secuencial
+    // Animación de búsqueda secuencial (con parada anticipada en estructura ordenada)
     for (let index = 0; index < boxes.length; index++) {
         const timeout = setTimeout(() => {
-            if (encontrado) return;
+            if (encontrado || terminado) return;
 
             pasos++;
             const box = boxes[index];
@@ -255,8 +269,10 @@ function buscarSecuencial() {
             box.classList.add('clave-buscando');
 
             const valorBox = box.querySelector('.clave-valor-vertical').textContent;
+            const comparacion = compararAlfanumerico(valorBox, claveValor);
 
-            if (valorBox === claveValor) {
+            if (comparacion === 0) {
+                // Encontrada
                 encontrado = true;
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
@@ -264,7 +280,16 @@ function buscarSecuencial() {
                     mostrarMensajeSecuencial(`Clave "${claveValor}" encontrada en posición ${index + 1} (${pasos} pasos)`, 'success');
                     animacionEnCurso = false;
                 }, 200);
+            } else if (comparacion > 0) {
+                // El valor actual es mayor → no puede estar más adelante (estructura ordenada)
+                terminado = true;
+                setTimeout(() => {
+                    box.classList.remove('clave-buscando');
+                    mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada (${pasos} pasos)`, 'danger');
+                    animacionEnCurso = false;
+                }, 200);
             } else if (index === boxes.length - 1) {
+                // Última posición sin encontrar
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
                     mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada (${pasos} pasos)`, 'danger');
@@ -281,58 +306,95 @@ function eliminarSecuencial() {
     if (animacionEnCurso) {
         limpiarTimeouts();
     }
+    limpiarResaltadosSecuencial();
 
-    const claveValor = document.getElementById('claveSecuencial').value.trim().toUpperCase();
+    const claveValor = document.getElementById('claveSecuencial').value.trim();
 
     if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const index = estructuraDatos.indexOf(claveValor);
-    if (index === -1) {
-        mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada`, 'danger');
+    // Validar que solo contenga números
+    if (!/^[0-9]+$/.test(claveValor)) {
+        mostrarMensajeSecuencial('La clave solo puede contener números', 'warning');
         return;
     }
 
-    // Confirmación antes de eliminar
-    if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
-        return;
+    const indexEnDatos = estructuraDatos.indexOf(claveValor);
+    const existeEnEstructura = indexEnDatos !== -1;
+
+    // Solo pedir confirmación si la clave existe
+    if (existeEnEstructura) {
+        if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
+            return;
+        }
     }
 
-    // Encontrar posición antes de eliminar
-    const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(claveValor) + 1;
 
-    // Animación de búsqueda antes de eliminar
     const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row');
+
+    if (boxes.length === 0) {
+        mostrarMensajeSecuencial('La estructura está vacía', 'warning');
+        return;
+    }
+
+    // Encontrar posición antes de eliminar (si existe)
+    const posicion = existeEnEstructura
+        ? [...estructuraDatos].sort(compararAlfanumerico).indexOf(claveValor) + 1
+        : -1;
+
     animacionEnCurso = true;
     let encontrado = false;
+    let terminado = false;
+    let pasos = 0;
 
+    // Animación de búsqueda secuencial con parada anticipada (igual que buscar)
     for (let i = 0; i < boxes.length; i++) {
         const timeout = setTimeout(() => {
-            if (encontrado) return;
+            if (encontrado || terminado) return;
 
+            pasos++;
             const box = boxes[i];
+
             if (i > 0) {
                 boxes[i - 1].classList.remove('clave-buscando');
             }
             box.classList.add('clave-buscando');
 
             const valorBox = box.querySelector('.clave-valor-vertical').textContent;
+            const comparacion = compararAlfanumerico(valorBox, claveValor);
 
-            if (valorBox === claveValor) {
+            if (comparacion === 0) {
+                // Encontrada → eliminar
                 encontrado = true;
                 setTimeout(() => {
                     box.classList.remove('clave-buscando');
                     box.classList.add('clave-eliminando');
 
                     setTimeout(() => {
-                        estructuraDatos.splice(index, 1);
+                        estructuraDatos.splice(indexEnDatos, 1);
                         sincronizarVisualizaciones();
                         document.getElementById('claveSecuencial').value = '';
-                        mostrarMensajeSecuencial(`Clave "${claveValor}" eliminada de posición ${posicion}`, 'success');
+                        mostrarMensajeSecuencial(`Clave "${claveValor}" eliminada de posición ${posicion} (${pasos} pasos)`, 'success');
                         animacionEnCurso = false;
                     }, 500);
+                }, 200);
+            } else if (comparacion > 0) {
+                // El valor actual es mayor → no puede estar más adelante
+                terminado = true;
+                setTimeout(() => {
+                    box.classList.remove('clave-buscando');
+                    mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada (${pasos} pasos)`, 'danger');
+                    animacionEnCurso = false;
+                }, 200);
+            } else if (i === boxes.length - 1) {
+                // Última posición sin encontrar
+                terminado = true;
+                setTimeout(() => {
+                    box.classList.remove('clave-buscando');
+                    mostrarMensajeSecuencial(`Clave "${claveValor}" no encontrada (${pasos} pasos)`, 'danger');
+                    animacionEnCurso = false;
                 }, 200);
             }
         }, i * 300);
@@ -424,10 +486,16 @@ function buscarBinaria() {
         limpiarTimeouts();
     }
 
-    const claveValor = document.getElementById('claveBinaria').value.trim().toUpperCase();
+    const claveValor = document.getElementById('claveBinaria').value.trim();
 
     if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
+        return;
+    }
+
+    // Validar que solo contenga números
+    if (!/^[0-9]+$/.test(claveValor)) {
+        mostrarMensajeBinaria('La clave solo puede contener números', 'warning');
         return;
     }
 
@@ -470,7 +538,7 @@ function buscarBinaria() {
             boxes.forEach((box, idx) => {
                 box.classList.remove('clave-buscando');
                 if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartado');
+                    box.classList.add('clave-descartada');
                 }
             });
             boxes[paso.mid].classList.add('clave-buscando');
@@ -500,10 +568,16 @@ function eliminarBinaria() {
         limpiarTimeouts();
     }
 
-    const claveValor = document.getElementById('claveBinaria').value.trim().toUpperCase();
+    const claveValor = document.getElementById('claveBinaria').value.trim();
 
     if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
+        return;
+    }
+
+    // Validar que solo contenga números
+    if (!/^[0-9]+$/.test(claveValor)) {
+        mostrarMensajeBinaria('La clave solo puede contener números', 'warning');
         return;
     }
 
@@ -550,7 +624,7 @@ function eliminarBinaria() {
             boxes.forEach((box, idx) => {
                 box.classList.remove('clave-buscando');
                 if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartado');
+                    box.classList.add('clave-descartada');
                 }
             });
             boxes[paso.mid].classList.add('clave-buscando');
@@ -645,8 +719,8 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = '';
     });
 
-    // Limpiar resaltados al cerrar modal secuencial
-    document.getElementById('modalSecuencial').addEventListener('hidden.bs.modal', function() {
+    // Limpiar resaltados al cambiar de pestaña
+    document.getElementById('tab-secuencial').addEventListener('hidden.bs.tab', function() {
         limpiarTimeouts();
         document.querySelectorAll('#visualizacionSecuencial .clave-row').forEach(el => {
             el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-eliminando');
@@ -654,8 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ocultarMensaje('Secuencial');
     });
 
-    // Limpiar resaltados al cerrar modal binaria
-    document.getElementById('modalBinaria').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('tab-binaria').addEventListener('hidden.bs.tab', function() {
         limpiarTimeouts();
         document.querySelectorAll('#visualizacionBinaria .clave-box').forEach(el => {
             el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada', 'clave-eliminando');
@@ -663,13 +736,21 @@ document.addEventListener('DOMContentLoaded', function() {
         ocultarMensaje('Binaria');
     });
 
-    // Sincronizar al abrir los modales
-    document.getElementById('modalSecuencial').addEventListener('shown.bs.modal', function() {
+    // Sincronizar al mostrar las pestañas
+    document.getElementById('tab-secuencial').addEventListener('shown.bs.tab', function() {
+        // Ocultar panel de bienvenida
+        const panelBienvenida = document.getElementById('panel-bienvenida');
+        if (panelBienvenida) panelBienvenida.style.display = 'none';
+
         renderizarSecuencial();
         ocultarMensaje('Secuencial');
     });
 
-    document.getElementById('modalBinaria').addEventListener('shown.bs.modal', function() {
+    document.getElementById('tab-binaria').addEventListener('shown.bs.tab', function() {
+        // Ocultar panel de bienvenida
+        const panelBienvenida = document.getElementById('panel-bienvenida');
+        if (panelBienvenida) panelBienvenida.style.display = 'none';
+
         renderizarBinaria();
         ocultarMensaje('Binaria');
     });

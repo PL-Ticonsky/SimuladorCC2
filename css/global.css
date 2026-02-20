@@ -41,7 +41,6 @@ body {
 .header-section {
     background: var(--primary-gradient);
     padding: 2rem 0;
-    margin-bottom: 2rem;
     box-shadow: 0 2px 8px rgba(68, 84, 106, 0.15);
 }
 
@@ -59,9 +58,10 @@ body {
 /* ============================================
    Cards de Temas (Menú Principal)
    ============================================ */
-.card-tema {
+.card-algoritmo.card-tema {
     min-height: 150px;
     flex-direction: column;
+    font-size: 1.4rem;
 }
 
 .card-tema small {

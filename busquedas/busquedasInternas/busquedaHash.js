@@ -58,9 +58,29 @@ function actualizarDescripcionHash() {
     const colision = document.getElementById('metodoColision').value;
     const descripcionDiv = document.getElementById('descripcionHash');
 
-    let html = descripcionesHash[metodo];
+    // Si no hay ninguna selección, mostrar mensaje por defecto
+    if (!metodo && !colision) {
+        descripcionDiv.innerHTML = '<span class="text-muted">Seleccione una función hash y un método de colisión para ver su descripción.</span>';
+        return;
+    }
+
+    let html = '';
+
+    // Mostrar descripción de función hash si está seleccionada
+    if (metodo && descripcionesHash[metodo]) {
+        html += descripcionesHash[metodo];
+    } else {
+        html += '<span class="text-muted">Seleccione una función hash.</span>';
+    }
+
     html += '<hr class="my-2">';
-    html += '<small><strong>Colisión:</strong> ' + descripcionesColision[colision] + '</small>';
+
+    // Mostrar descripción de colisión si está seleccionada
+    if (colision && descripcionesColision[colision]) {
+        html += '<small><strong>Colisión:</strong> ' + descripcionesColision[colision] + '</small>';
+    } else {
+        html += '<small class="text-muted">Seleccione un método de colisión.</small>';
+    }
 
     descripcionDiv.innerHTML = html;
 }
@@ -392,7 +412,20 @@ function insertarHash() {
     }
 
     if (!estructuraHashInicializada) {
-        mostrarMensajeHash('Primero debe inicializar la estructura', 'warning');
+        mostrarMensajeHash('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
+    const metodoHash = document.getElementById('metodoHash').value;
+    const metodoColision = document.getElementById('metodoColision').value;
+
+    if (!metodoHash) {
+        mostrarMensajeHash('Seleccione una función hash', 'warning');
+        return;
+    }
+
+    if (!metodoColision) {
+        mostrarMensajeHash('Seleccione un método de colisión', 'warning');
         return;
     }
 
@@ -407,8 +440,6 @@ function insertarHash() {
     }
 
     const clave = validacion.clave;
-    const metodoHash = document.getElementById('metodoHash').value;
-    const metodoColision = document.getElementById('metodoColision').value;
 
     const hashInicial = calcularHash(clave, metodoHash, tamanoTablaHash);
 
@@ -1009,6 +1040,24 @@ function eliminarDeListaEnlazada(clave, hashPosicion) {
 // ==================== LIMPIAR ====================
 
 function limpiarHash() {
+    if (!estructuraHashInicializada) {
+        mostrarMensajeHash('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
+    const metodoHash = document.getElementById('metodoHash').value;
+    const metodoColision = document.getElementById('metodoColision').value;
+
+    if (!metodoHash) {
+        mostrarMensajeHash('Seleccione una función hash', 'warning');
+        return;
+    }
+
+    if (!metodoColision) {
+        mostrarMensajeHash('Seleccione un método de colisión', 'warning');
+        return;
+    }
+
     if (!confirm('¿Está seguro de limpiar toda la estructura?')) {
         return;
     }
@@ -1122,5 +1171,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Inicializar descripción
     actualizarDescripcionHash();
-});
 
+    // Ocultar panel de bienvenida cuando se selecciona la pestaña de hash
+    const tabHash = document.getElementById('tab-hash');
+    if (tabHash) {
+        tabHash.addEventListener('shown.bs.tab', function() {
+            const panelBienvenida = document.getElementById('panel-bienvenida');
+            if (panelBienvenida) {
+                panelBienvenida.style.display = 'none';
+            }
+        });
+    }
+});

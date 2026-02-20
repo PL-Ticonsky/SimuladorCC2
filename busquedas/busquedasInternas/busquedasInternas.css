@@ -118,6 +118,23 @@
     animation: highlight 0.5s ease;
 }
 
+/* Espacio vacío en Hash (indicador de posiciones intermedias) */
+.hash-espacio-vacio {
+    background: #F8F9FA;
+    border-style: dashed;
+    opacity: 0.7;
+}
+
+.hash-espacio-vacio .clave-index-left {
+    background: linear-gradient(135deg, #ADB5BD 0%, #6C757D 100%);
+    font-size: 0.65rem;
+}
+
+.hash-espacio-vacio:hover {
+    background: #F8F9FA;
+    border-color: #D6DCE5;
+}
+
 .clave-row.clave-moviendo {
     animation: moveDown 0.4s ease;
 }
@@ -647,16 +664,16 @@
 
 .lista-celda-principal.lista-encontrada,
 .lista-nodo-externo.lista-encontrada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #C6EFCE !important;
+    border-color: #70AD47 !important;
 }
 
 .lista-celda-principal.lista-encontrada .lista-valor-principal {
-    color: #375623;
+    color: #1D6B2F;
 }
 
 .lista-celda-principal.lista-encontrada .clave-index-left {
-    background: linear-gradient(135deg, #A9D18E 0%, #70AD47 100%);
+    background: linear-gradient(135deg, #70AD47 0%, #375623 100%);
 }
 
 .lista-celda-principal.lista-insertada,
