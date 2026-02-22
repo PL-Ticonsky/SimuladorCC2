@@ -66,7 +66,7 @@ function limpiarTimeoutsArr(arr) {
 const descripcionesResiduo = {
     digital: '<strong>Árbol Digital:</strong> Inserta letras (A-Z) una por una. Cada letra se codifica a su número (A=1, B=2...) y luego a binario de 5 bits. La primera letra es la raíz. Las siguientes se insertan leyendo bit a bit: <code>0 → izquierda</code>, <code>1 → derecha</code>. Si hay colisión, se lee el siguiente bit.',
     tries: '<strong>Tries (Simple):</strong> Inserta letras (A-Z) una por una. Cada letra se convierte a binario de 5 bits. Los nodos internos siempre están vacíos y las letras se ubican en las hojas. <code>0 → izquierda</code>, <code>1 → derecha</code>. Si dos letras colisionan en una hoja, el árbol crece hasta que sus bits divergen.',
-    multiple: '<strong>Árbol Múltiple (por Residuo):</strong> Cada nodo puede tener hasta <em>grado</em> hijos. La posición de inserción se calcula como <code>clave mod grado</code>. En colisión, se desciende por ese hijo y se repite.',
+    multiple: '<strong>Árbol Múltiple (por Residuo):</strong> Define un grado <em>m</em> (bits por nivel). Cada nodo interno tiene hasta 2<sup>m</sup> hijos, etiquetados con combinaciones de <em>m</em> bits. Las letras (A-Z) se codifican en 5 bits y se recorren tomando <em>m</em> bits por nivel. Nodos internos vacíos, letras en las hojas.',
     huffman: '<strong>Huffman (Codificación por Frecuencia):</strong> Ingresa una palabra y el programa detecta automáticamente la frecuencia de cada letra. Las letras más frecuentes reciben códigos más cortos. <code>0 → izquierda</code>, <code>1 → derecha</code>.'
 };
 
@@ -105,8 +105,7 @@ function cambiarMetodoResiduo() {
     if (tipo === 'Digital') renderizarArbolD3('Digital', arbolDigital);
     else if (tipo === 'Tries') renderizarArbolD3('Tries', raizTries);
     else if (tipo === 'Multiple') {
-        const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
-        renderizarArbolD3('Multiple', arbolMultiple, grado);
+        renderizarArbolD3('Multiple', arbolMultiple, gradoMultipleActual);
     }
     else if (tipo === 'Huffman') renderizarArbolD3('Huffman', huffmanArbol);
 }
@@ -1015,87 +1014,148 @@ function limpiarInfoTries() {
 // ==================== ÁRBOL MÚLTIPLE ====================
 
 /**
- * Árbol de búsqueda por residuo múltiple (B-ario)
- * Grado configurable (orden del árbol)
- * La clave se distribuye entre los hijos según: clave mod grado
+ * Árbol Múltiple por Residuo:
+ * - m = grado (bits por nivel)
+ * - Cada nodo interno tiene 2^m hijos, etiquetados con combinaciones de m bits
+ * - Las letras (A-Z) se codifican en 5 bits. Se recorren tomando m bits por nivel.
+ * - Si en el último nivel quedan menos de m bits, solo se usan los bits restantes.
+ * - Nodos internos vacíos, letras en las hojas.
  */
-function crearNodoMultiple(clave = null) {
-    return { clave, hijos: [] };
+let gradoMultipleActual = 2;
+
+function crearNodoMultiple() {
+    return { clave: null, hijos: {} };
+}
+
+function crearArbolMultiple() {
+    const m = parseInt(document.getElementById('gradoMultiple').value);
+    if (!m || m < 1 || m > 5) {
+        mostrarMensajeResiduo('Multiple', 'El grado (m) debe estar entre 1 y 5', 'warning');
+        return;
+    }
+    gradoMultipleActual = m;
+    // Construir árbol completo con todos los nodos internos y hojas vacías
+    arbolMultiple = construirArbolCompletoMultiple(m, 0, 5);
+    document.getElementById('multipleControles').classList.remove('d-none');
+    renderizarArbolMultipleD3();
+    mostrarMensajeResiduo('Multiple',
+        `Árbol creado con grado <strong>m=${m}</strong>. Cada nodo tiene <strong>2<sup>${m}</sup> = ${Math.pow(2, m)}</strong> hijos. Profundidad: <strong>${Math.ceil(5 / m)}</strong> niveles.`, 'success');
+}
+
+/**
+ * Construye recursivamente el árbol m-ario completo.
+ * bitsUsados: cuántos bits ya se han consumido
+ * totalBits: total de bits (5)
+ */
+function construirArbolCompletoMultiple(m, bitsUsados, totalBits) {
+    const nodo = crearNodoMultiple();
+    const bitsRestantes = totalBits - bitsUsados;
+    if (bitsRestantes <= 0) return nodo; // es hoja
+
+    const bitsEnEsteNivel = Math.min(m, bitsRestantes);
+    const numHijos = Math.pow(2, bitsEnEsteNivel);
+
+    for (let i = 0; i < numHijos; i++) {
+        const etiqueta = i.toString(2).padStart(bitsEnEsteNivel, '0');
+        nodo.hijos[etiqueta] = construirArbolCompletoMultiple(m, bitsUsados + bitsEnEsteNivel, totalBits);
+    }
+    return nodo;
+}
+
+function obtenerGruposBits(binario, m) {
+    const grupos = [];
+    for (let i = 0; i < binario.length; i += m) {
+        grupos.push(binario.substring(i, Math.min(i + m, binario.length)));
+    }
+    return grupos;
 }
 
 function insertarMultiple() {
     if (animacionMultipleEnCurso) limpiarTimeoutsArr(timeoutsMultiple);
 
     const input = document.getElementById('claveMultiple');
-    const gradoEl = document.getElementById('gradoMultiple');
-    const clave = input.value.trim();
-    const grado = parseInt(gradoEl.value) || 3;
+    const letra = input.value.trim().toUpperCase();
+    const m = gradoMultipleActual;
 
-    if (!clave || !/^[0-9]+$/.test(clave)) {
-        mostrarMensajeResiduo('Multiple', 'Ingrese una clave numérica', 'warning');
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Multiple', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
-
-    const num = parseInt(clave);
 
     if (!arbolMultiple) {
-        arbolMultiple = crearNodoMultiple(num);
-        input.value = '';
-        renderizarArbolD3('Multiple', arbolMultiple, grado);
-        mostrarMensajeResiduo('Multiple',
-            `Clave <strong>${num}</strong> insertada como raíz`, 'success');
-        mostrarTablaMultiple(num, grado, []);
+        mostrarMensajeResiduo('Multiple', 'Primero cree el árbol con "Crear árbol"', 'warning');
         return;
     }
 
-    if (buscarEnArbolMultiple(arbolMultiple, num, grado)) {
-        mostrarMensajeResiduo('Multiple', `La clave ${num} ya existe`, 'warning');
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    const grupos = obtenerGruposBits(binario, m);
+    mostrarInfoMultiple(letra, num, binario, grupos);
+
+    // Verificar si ya existe
+    if (buscarLetraEnMultiple(arbolMultiple, grupos)) {
+        mostrarMensajeResiduo('Multiple', `La letra "${letra}" ya existe en el árbol`, 'warning');
         return;
     }
 
-    const pasos = [];
+    // Insertar recorriendo los grupos de bits (el árbol ya tiene todos los nodos)
     let nodo = arbolMultiple;
-
-    while (true) {
-        const residuo = num % grado;
-        pasos.push({ nodo: nodo.clave, residuo, grado, idx: residuo });
-
-        // Inicializar hijos si es necesario
-        while (nodo.hijos.length <= residuo) {
-            nodo.hijos.push(null);
+    const ruta = [];
+    for (let i = 0; i < grupos.length; i++) {
+        const grupo = grupos[i];
+        ruta.push(grupo);
+        if (!nodo.hijos[grupo]) {
+            nodo.hijos[grupo] = crearNodoMultiple();
         }
-
-        if (nodo.hijos[residuo] === null || nodo.hijos[residuo] === undefined) {
-            nodo.hijos[residuo] = crearNodoMultiple(num);
-            break;
+        if (i === grupos.length - 1) {
+            nodo.hijos[grupo].clave = letra;
         } else {
-            nodo = nodo.hijos[residuo];
+            nodo = nodo.hijos[grupo];
         }
     }
 
     input.value = '';
-    renderizarArbolD3('Multiple', arbolMultiple, grado);
-    mostrarTablaMultiple(num, grado, pasos);
+    renderizarArbolMultipleD3();
+
+    // Resaltar la hoja insertada en verde
+    setTimeout(() => {
+        resaltarNodoD3('Multiple', letra, 'encontrado');
+    }, 100);
+
     mostrarMensajeResiduo('Multiple',
-        `Clave <strong>${num}</strong> insertada. Residuo: ${num % grado}. Pasos: ${pasos.length}`, 'success');
+        `<strong>"${letra}"</strong> (${num} = ${binario}) insertada. Ruta: <code>${ruta.join(' → ')}</code>`, 'success');
 }
 
-function buscarEnArbolMultiple(nodo, num, grado) {
+function buscarLetraEnMultiple(nodo, grupos) {
     if (!nodo) return false;
-    if (nodo.clave === num) return true;
-    const residuo = num % grado;
-    if (residuo < nodo.hijos.length && nodo.hijos[residuo]) {
-        return buscarEnArbolMultiple(nodo.hijos[residuo], num, grado);
+    let actual = nodo;
+    for (const grupo of grupos) {
+        if (!actual.hijos[grupo]) return false;
+        actual = actual.hijos[grupo];
     }
-    return false;
+    return actual.clave !== null;
+}
+
+function buscarLetraEnMultipleConNodos(nodo, grupos) {
+    // Devuelve array de nodos visitados y si encontró
+    const nodosVisitados = [nodo];
+    let actual = nodo;
+    for (const grupo of grupos) {
+        if (!actual.hijos[grupo]) return { nodosVisitados, encontrado: false };
+        actual = actual.hijos[grupo];
+        nodosVisitados.push(actual);
+    }
+    return { nodosVisitados, encontrado: actual.clave !== null };
 }
 
 function buscarMultiple() {
-    const clave = document.getElementById('claveMultiple').value.trim();
-    const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
+    if (animacionMultipleEnCurso) limpiarTimeoutsArr(timeoutsMultiple);
 
-    if (!clave || !/^[0-9]+$/.test(clave)) {
-        mostrarMensajeResiduo('Multiple', 'Ingrese una clave numérica', 'warning');
+    const letra = document.getElementById('claveMultiple').value.trim().toUpperCase();
+    const m = gradoMultipleActual;
+
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Multiple', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
 
@@ -1104,66 +1164,180 @@ function buscarMultiple() {
         return;
     }
 
-    const num = parseInt(clave);
-    const encontrado = buscarEnArbolMultiple(arbolMultiple, num, grado);
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    const grupos = obtenerGruposBits(binario, m);
+    mostrarInfoMultiple(letra, num, binario, grupos);
 
-    if (encontrado) {
-        mostrarMensajeResiduo('Multiple', `Clave <strong>${num}</strong> encontrada`, 'success');
-        resaltarNodoD3('Multiple', num, 'encontrado');
-    } else {
-        mostrarMensajeResiduo('Multiple', `Clave <strong>${num}</strong> no encontrada`, 'danger');
+    // Animate using D3 indices
+    const datosD3 = arbolMultipleAD3(arbolMultiple, m);
+    const rootH = d3.hierarchy(datosD3);
+    const descs = rootH.descendants();
+    const svgEl = document.getElementById('svgMultiple');
+    if (!svgEl) return;
+    const todosNodos = svgEl.querySelectorAll('.node');
+
+    // Traverse D3 hierarchy matching grupos
+    const indicesEnD3 = [];
+    let d3Nodo = rootH;
+    indicesEnD3.push(descs.indexOf(d3Nodo));
+    for (const grupo of grupos) {
+        if (d3Nodo.children) {
+            const hijo = d3Nodo.children.find(c => c.data.edgeLabel === grupo);
+            if (hijo) {
+                d3Nodo = hijo;
+                indicesEnD3.push(descs.indexOf(d3Nodo));
+            } else break;
+        } else break;
     }
+
+    const { encontrado } = buscarLetraEnMultipleConNodos(arbolMultiple, grupos);
+
+    animacionMultipleEnCurso = true;
+    const delay = 500;
+
+    indicesEnD3.forEach((idx, i) => {
+        if (idx < 0 || idx >= todosNodos.length) return;
+        timeoutsMultiple.push(setTimeout(() => {
+            const circle = todosNodos[idx].querySelector('circle');
+            if (circle) {
+                const orig = circle.getAttribute('fill');
+                circle.setAttribute('fill', '#FFC107');
+                setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+            }
+        }, i * delay));
+    });
+
+    timeoutsMultiple.push(setTimeout(() => {
+        if (encontrado) {
+            resaltarNodoD3('Multiple', letra, 'encontrado');
+            mostrarMensajeResiduo('Multiple',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) encontrada. Ruta: <code>${grupos.join(' → ')}</code>`, 'success');
+        } else {
+            const lastIdx = indicesEnD3[indicesEnD3.length - 1];
+            if (lastIdx >= 0 && lastIdx < todosNodos.length) {
+                const circle = todosNodos[lastIdx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#E74C3C');
+                    setTimeout(() => circle.setAttribute('fill', orig), 2000);
+                }
+            }
+            mostrarMensajeResiduo('Multiple',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) no encontrada. Ruta: <code>${grupos.join(' → ')}</code>`, 'danger');
+        }
+        animacionMultipleEnCurso = false;
+    }, indicesEnD3.length * delay));
 }
 
 function eliminarMultiple() {
-    const clave = document.getElementById('claveMultiple').value.trim();
-    const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
+    if (animacionMultipleEnCurso) limpiarTimeoutsArr(timeoutsMultiple);
 
-    if (!clave || !/^[0-9]+$/.test(clave)) {
-        mostrarMensajeResiduo('Multiple', 'Ingrese una clave numérica', 'warning');
+    const letra = document.getElementById('claveMultiple').value.trim().toUpperCase();
+    const m = gradoMultipleActual;
+
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Multiple', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
 
-    const num = parseInt(clave);
-    if (!arbolMultiple || !buscarEnArbolMultiple(arbolMultiple, num, grado)) {
-        mostrarMensajeResiduo('Multiple', `Clave ${num} no encontrada`, 'danger');
+    if (!arbolMultiple) {
+        mostrarMensajeResiduo('Multiple', 'El árbol está vacío', 'warning');
         return;
     }
 
-    if (!confirm(`¿Eliminar la clave ${num}?`)) return;
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    const grupos = obtenerGruposBits(binario, m);
+    mostrarInfoMultiple(letra, num, binario, grupos);
 
-    arbolMultiple = eliminarDeArbolMultiple(arbolMultiple, num, grado);
-    document.getElementById('claveMultiple').value = '';
-    renderizarArbolD3('Multiple', arbolMultiple, grado);
-    mostrarMensajeResiduo('Multiple', `Clave ${num} eliminada`, 'success');
+    const { encontrado } = buscarLetraEnMultipleConNodos(arbolMultiple, grupos);
+
+    // Animate using D3 indices
+    const datosD3 = arbolMultipleAD3(arbolMultiple, m);
+    const rootH = d3.hierarchy(datosD3);
+    const descs = rootH.descendants();
+    const svgEl = document.getElementById('svgMultiple');
+    if (!svgEl) return;
+    const todosNodos = svgEl.querySelectorAll('.node');
+
+    const indicesEnD3 = [];
+    let d3Nodo = rootH;
+    indicesEnD3.push(descs.indexOf(d3Nodo));
+    for (const grupo of grupos) {
+        if (d3Nodo.children) {
+            const hijo = d3Nodo.children.find(c => c.data.edgeLabel === grupo);
+            if (hijo) {
+                d3Nodo = hijo;
+                indicesEnD3.push(descs.indexOf(d3Nodo));
+            } else break;
+        } else break;
+    }
+
+    animacionMultipleEnCurso = true;
+    const delay = 500;
+
+    indicesEnD3.forEach((idx, i) => {
+        if (idx < 0 || idx >= todosNodos.length) return;
+        const isTarget = (i === indicesEnD3.length - 1);
+        timeoutsMultiple.push(setTimeout(() => {
+            const circle = todosNodos[idx].querySelector('circle');
+            if (circle) {
+                const orig = circle.getAttribute('fill');
+                circle.setAttribute('fill', isTarget && encontrado ? '#E74C3C' : '#FFC107');
+                setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+            }
+        }, i * delay));
+    });
+
+    timeoutsMultiple.push(setTimeout(() => {
+        if (!encontrado) {
+            const lastIdx = indicesEnD3[indicesEnD3.length - 1];
+            if (lastIdx >= 0 && lastIdx < todosNodos.length) {
+                const circle = todosNodos[lastIdx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#E74C3C');
+                    setTimeout(() => circle.setAttribute('fill', orig), 2000);
+                }
+            }
+            mostrarMensajeResiduo('Multiple', `La letra "${letra}" no existe en el árbol`, 'danger');
+            animacionMultipleEnCurso = false;
+            return;
+        }
+        // Eliminar: quitar clave de la hoja y podar
+        eliminarDeMultiple(arbolMultiple, grupos);
+        document.getElementById('claveMultiple').value = '';
+        renderizarArbolMultipleD3();
+        mostrarMensajeResiduo('Multiple', `Letra "${letra}" eliminada. Ruta: <code>${grupos.join(' → ')}</code>`, 'success');
+        limpiarInfoMultiple();
+        animacionMultipleEnCurso = false;
+    }, indicesEnD3.length * delay + 200));
 }
 
-function eliminarDeArbolMultiple(nodo, num, grado) {
-    if (!nodo) return null;
-    if (nodo.clave === num) {
-        if (nodo.hijos.every(h => !h)) return null;
-        nodo.clave = null;
-        return nodo;
+function eliminarDeMultiple(nodo, grupos) {
+    if (!nodo || grupos.length === 0) return;
+    // Navegar hasta la hoja y limpiar la clave (no podar, el árbol es pre-construido)
+    let actual = nodo;
+    for (const grupo of grupos) {
+        if (!actual.hijos[grupo]) return;
+        actual = actual.hijos[grupo];
     }
-    const residuo = num % grado;
-    if (residuo < nodo.hijos.length) {
-        nodo.hijos[residuo] = eliminarDeArbolMultiple(nodo.hijos[residuo], num, grado);
-    }
-    return nodo;
+    actual.clave = null;
 }
 
 function limpiarMultiple() {
     if (!confirm('¿Limpiar todo el árbol múltiple?')) return;
     limpiarTimeoutsArr(timeoutsMultiple);
-    arbolMultiple = null;
+    arbolMultiple = construirArbolCompletoMultiple(gradoMultipleActual, 0, 5);
     document.getElementById('claveMultiple').value = '';
-    renderizarArbolD3('Multiple', null);
+    renderizarArbolMultipleD3();
     mostrarMensajeResiduo('Multiple', 'Árbol limpiado', 'info');
+    limpiarInfoMultiple();
 }
 
 function guardarMultiple() {
-    const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
-    const datos = JSON.stringify({ tipo: 'multiple', grado, arbol: arbolMultiple });
+    const datos = JSON.stringify({ tipo: 'multiple', grado: gradoMultipleActual, arbol: arbolMultiple });
     descargarJSON(datos, 'arbol_multiple.json');
     mostrarMensajeResiduo('Multiple', 'Árbol guardado correctamente', 'success');
 }
@@ -1172,28 +1346,21 @@ function cargarMultiple() {
     document.getElementById('fileInputMultiple').click();
 }
 
-function mostrarTablaMultiple(num, grado, pasos) {
-    const tbody = document.getElementById('tablaMultipleBody');
-    if (!tbody) return;
+function renderizarArbolMultipleD3() {
+    renderizarArbolD3('Multiple', arbolMultiple, gradoMultipleActual);
+}
 
-    let html = `<tr class="table-primary">
-        <td colspan="3"><strong>Clave:</strong> ${num} | <strong>Grado:</strong> ${grado} | <strong>Residuo base:</strong> ${num % grado}</td>
-    </tr>`;
+function mostrarInfoMultiple(letra, num, binario, grupos) {
+    const container = document.getElementById('infoMultiple');
+    const body = document.getElementById('infoMultipleBody');
+    if (!container || !body) return;
+    body.innerHTML = `<strong>Letra:</strong> ${letra} | <strong>Número:</strong> ${num} | <strong>Binario (5 bits):</strong> <code>${binario}</code> | <strong>Grupos (m=${gradoMultipleActual}):</strong> <code>${grupos.join(' | ')}</code>`;
+    container.classList.remove('d-none');
+}
 
-    if (pasos.length === 0) {
-        html += `<tr><td colspan="3" class="text-center text-muted">Insertada como raíz</td></tr>`;
-    } else {
-        pasos.forEach((p, i) => {
-            html += `<tr>
-                <td>${i + 1}</td>
-                <td>Nodo: <strong>${p.nodo}</strong> | ${p.num !== undefined ? p.num : num} mod ${p.grado} = <strong>${p.residuo}</strong></td>
-                <td>→ Hijo[${p.residuo}]</td>
-            </tr>`;
-        });
-    }
-
-    tbody.innerHTML = html;
-    document.getElementById('tablaMultiple').classList.remove('d-none');
+function limpiarInfoMultiple() {
+    const container = document.getElementById('infoMultiple');
+    if (container) container.classList.add('d-none');
 }
 
 // ==================== HUFFMAN ====================
@@ -1525,16 +1692,54 @@ function arbolTriesAD3(nodo) {
     };
 }
 
-function arbolMultipleAD3(nodo, grado) {
+function arbolMultipleAD3(nodo, m, bitsUsados) {
     if (!nodo) return null;
-    const name = nodo.clave !== null ? `${nodo.clave}` : '∅';
+    if (bitsUsados === undefined) bitsUsados = 0;
+    const name = nodo.clave ? nodo.clave : '';
+    const bitsRestantes = 5 - bitsUsados;
+
+    // Si no quedan bits, es hoja
+    if (bitsRestantes <= 0) {
+        return { name, originalClave: nodo.clave, children: undefined };
+    }
+
+    const bitsEnEsteNivel = Math.min(m, bitsRestantes);
+    const numHijos = Math.pow(2, bitsEnEsteNivel);
     const children = [];
-    for (let i = 0; i < Math.max(nodo.hijos.length, grado); i++) {
-        if (nodo.hijos[i]) {
-            children.push({ ...arbolMultipleAD3(nodo.hijos[i], grado), edgeLabel: `[${i}]` });
+
+    for (let i = 0; i < numHijos; i++) {
+        const etiqueta = i.toString(2).padStart(bitsEnEsteNivel, '0');
+        const hijo = nodo.hijos[etiqueta];
+        if (hijo) {
+            children.push({ ...arbolMultipleAD3(hijo, m, bitsUsados + bitsEnEsteNivel), edgeLabel: etiqueta });
+        } else {
+            // Nodo vacío placeholder — mantener estructura completa
+            const placeholder = arbolMultipleAD3PlaceHolder(m, bitsUsados + bitsEnEsteNivel);
+            children.push({ ...placeholder, edgeLabel: etiqueta });
         }
     }
-    return { name, originalClave: nodo.clave, children: children.length ? children : undefined };
+
+    return {
+        name,
+        originalClave: nodo.clave,
+        children: children.length ? children : undefined
+    };
+}
+
+/** Genera un subárbol placeholder vacío para completar la visualización */
+function arbolMultipleAD3PlaceHolder(m, bitsUsados) {
+    const bitsRestantes = 5 - bitsUsados;
+    if (bitsRestantes <= 0) {
+        return { name: '', originalClave: null, children: undefined };
+    }
+    const bitsEnEsteNivel = Math.min(m, bitsRestantes);
+    const numHijos = Math.pow(2, bitsEnEsteNivel);
+    const children = [];
+    for (let i = 0; i < numHijos; i++) {
+        const etiqueta = i.toString(2).padStart(bitsEnEsteNivel, '0');
+        children.push({ ...arbolMultipleAD3PlaceHolder(m, bitsUsados + bitsEnEsteNivel), edgeLabel: etiqueta });
+    }
+    return { name: '', originalClave: null, children: children.length ? children : undefined };
 }
 
 function arbolHuffmanAD3(nodo, total) {
@@ -1590,8 +1795,8 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
     const root = d3.hierarchy(datosD3);
 
     // Layout del árbol
-    const nodeW = (tipo === 'Digital' || tipo === 'Huffman' || tipo === 'Tries') ? 110 : 70;
-    const nodeH = 80;
+    const nodeW = tipo === 'Multiple' ? (grado <= 2 ? 50 : 40) : (tipo === 'Digital' || tipo === 'Huffman' || tipo === 'Tries') ? 110 : 70;
+    const nodeH = tipo === 'Multiple' ? 70 : 80;
     const treeFn = d3.tree().nodeSize([nodeW, nodeH]);
     treeFn(root);
 
@@ -1608,6 +1813,7 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
     const totalAncho = maxX - minX + margen * 2;
     const totalAlto = Math.max(altoMin, maxY - minY + margen * 2 + 40);
 
+    svg.attr('width', Math.max(ancho, totalAncho));
     svg.attr('height', totalAlto);
 
     const offsetX = -minX + margen;
@@ -1619,10 +1825,11 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
     const colores = {
         Digital: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', hoja: '#5B9BD5' },
         Tries: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', fin: '#5B9BD5' },
-        Multiple: { nodo: '#ED7D31', texto: 'white', borde: '#843C0C', raiz: '#843C0C' },
+        Multiple: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A' },
         Huffman: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', hoja: '#5B9BD5' }
     };
     const col = colores[tipo] || colores.Digital;
+    const esMultiple = tipo === 'Multiple';
 
     // Links
     g.selectAll('.link')
@@ -1652,23 +1859,28 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
             if (d.target.data.edgeLabel !== undefined) {
                 const mx = (d.source.x + d.target.x) / 2;
                 const my = (d.source.y + d.target.y) / 2;
+                const labelText = d.target.data.edgeLabel;
+                const fontSize = esMultiple ? 9 : 11;
+                const charW = esMultiple ? 7 : 9;
+                const labelW = Math.max(esMultiple ? 16 : 20, labelText.length * charW + 6);
+                const labelH = esMultiple ? 14 : 18;
                 grp.append('rect')
-                    .attr('x', mx - 10)
-                    .attr('y', my - 9)
-                    .attr('width', 20)
-                    .attr('height', 18)
-                    .attr('rx', 4)
+                    .attr('x', mx - labelW / 2)
+                    .attr('y', my - labelH / 2)
+                    .attr('width', labelW)
+                    .attr('height', labelH)
+                    .attr('rx', 3)
                     .attr('fill', '#F2F2F2')
                     .attr('stroke', '#D6DCE5')
                     .attr('stroke-width', 1);
                 grp.append('text')
                     .attr('x', mx)
-                    .attr('y', my + 4)
+                    .attr('y', my + (esMultiple ? 3 : 4))
                     .attr('text-anchor', 'middle')
-                    .attr('font-size', '11px')
+                    .attr('font-size', fontSize + 'px')
                     .attr('font-weight', 'bold')
                     .attr('fill', col.borde)
-                    .text(d.target.data.edgeLabel);
+                    .text(labelText);
             }
         });
 
@@ -1685,6 +1897,7 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
     nodeGrp.append('circle')
         .attr('r', d => {
             if (d.data.esPlaceholder) return 0;
+            if (esMultiple) return d.depth === 0 ? 18 : 14;
             return d.depth === 0 ? 24 : 20;
         })
         .attr('fill', d => {
@@ -1705,7 +1918,7 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
         grp.append('text')
             .attr('text-anchor', 'middle')
             .attr('dy', '0.35em')
-            .attr('font-size', d.depth === 0 ? '13px' : '12px')
+            .attr('font-size', esMultiple ? '10px' : (d.depth === 0 ? '13px' : '12px'))
             .attr('font-weight', 'bold')
             .attr('fill', 'white')
             .text(label);
@@ -1856,9 +2069,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     const datos = JSON.parse(ev.target.result);
                     arbolMultiple = datos.arbol;
-                    if (datos.grado) document.getElementById('gradoMultiple').value = datos.grado;
-                    const grado = datos.grado || 3;
-                    renderizarArbolD3('Multiple', arbolMultiple, grado);
+                    if (datos.grado) {
+                        gradoMultipleActual = datos.grado;
+                        document.getElementById('gradoMultiple').value = datos.grado;
+                    }
+                    document.getElementById('multipleControles').classList.remove('d-none');
+                    renderizarArbolD3('Multiple', arbolMultiple, gradoMultipleActual);
                     mostrarMensajeResiduo('Multiple', 'Árbol cargado correctamente', 'success');
                 } catch (err) {
                     mostrarMensajeResiduo('Multiple', 'Error al cargar el archivo', 'danger');
