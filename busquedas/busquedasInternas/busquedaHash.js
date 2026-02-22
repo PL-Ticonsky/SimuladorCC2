@@ -146,15 +146,15 @@ function validarClaveHash(valor, tamanoCaracteres) {
         return { valido: false, mensaje: 'La clave no puede estar vacía' };
     }
 
-    if (!/^[a-zA-Z0-9]+$/.test(claveStr)) {
-        return { valido: false, mensaje: 'La clave solo puede contener letras y números' };
+    if (!/^[0-9]+$/.test(claveStr)) {
+        return { valido: false, mensaje: 'La clave solo puede contener números' };
     }
 
     if (claveStr.length !== tamanoCaracteres) {
-        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoCaracteres} caracteres` };
+        return { valido: false, mensaje: `La clave debe tener exactamente ${tamanoCaracteres} dígitos` };
     }
 
-    return { valido: true, clave: claveStr.toUpperCase() };
+    return { valido: true, clave: claveStr };
 }
 
 // ==================== FUNCIONES HASH ====================
@@ -171,26 +171,25 @@ function calcularHash(clave, metodo, tamano) {
             break;
 
         case 'cuadrado':
-            // Elevar al cuadrado
-            const cuadrado = (k * k).toString();
-            // Determinar cuántos dígitos centrales tomar según el tamaño de la estructura
-            const digitosNecesarios = tamano.toString().length;
-            const longitudCuadrado = cuadrado.length;
+            // 1. Calcular cuántos dígitos necesitamos según el tamaño
+            const digitosNecesarios = (tamano - 1).toString().length;
 
-            // Calcular posición inicial para extraer dígitos centrales
-            const inicio = Math.floor((longitudCuadrado - digitosNecesarios) / 2);
-            const fin = inicio + digitosNecesarios;
+            // 2. Elevar al cuadrado (usamos BigInt por seguridad con números grandes)
+            const cuadrado = BigInt(k) * BigInt(k);
+            const cuadradoStr = cuadrado.toString();
+            const longitudCuadrado = cuadradoStr.length;
 
-            // Extraer dígitos centrales
-            let digitosCentrales;
-            if (inicio >= 0 && fin <= longitudCuadrado) {
-                digitosCentrales = cuadrado.substring(inicio, fin);
-            } else {
+            if (digitosNecesarios > longitudCuadrado) {
                 // Si el cuadrado tiene menos dígitos que los necesarios, usar todo
-                digitosCentrales = cuadrado;
-            }
+                hashBase0 = parseInt(cuadradoStr);
+            } else {
+                // 3. Centro desplazado hacia la izquierda
+                const inicio = Math.floor((longitudCuadrado - digitosNecesarios) / 2);
 
-            hashBase0 = parseInt(digitosCentrales || '0') % tamano;
+                // 4. Extraer los dígitos centrales
+                const digitosCentrales = cuadradoStr.substring(inicio, inicio + digitosNecesarios);
+                hashBase0 = parseInt(digitosCentrales || '0');
+            }
             break;
 
         case 'truncamiento':
@@ -315,9 +314,43 @@ function renderizarTablaHashSimple(container) {
 
     let html = '<div class="estructura-vertical">';
 
+    // Determinar qué índices mostrar: primero, último y los que tienen datos
+    const primerIndice = 0;
+    const ultimoIndice = tablaHash.length - 1;
+    const indicesConDatos = [];
+
     for (let i = 0; i < tablaHash.length; i++) {
+        if (tablaHash[i] !== null) {
+            indicesConDatos.push(i);
+        }
+    }
+
+    // Crear conjunto de índices a mostrar (siempre primero y último + los que tienen datos)
+    const indicesMostrar = new Set([primerIndice, ultimoIndice, ...indicesConDatos]);
+    const indicesOrdenados = Array.from(indicesMostrar).sort((a, b) => a - b);
+
+    // Verificar si hay algún dato insertado
+    const hayDatos = indicesConDatos.length > 0;
+
+    for (let j = 0; j < indicesOrdenados.length; j++) {
+        const i = indicesOrdenados[j];
         const valor = tablaHash[i];
         const vacia = valor === null;
+
+        // Mostrar puntos suspensivos si hay un hueco entre el índice anterior y el actual
+        // Solo mostrar puntos suspensivos si NO hay datos insertados aún
+        if (j > 0) {
+            const indiceAnterior = indicesOrdenados[j - 1];
+            if (i - indiceAnterior > 1) {
+                if (!hayDatos) {
+                    // Solo mostrar puntos suspensivos si no hay datos
+                    html += `<div class="clave-row hash-row hash-ellipsis">
+                                <span class="clave-valor-vertical text-muted">...</span>
+                             </div>`;
+                }
+            }
+        }
+
         // Mostrar índice base 1 (i + 1)
         html += `<div class="clave-row hash-row" data-index="${i}">
                     <span class="clave-index-left">${i + 1}</span>
@@ -372,8 +405,44 @@ function renderizarListaEnlazadaHash(container) {
 
     let html = '<div class="lista-enlazada-vertical">';
 
+    // Determinar qué índices mostrar: primero, último y los que tienen datos
+    const primerIndice = 0;
+    const ultimoIndice = listaEnlazadaHash.length - 1;
+    const indicesConDatos = [];
+
     for (let i = 0; i < listaEnlazadaHash.length; i++) {
+        if (listaEnlazadaHash[i].length > 0) {
+            indicesConDatos.push(i);
+        }
+    }
+
+    // Crear conjunto de índices a mostrar (siempre primero y último + los que tienen datos)
+    const indicesMostrar = new Set([primerIndice, ultimoIndice, ...indicesConDatos]);
+    const indicesOrdenados = Array.from(indicesMostrar).sort((a, b) => a - b);
+
+    // Verificar si hay algún dato insertado
+    const hayDatos = indicesConDatos.length > 0;
+
+    for (let j = 0; j < indicesOrdenados.length; j++) {
+        const i = indicesOrdenados[j];
         const lista = listaEnlazadaHash[i];
+
+        // Mostrar puntos suspensivos si hay un hueco entre el índice anterior y el actual
+        // Solo mostrar puntos suspensivos si NO hay datos insertados aún
+        if (j > 0) {
+            const indiceAnterior = indicesOrdenados[j - 1];
+            if (i - indiceAnterior > 1) {
+                if (!hayDatos) {
+                    // Solo mostrar puntos suspensivos si no hay datos
+                    html += `<div class="lista-fila-vertical lista-ellipsis">
+                                <div class="lista-celda-principal">
+                                    <span class="lista-valor-principal text-muted">...</span>
+                                </div>
+                             </div>`;
+                }
+            }
+        }
+
         // Índice base 1
         html += `<div class="lista-fila-vertical" data-index="${i}">`;
 
@@ -479,11 +548,13 @@ function insertarConColision(clave, hashInicial, metodoColision, metodoHash) {
         }
 
         renderizarEstructuraHash();
-        const rows = document.querySelectorAll('#visualizacionHash .hash-row');
 
-        // Resaltar posición actual (usando índice de array)
-        if (rows[posicionArray]) {
-            rows[posicionArray].classList.add('clave-buscando');
+        // Buscar el elemento por data-index en lugar de índice del array
+        const rowActual = document.querySelector(`#visualizacionHash .hash-row[data-index="${posicionArray}"]`);
+
+        // Resaltar posición actual
+        if (rowActual) {
+            rowActual.classList.add('clave-buscando');
         }
 
         const timeout = setTimeout(() => {
@@ -492,11 +563,12 @@ function insertarConColision(clave, hashInicial, metodoColision, metodoHash) {
                 tablaHash[posicionArray] = clave;
                 renderizarEstructuraHash();
 
-                const rows2 = document.querySelectorAll('#visualizacionHash .hash-row');
-                if (rows2[posicionArray]) {
-                    rows2[posicionArray].classList.add('clave-insertada');
+                // Buscar el elemento insertado por data-index
+                const rowInsertada = document.querySelector(`#visualizacionHash .hash-row[data-index="${posicionArray}"]`);
+                if (rowInsertada) {
+                    rowInsertada.classList.add('clave-insertada');
                     setTimeout(() => {
-                        rows2[posicionArray].classList.remove('clave-insertada');
+                        rowInsertada.classList.remove('clave-insertada');
                     }, 1000);
                 }
 
@@ -607,41 +679,64 @@ function insertarEnListaEnlazada(clave, hashPosicion) {
         return;
     }
 
-    // Animación
-    renderizarEstructuraHash();
+    const lista = listaEnlazadaHash[posicionArray];
+    let idx = 0;
 
-    setTimeout(() => {
+    // Animación recorriendo los nodos existentes antes de insertar
+    const recorrerEInsertar = () => {
+        // Obtener elementos actualizados del DOM
         const fila = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"]`);
         const celdaPrincipal = fila ? fila.querySelector('.lista-celda-principal') : null;
-        if (celdaPrincipal) celdaPrincipal.classList.add('lista-buscando');
+        const nodosExternos = fila ? fila.querySelectorAll('.lista-nodo-externo') : [];
 
-        setTimeout(() => {
+        // Limpiar resaltados anteriores
+        if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando');
+        nodosExternos.forEach(n => n.classList.remove('lista-buscando'));
+
+        if (idx < lista.length) {
+            // Resaltar nodo actual mientras recorre
+            if (idx === 0) {
+                if (celdaPrincipal) celdaPrincipal.classList.add('lista-buscando');
+            } else {
+                if (nodosExternos[idx - 1]) nodosExternos[idx - 1].classList.add('lista-buscando');
+            }
+
+            const timeout = setTimeout(() => {
+                idx++;
+                recorrerEInsertar();
+            }, 400);
+            timeoutsHash.push(timeout);
+        } else {
+            // Ya recorrió todos, ahora insertar
             listaEnlazadaHash[posicionArray].push(clave);
             renderizarEstructuraHash();
 
             const posEnLista = listaEnlazadaHash[posicionArray].length;
 
-            // Seleccionar el elemento insertado (primer nodo o nodo externo)
+            // Seleccionar el elemento insertado
+            const filaActualizada = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"]`);
             if (posEnLista === 1) {
-                const celdaInsertada = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-celda-principal`);
+                const celdaInsertada = filaActualizada ? filaActualizada.querySelector('.lista-celda-principal') : null;
                 if (celdaInsertada) {
                     celdaInsertada.classList.add('lista-insertada');
                     setTimeout(() => celdaInsertada.classList.remove('lista-insertada'), 1000);
                 }
             } else {
-                const nodosExternos = document.querySelectorAll(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-nodo-externo`);
-                const ultimoNodo = nodosExternos[nodosExternos.length - 1];
+                const nodosExternosActualizados = filaActualizada ? filaActualizada.querySelectorAll('.lista-nodo-externo') : [];
+                const ultimoNodo = nodosExternosActualizados[nodosExternosActualizados.length - 1];
                 if (ultimoNodo) {
                     ultimoNodo.classList.add('lista-insertada');
                     setTimeout(() => ultimoNodo.classList.remove('lista-insertada'), 1000);
                 }
             }
 
-            // Mostrar posición en base 1
             mostrarMensajeHash(`Clave "${clave}" insertada en posición ${hashPosicion}, nodo ${posEnLista}<br><small>Hash: ${hashPosicion}</small>`, 'success');
             animacionHashEnCurso = false;
-        }, 500);
-    }, 200);
+        }
+    };
+
+    renderizarEstructuraHash();
+    recorrerEInsertar();
 }
 
 // ==================== OPERACIONES DE BÚSQUEDA ====================
@@ -652,27 +747,46 @@ function buscarHash() {
     }
 
     if (!estructuraHashInicializada) {
-        mostrarMensajeHash('Primero debe inicializar la estructura', 'warning');
+        mostrarMensajeHash('Primero debe crear la estructura', 'warning');
         return;
     }
 
-    const claveValor = document.getElementById('claveHash').value.trim().toUpperCase();
+    const metodoHash = document.getElementById('metodoHash').value;
+    const metodoColision = document.getElementById('metodoColision').value;
+
+    if (!metodoHash) {
+        mostrarMensajeHash('Seleccione una función hash', 'warning');
+        return;
+    }
+
+    if (!metodoColision) {
+        mostrarMensajeHash('Seleccione un método de colisión', 'warning');
+        return;
+    }
+
+    const claveValor = document.getElementById('claveHash').value.trim();
+    const tamanoCaracteres = parseInt(document.getElementById('tamanoClaveHash').value) || 3;
 
     if (!claveValor) {
         mostrarMensajeHash('Ingrese una clave para buscar', 'warning');
         return;
     }
 
-    const metodoHash = document.getElementById('metodoHash').value;
-    const metodoColision = document.getElementById('metodoColision').value;
-    const hashInicial = calcularHash(claveValor, metodoHash, tamanoTablaHash);
+    const validacion = validarClaveHash(claveValor, tamanoCaracteres);
+    if (!validacion.valido) {
+        mostrarMensajeHash(validacion.mensaje, 'warning');
+        return;
+    }
+
+    const clave = validacion.clave;
+    const hashInicial = calcularHash(clave, metodoHash, tamanoTablaHash);
 
     if (metodoColision === 'anidados') {
-        buscarEnMatriz(claveValor, hashInicial);
+        buscarEnMatriz(clave, hashInicial);
     } else if (metodoColision === 'enlazada') {
-        buscarEnListaEnlazada(claveValor, hashInicial);
+        buscarEnListaEnlazada(clave, hashInicial);
     } else {
-        buscarConColision(claveValor, hashInicial, metodoColision, metodoHash);
+        buscarConColision(clave, hashInicial, metodoColision, metodoHash);
     }
 }
 
@@ -698,19 +812,22 @@ function buscarConColision(clave, hashInicial, metodoColision, metodoHash) {
         }
 
         pasos++;
-        const rows = document.querySelectorAll('#visualizacionHash .hash-row');
 
-        // Quitar resaltado anterior
-        rows.forEach(r => r.classList.remove('clave-buscando'));
+        // Limpiar resaltados anteriores
+        document.querySelectorAll('#visualizacionHash .hash-row').forEach(r => r.classList.remove('clave-buscando'));
 
-        if (rows[posicionArray]) {
-            rows[posicionArray].classList.add('clave-buscando');
+        // Buscar el elemento por data-index
+        const rowActual = document.querySelector(`#visualizacionHash .hash-row[data-index="${posicionArray}"]`);
+        if (rowActual) {
+            rowActual.classList.add('clave-buscando');
         }
 
         const timeout = setTimeout(() => {
             if (tablaHash[posicionArray] === clave) {
-                rows[posicionArray].classList.remove('clave-buscando');
-                rows[posicionArray].classList.add('clave-encontrada');
+                if (rowActual) {
+                    rowActual.classList.remove('clave-buscando');
+                    rowActual.classList.add('clave-encontrada');
+                }
                 // Mostrar posición en base 1
                 const posicionMostrar = posicionArray + 1;
                 mostrarMensajeHash(`Clave "${clave}" encontrada en posición ${posicionMostrar} (${pasos} pasos)<br><small>Hash inicial: ${hashInicial}</small>`, 'success');
@@ -804,12 +921,16 @@ function buscarEnListaEnlazada(clave, hashPosicion) {
         return;
     }
 
-    // Obtener celda principal y nodos externos
-    const celdaPrincipal = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-celda-principal`);
-    const nodosExternos = document.querySelectorAll(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-nodo-externo`);
-
     const buscarEnLista = (idx) => {
+        // Obtener elementos actualizados del DOM en cada iteración
+        const fila = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"]`);
+        const celdaPrincipal = fila ? fila.querySelector('.lista-celda-principal') : null;
+        const nodosExternos = fila ? fila.querySelectorAll('.lista-nodo-externo') : [];
+
         if (idx >= lista.length) {
+            // Limpiar resaltados
+            if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando');
+            nodosExternos.forEach(n => n.classList.remove('lista-buscando'));
             mostrarMensajeHash(`Clave "${clave}" no encontrada (${pasos} pasos)`, 'danger');
             animacionHashEnCurso = false;
             return;
@@ -818,8 +939,8 @@ function buscarEnListaEnlazada(clave, hashPosicion) {
         pasos++;
 
         // Quitar resaltado anterior
-        if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando');
-        nodosExternos.forEach(n => n.classList.remove('lista-buscando'));
+        if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando', 'lista-encontrada');
+        nodosExternos.forEach(n => n.classList.remove('lista-buscando', 'lista-encontrada'));
 
         // Resaltar elemento actual
         if (idx === 0) {
@@ -842,7 +963,6 @@ function buscarEnListaEnlazada(clave, hashPosicion) {
                         nodosExternos[idx - 1].classList.add('lista-encontrada');
                     }
                 }
-                // Mostrar posición en base 1
                 mostrarMensajeHash(`Clave "${clave}" encontrada en posición ${hashPosicion}, nodo ${idx + 1} (${pasos} pasos)`, 'success');
                 animacionHashEnCurso = false;
             } else {
@@ -864,31 +984,51 @@ function eliminarHash() {
     }
 
     if (!estructuraHashInicializada) {
-        mostrarMensajeHash('Primero debe inicializar la estructura', 'warning');
+        mostrarMensajeHash('Primero debe crear la estructura', 'warning');
         return;
     }
 
-    const claveValor = document.getElementById('claveHash').value.trim().toUpperCase();
+    const metodoHash = document.getElementById('metodoHash').value;
+    const metodoColision = document.getElementById('metodoColision').value;
+
+    if (!metodoHash) {
+        mostrarMensajeHash('Seleccione una función hash', 'warning');
+        return;
+    }
+
+    if (!metodoColision) {
+        mostrarMensajeHash('Seleccione un método de colisión', 'warning');
+        return;
+    }
+
+    const claveValor = document.getElementById('claveHash').value.trim();
+    const tamanoCaracteres = parseInt(document.getElementById('tamanoClaveHash').value) || 3;
 
     if (!claveValor) {
         mostrarMensajeHash('Ingrese una clave para eliminar', 'warning');
         return;
     }
 
-    if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
+    const validacion = validarClaveHash(claveValor, tamanoCaracteres);
+    if (!validacion.valido) {
+        mostrarMensajeHash(validacion.mensaje, 'warning');
         return;
     }
 
-    const metodoHash = document.getElementById('metodoHash').value;
-    const metodoColision = document.getElementById('metodoColision').value;
-    const hashInicial = calcularHash(claveValor, metodoHash, tamanoTablaHash);
+    const clave = validacion.clave;
+
+    if (!confirm(`¿Está seguro de eliminar la clave "${clave}"?`)) {
+        return;
+    }
+
+    const hashInicial = calcularHash(clave, metodoHash, tamanoTablaHash);
 
     if (metodoColision === 'anidados') {
-        eliminarDeMatriz(claveValor, hashInicial);
+        eliminarDeMatriz(clave, hashInicial);
     } else if (metodoColision === 'enlazada') {
-        eliminarDeListaEnlazada(claveValor, hashInicial);
+        eliminarDeListaEnlazada(clave, hashInicial);
     } else {
-        eliminarConColision(claveValor, hashInicial, metodoColision, metodoHash);
+        eliminarConColision(clave, hashInicial, metodoColision, metodoHash);
     }
 }
 
@@ -907,17 +1047,21 @@ function eliminarConColision(clave, hashInicial, metodoColision, metodoHash) {
             return;
         }
 
-        const rows = document.querySelectorAll('#visualizacionHash .hash-row');
-        rows.forEach(r => r.classList.remove('clave-buscando'));
+        // Limpiar resaltados anteriores
+        document.querySelectorAll('#visualizacionHash .hash-row').forEach(r => r.classList.remove('clave-buscando'));
 
-        if (rows[posicionArray]) {
-            rows[posicionArray].classList.add('clave-buscando');
+        // Buscar el elemento por data-index
+        const rowActual = document.querySelector(`#visualizacionHash .hash-row[data-index="${posicionArray}"]`);
+        if (rowActual) {
+            rowActual.classList.add('clave-buscando');
         }
 
         const timeout = setTimeout(() => {
             if (tablaHash[posicionArray] === clave) {
-                rows[posicionArray].classList.remove('clave-buscando');
-                rows[posicionArray].classList.add('clave-eliminando');
+                if (rowActual) {
+                    rowActual.classList.remove('clave-buscando');
+                    rowActual.classList.add('clave-eliminando');
+                }
 
                 setTimeout(() => {
                     tablaHash[posicionArray] = null;
@@ -1000,41 +1144,98 @@ function eliminarDeListaEnlazada(clave, hashPosicion) {
     const posicionArray = hashPosicion - 1;
 
     const lista = listaEnlazadaHash[posicionArray];
-    const idx = lista.indexOf(clave);
+    const idxObjetivo = lista.indexOf(clave);
 
-    if (idx === -1) {
-        mostrarMensajeHash(`Clave "${clave}" no encontrada`, 'danger');
-        animacionHashEnCurso = false;
+    if (idxObjetivo === -1) {
+        // No encontrada, pero hacer animación de búsqueda
+        let idx = 0;
+        const buscarYNoEncontrar = () => {
+            const fila = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"]`);
+            const celdaPrincipal = fila ? fila.querySelector('.lista-celda-principal') : null;
+            const nodosExternos = fila ? fila.querySelectorAll('.lista-nodo-externo') : [];
+
+            // Limpiar resaltados anteriores
+            if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando');
+            nodosExternos.forEach(n => n.classList.remove('lista-buscando'));
+
+            if (idx >= lista.length) {
+                mostrarMensajeHash(`Clave "${clave}" no encontrada`, 'danger');
+                animacionHashEnCurso = false;
+                return;
+            }
+
+            // Resaltar nodo actual
+            if (idx === 0) {
+                if (celdaPrincipal) celdaPrincipal.classList.add('lista-buscando');
+            } else {
+                if (nodosExternos[idx - 1]) nodosExternos[idx - 1].classList.add('lista-buscando');
+            }
+
+            const timeout = setTimeout(() => {
+                idx++;
+                buscarYNoEncontrar();
+            }, 400);
+            timeoutsHash.push(timeout);
+        };
+
+        if (lista.length === 0) {
+            mostrarMensajeHash(`Clave "${clave}" no encontrada`, 'danger');
+            animacionHashEnCurso = false;
+        } else {
+            buscarYNoEncontrar();
+        }
         return;
     }
 
-    // Seleccionar el elemento a eliminar
-    let elemento;
-    if (idx === 0) {
-        elemento = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-celda-principal`);
-    } else {
-        elemento = document.querySelectorAll(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"] .lista-nodo-externo`)[idx - 1];
-    }
+    // Encontrada, hacer animación de búsqueda hasta encontrarla y luego eliminar
+    let idx = 0;
+    const buscarYEliminar = () => {
+        const fila = document.querySelector(`#visualizacionHash .lista-fila-vertical[data-index="${posicionArray}"]`);
+        const celdaPrincipal = fila ? fila.querySelector('.lista-celda-principal') : null;
+        const nodosExternos = fila ? fila.querySelectorAll('.lista-nodo-externo') : [];
 
-    if (elemento) {
-        elemento.classList.add('lista-eliminando');
+        // Limpiar resaltados anteriores
+        if (celdaPrincipal) celdaPrincipal.classList.remove('lista-buscando');
+        nodosExternos.forEach(n => n.classList.remove('lista-buscando'));
 
-        setTimeout(() => {
-            listaEnlazadaHash[posicionArray].splice(idx, 1);
-            renderizarEstructuraHash();
-            document.getElementById('claveHash').value = '';
-            // Mostrar posición en base 1
-            mostrarMensajeHash(`Clave "${clave}" eliminada de posición ${hashPosicion}`, 'success');
-            animacionHashEnCurso = false;
-        }, 500);
-    } else {
-        // Si no se encuentra el elemento visual, eliminar directamente
-        listaEnlazadaHash[posicionArray].splice(idx, 1);
-        renderizarEstructuraHash();
-        document.getElementById('claveHash').value = '';
-        mostrarMensajeHash(`Clave "${clave}" eliminada de posición ${hashPosicion}`, 'success');
-        animacionHashEnCurso = false;
-    }
+        // Resaltar nodo actual
+        if (idx === 0) {
+            if (celdaPrincipal) celdaPrincipal.classList.add('lista-buscando');
+        } else {
+            if (nodosExternos[idx - 1]) nodosExternos[idx - 1].classList.add('lista-buscando');
+        }
+
+        const timeout = setTimeout(() => {
+            if (idx === idxObjetivo) {
+                // Encontrado, aplicar animación de eliminación
+                let elemento;
+                if (idx === 0) {
+                    elemento = celdaPrincipal;
+                } else {
+                    elemento = nodosExternos[idx - 1];
+                }
+
+                if (elemento) {
+                    elemento.classList.remove('lista-buscando');
+                    elemento.classList.add('lista-eliminando');
+                }
+
+                setTimeout(() => {
+                    listaEnlazadaHash[posicionArray].splice(idxObjetivo, 1);
+                    renderizarEstructuraHash();
+                    document.getElementById('claveHash').value = '';
+                    mostrarMensajeHash(`Clave "${clave}" eliminada de posición ${hashPosicion}, nodo ${idxObjetivo + 1}`, 'success');
+                    animacionHashEnCurso = false;
+                }, 500);
+            } else {
+                idx++;
+                buscarYEliminar();
+            }
+        }, 400);
+        timeoutsHash.push(timeout);
+    };
+
+    buscarYEliminar();
 }
 
 // ==================== LIMPIAR ====================

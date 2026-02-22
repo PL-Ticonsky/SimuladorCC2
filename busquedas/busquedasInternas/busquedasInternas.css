@@ -135,6 +135,49 @@
     border-color: #D6DCE5;
 }
 
+/* Puntos suspensivos en Hash (entre primer y último elemento) */
+.hash-ellipsis {
+    background: transparent;
+    border: none;
+    border-left: 1px solid #D6DCE5;
+    border-right: 1px solid #D6DCE5;
+    padding: 4px 12px 4px 54px; /* 54px = 30px círculo + 12px margin-right + 12px padding */
+}
+
+.hash-ellipsis .clave-valor-vertical {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: #8497B0;
+}
+
+.hash-ellipsis:hover {
+    background: transparent;
+    border-color: #D6DCE5;
+}
+
+/* Puntos suspensivos en Lista Enlazada */
+.lista-ellipsis {
+    background: transparent;
+}
+
+.lista-ellipsis .lista-celda-principal {
+    border: none;
+    border-left: 1px solid #D6DCE5;
+    border-right: 1px solid #D6DCE5;
+    padding-left: 54px; /* Alinear con el contenido de las celdas normales */
+}
+
+.lista-ellipsis .lista-valor-principal {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: #8497B0;
+}
+
+.lista-ellipsis:hover .lista-celda-principal {
+    background: transparent;
+    border-color: #D6DCE5;
+}
+
 .clave-row.clave-moviendo {
     animation: moveDown 0.4s ease;
 }
