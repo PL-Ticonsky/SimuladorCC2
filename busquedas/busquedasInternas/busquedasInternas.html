@@ -44,7 +44,7 @@
                 <button class="nav-link" id="tab-hash" data-bs-toggle="pill" data-bs-target="#panel-hash" type="button" role="tab">Búsquedas Hash</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" type="button" role="tab">Búsquedas por Residuos</button>
+                <button class="nav-link" id="tab-residuo" data-bs-toggle="pill" data-bs-target="#panel-residuo" type="button" role="tab">Búsquedas por Residuos</button>
             </li>
         </ul>
     </nav>
@@ -68,7 +68,6 @@
                     </div>
                 </div>
 
-                <!-- Configuración -->
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <label for="tamanoSecuencial" class="form-label fw-semibold">Cantidad de dígitos por clave</label>
@@ -80,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- Botones de acción -->
                 <div class="d-flex justify-content-between mb-4 flex-wrap">
                     <div class="d-flex gap-2 flex-wrap">
                         <button class="btn btn-success" onclick="insertarSecuencial()">Insertar</button>
@@ -94,7 +92,6 @@
                     </div>
                 </div>
 
-                <!-- Visualización de la estructura -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Visualización de la Estructura</label>
                     <div id="visualizacionSecuencial" class="estructura-container border rounded p-3 bg-light">
@@ -102,7 +99,6 @@
                     </div>
                 </div>
 
-                <!-- Mensaje de resultado -->
                 <div id="mensajeSecuencial" class="alert d-none" role="alert"></div>
             </section>
         </div>
@@ -117,7 +113,6 @@
                     </div>
                 </div>
 
-                <!-- Configuración -->
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <label for="tamanoBinaria" class="form-label fw-semibold">Cantidad de dígitos por clave</label>
@@ -129,7 +124,6 @@
                     </div>
                 </div>
 
-                <!-- Botones de acción -->
                 <div class="d-flex justify-content-between mb-4 flex-wrap">
                     <div class="d-flex gap-2 flex-wrap">
                         <button class="btn btn-success" onclick="insertarBinaria()">Insertar</button>
@@ -143,7 +137,6 @@
                     </div>
                 </div>
 
-                <!-- Visualización de la estructura -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Visualización de la Estructura</label>
                     <div id="visualizacionBinaria" class="estructura-container border rounded p-3 bg-light">
@@ -151,7 +144,6 @@
                     </div>
                 </div>
 
-                <!-- Mensaje de resultado -->
                 <div id="mensajeBinaria" class="alert d-none" role="alert"></div>
             </section>
         </div>
@@ -166,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Configuración inicial -->
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="tamanoEstructuraHash" class="form-label fw-semibold">Tamaño de estructura</label>
@@ -181,7 +172,6 @@
                     </div>
                 </div>
 
-                <!-- Selectores de método y colisión -->
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="metodoHash" class="form-label fw-semibold">Función Hash</label>
@@ -206,12 +196,10 @@
                     </div>
                 </div>
 
-                <!-- Descripción del método hash -->
                 <div class="alert alert-info mb-3" id="descripcionHash">
                     <span class="text-muted">Seleccione una función hash y un método de colisión para ver su descripción.</span>
                 </div>
 
-                <!-- Campo de clave -->
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="claveHash" class="form-label fw-semibold">Clave</label>
@@ -219,7 +207,6 @@
                     </div>
                 </div>
 
-                <!-- Botones de acción -->
                 <div class="d-flex justify-content-between mb-4 flex-wrap">
                     <div class="d-flex gap-2 flex-wrap">
                         <button class="btn btn-success" onclick="insertarHash()">Insertar</button>
@@ -233,7 +220,6 @@
                     </div>
                 </div>
 
-                <!-- Visualización de la estructura -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Visualización de la Estructura Hash</label>
                     <div id="visualizacionHash" class="estructura-container border rounded p-3 bg-light">
@@ -241,28 +227,329 @@
                     </div>
                 </div>
 
-                <!-- Mensaje de resultado -->
                 <div id="mensajeHash" class="alert d-none" role="alert"></div>
             </section>
         </div>
 
-    </div>
+        <!-- ============================================================
+             Panel Búsquedas por Residuos
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-residuo" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Búsquedas por Residuos</h3>
+                        <p class="panel-subtitle">Árboles digitales, tries, árboles múltiples y codificación Huffman</p>
+                    </div>
+                </div>
+
+                <!-- Sub-tabs de residuos -->
+                <ul class="nav nav-tabs mb-4" id="residuoTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-digital" data-bs-toggle="tab" data-bs-target="#panel-digital" type="button" role="tab">
+                            🌳 Árbol Digital
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-tries" data-bs-toggle="tab" data-bs-target="#panel-tries" type="button" role="tab">
+                            🔤 Tries (Simple)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-multiple" data-bs-toggle="tab" data-bs-target="#panel-multiple" type="button" role="tab">
+                            🌿 Árbol Múltiple
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-huffman" data-bs-toggle="tab" data-bs-target="#panel-huffman" type="button" role="tab">
+                            📊 Huffman
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="residuoTabContent">
+
+                    <!-- ======== ÁRBOL DIGITAL ======== -->
+                    <div class="tab-pane fade show active" id="panel-digital" role="tabpanel">
+
+                        <div class="alert alert-light border mb-3">
+                            <strong>Árbol Digital:</strong> Inserta letras (A-Z) una por una. Cada letra se codifica a su número (A=1, B=2...) y luego a binario de 5 bits.
+                            La primera letra es la raíz. Las siguientes se insertan leyendo bit a bit: <code>0 → izquierda</code>, <code>1 → derecha</code>.
+                            Si hay colisión (posición ocupada), se lee el siguiente bit.
+                        </div>
+
+                        <!-- Controles -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="claveDigital" class="form-label fw-semibold">Letra (A-Z)</label>
+                                <input type="text"
+                                       class="form-control text-uppercase"
+                                       id="claveDigital"
+                                       maxlength="1"
+                                       placeholder="Ej: A"
+                                       oninput="this.value=this.value.toUpperCase()">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 flex-wrap">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-success" onclick="insertarDigital()">Insertar</button>
+                                <button class="btn btn-primary" onclick="buscarDigital()">Buscar</button>
+                                <button class="btn btn-danger" onclick="eliminarDigital()">Eliminar</button>
+                                <button class="btn btn-warning" onclick="limpiarDigital()">Limpiar</button>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-secondary" onclick="cargarDigital()">Cargar</button>
+                                <button class="btn btn-outline-secondary" onclick="guardarDigital()">Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de pasos -->
+                        <div id="tablaDigital" class="d-none mb-3">
+                            <label class="form-label fw-semibold">Pasos de inserción / búsqueda</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="table-dark">
+                                    <tr>
+                                        <th>Paso</th>
+                                        <th>Bit leído</th>
+                                        <th>Dirección</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tablaDigitalBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Visualización D3 -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Árbol Digital</label>
+                            <div id="svgDigitalContainer"
+                                 class="border rounded p-2 bg-light"
+                                 style="min-height: 300px; overflow-x: auto;">
+                                <div class="text-muted text-center py-4">El árbol está vacío</div>
+                            </div>
+                        </div>
+
+                        <div id="mensajeResiduoDigital" class="alert d-none" role="alert"></div>
+                    </div>
+
+                    <!-- ======== TRIES ======== -->
+                    <div class="tab-pane fade" id="panel-tries" role="tabpanel">
+
+                        <div class="alert alert-light border mb-3">
+                            <strong>Tries (Árbol de Prefijos):</strong> Inserta palabras completas (solo letras). Cada carácter de la palabra ocupa un nivel del árbol.
+                            Los nodos con doble borde marcan el fin de una palabra. Permite búsqueda eficiente por prefijo.
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-5">
+                                <label for="claveTries" class="form-label fw-semibold">Palabra (solo letras)</label>
+                                <input type="text"
+                                       class="form-control text-uppercase"
+                                       id="claveTries"
+                                       placeholder="Ej: CASA"
+                                       oninput="this.value=this.value.toUpperCase()">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 flex-wrap">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-success" onclick="insertarTries()">Insertar</button>
+                                <button class="btn btn-primary" onclick="buscarTries()">Buscar</button>
+                                <button class="btn btn-danger" onclick="eliminarTries()">Eliminar</button>
+                                <button class="btn btn-warning" onclick="limpiarTries()">Limpiar</button>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-secondary" onclick="cargarTries()">Cargar</button>
+                                <button class="btn btn-outline-secondary" onclick="guardarTries()">Guardar</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Árbol Tries</label>
+                            <div id="svgTriesContainer"
+                                 class="border rounded p-2 bg-light"
+                                 style="min-height: 300px; overflow-x: auto;">
+                                <div class="text-muted text-center py-4">El trie está vacío</div>
+                            </div>
+                        </div>
+
+                        <div id="mensajeResiduoTries" class="alert d-none" role="alert"></div>
+                    </div>
+
+                    <!-- ======== ÁRBOL MÚLTIPLE ======== -->
+                    <div class="tab-pane fade" id="panel-multiple" role="tabpanel">
+
+                        <div class="alert alert-light border mb-3">
+                            <strong>Árbol Múltiple (por Residuo):</strong> Cada nodo puede tener hasta <em>grado</em> hijos.
+                            La posición de inserción se calcula como <code>clave mod grado</code>. En colisión, se desciende por ese hijo y se repite.
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="gradoMultiple" class="form-label fw-semibold">Grado del árbol</label>
+                                <input type="number" class="form-control" id="gradoMultiple" min="2" max="10" value="3">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="claveMultiple" class="form-label fw-semibold">Clave (numérica)</label>
+                                <input type="text" class="form-control" id="claveMultiple" placeholder="Ej: 42">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 flex-wrap">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-success" onclick="insertarMultiple()">Insertar</button>
+                                <button class="btn btn-primary" onclick="buscarMultiple()">Buscar</button>
+                                <button class="btn btn-danger" onclick="eliminarMultiple()">Eliminar</button>
+                                <button class="btn btn-warning" onclick="limpiarMultiple()">Limpiar</button>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-secondary" onclick="cargarMultiple()">Cargar</button>
+                                <button class="btn btn-outline-secondary" onclick="guardarMultiple()">Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de pasos -->
+                        <div id="tablaMultiple" class="d-none mb-3">
+                            <label class="form-label fw-semibold">Pasos de inserción</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="table-dark">
+                                    <tr>
+                                        <th>Paso</th>
+                                        <th>Cálculo</th>
+                                        <th>Posición</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tablaMultipleBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Árbol Múltiple</label>
+                            <div id="svgMultipleContainer"
+                                 class="border rounded p-2 bg-light"
+                                 style="min-height: 300px; overflow-x: auto;">
+                                <div class="text-muted text-center py-4">El árbol está vacío</div>
+                            </div>
+                        </div>
+
+                        <div id="mensajeResiduoMultiple" class="alert d-none" role="alert"></div>
+                    </div>
+
+                    <!-- ======== HUFFMAN ======== -->
+                    <div class="tab-pane fade" id="panel-huffman" role="tabpanel">
+
+                        <div class="alert alert-light border mb-3">
+                            <strong>Huffman (Codificación por Frecuencia):</strong> Agrega palabras con sus frecuencias de aparición.
+                            Luego presiona <em>"Construir Árbol"</em> para generar el árbol de Huffman. Las palabras más frecuentes
+                            reciben códigos más cortos (0/1). <code>0 → izquierda</code>, <code>1 → derecha</code>.
+                        </div>
+
+                        <!-- Agregar palabras -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="palabraHuffman" class="form-label fw-semibold">Palabra / Símbolo</label>
+                                <input type="text"
+                                       class="form-control text-uppercase"
+                                       id="palabraHuffman"
+                                       placeholder="Ej: HOLA"
+                                       oninput="this.value=this.value.toUpperCase()">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="frecuenciaHuffman" class="form-label fw-semibold">Frecuencia</label>
+                                <input type="number" class="form-control" id="frecuenciaHuffman" min="1" placeholder="Ej: 5">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-success w-100" onclick="agregarPalabraHuffman()">Agregar</button>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-info w-100" onclick="construirHuffman()">Construir Árbol</button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de palabras -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Palabras agregadas</label>
+                            <div id="listaHuffman"
+                                 class="border rounded p-2 bg-light"
+                                 style="min-height: 60px; max-height: 150px; overflow-y: auto;">
+                                <div class="text-muted text-center small">No hay palabras agregadas</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 flex-wrap">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-primary" onclick="buscarHuffman()">Buscar código</button>
+                                <button class="btn btn-warning" onclick="limpiarHuffman()">Limpiar todo</button>
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-secondary" onclick="cargarHuffman()">Cargar</button>
+                                <button class="btn btn-outline-secondary" onclick="guardarHuffman()">Guardar</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla Huffman: pasos y códigos -->
+                        <div id="tablaHuffman" class="d-none mb-3">
+                            <label class="form-label fw-semibold">Proceso de construcción y códigos generados</label>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-hover">
+                                    <thead class="table-dark">
+                                    <tr>
+                                        <th>Paso / Palabra</th>
+                                        <th>Nodo izquierdo</th>
+                                        <th>Nodo derecho</th>
+                                        <th>Suma / Código</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tablaHuffmanBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Árbol -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Árbol de Huffman</label>
+                            <div id="svgHuffmanContainer"
+                                 class="border rounded p-2 bg-light"
+                                 style="min-height: 300px; overflow-x: auto;">
+                                <div class="text-muted text-center py-4">Agregue palabras y presione "Construir Árbol"</div>
+                            </div>
+                        </div>
+
+                        <div id="mensajeResiduoHuffman" class="alert d-none" role="alert"></div>
+                    </div>
+
+                </div><!-- /residuoTabContent -->
+            </section>
+        </div><!-- /panel-residuo -->
+
+    </div><!-- /tab-content principal -->
 
 </div>
 
-<!-- Input oculto para cargar archivos -->
+<!-- Inputs ocultos para cargar archivos -->
 <input type="file" id="fileInputSecuencial" accept=".json" style="display: none;">
 <input type="file" id="fileInputBinaria" accept=".json" style="display: none;">
 <input type="file" id="fileInputHash" accept=".json" style="display: none;">
+<input type="file" id="fileInputDigital" accept=".json" style="display: none;">
+<input type="file" id="fileInputTries" accept=".json" style="display: none;">
+<input type="file" id="fileInputMultiple" accept=".json" style="display: none;">
+<input type="file" id="fileInputHuffman" accept=".json" style="display: none;">
 
 <!-- Bootstrap JS -->
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
 
-<!-- Script de Búsquedas -->
+<!-- D3.js v7 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+<!-- Scripts de Búsquedas -->
 <script src="busquedaSecuencialYBinaria.js"></script>
 <script src="busquedaHash.js"></script>
+<script src="busquedaResiduo.js"></script>
 
 </body>
 </html>
-
-
