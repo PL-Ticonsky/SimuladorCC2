@@ -21,7 +21,8 @@ let animacionMultipleEnCurso = false;
 let timeoutsMultiple = [];
 
 // --- Huffman ---
-let huffmanPalabras = []; // [{palabra, frecuencia}]
+let huffmanLetras = {}; // {letra: frecuencia}
+let huffmanPalabraOriginal = ''; // palabra original ingresada
 let huffmanArbol = null;
 let huffmanCodigos = {};
 let animacionHuffmanEnCurso = false;
@@ -60,6 +61,56 @@ function limpiarTimeoutsArr(arr) {
     arr.length = 0;
 }
 
+// ==================== GESTOR DE MÉTODOS ====================
+
+const descripcionesResiduo = {
+    digital: '<strong>Árbol Digital:</strong> Inserta letras (A-Z) una por una. Cada letra se codifica a su número (A=1, B=2...) y luego a binario de 5 bits. La primera letra es la raíz. Las siguientes se insertan leyendo bit a bit: <code>0 → izquierda</code>, <code>1 → derecha</code>. Si hay colisión, se lee el siguiente bit.',
+    tries: '<strong>Tries (Simple):</strong> Inserta letras (A-Z) una por una. Cada letra se convierte a binario de 5 bits. Los nodos internos siempre están vacíos y las letras se ubican en las hojas. <code>0 → izquierda</code>, <code>1 → derecha</code>. Si dos letras colisionan en una hoja, el árbol crece hasta que sus bits divergen.',
+    multiple: '<strong>Árbol Múltiple (por Residuo):</strong> Cada nodo puede tener hasta <em>grado</em> hijos. La posición de inserción se calcula como <code>clave mod grado</code>. En colisión, se desciende por ese hijo y se repite.',
+    huffman: '<strong>Huffman (Codificación por Frecuencia):</strong> Ingresa una palabra y el programa detecta automáticamente la frecuencia de cada letra. Las letras más frecuentes reciben códigos más cortos. <code>0 → izquierda</code>, <code>1 → derecha</code>.'
+};
+
+function cambiarMetodoResiduo() {
+    const metodo = document.getElementById('metodoResiduo').value;
+    const descripcionDiv = document.getElementById('descripcionResiduo');
+    const paneles = document.querySelectorAll('.residuo-panel');
+
+    if (!metodo) {
+        descripcionDiv.innerHTML = '<span class="text-muted">Seleccione un método de búsqueda para ver su descripción.</span>';
+        // Ocultar todos los paneles
+        paneles.forEach(panel => panel.classList.add('d-none'));
+        return;
+    }
+
+    // Mostrar descripción
+    descripcionDiv.innerHTML = descripcionesResiduo[metodo] || '<span class="text-muted">Sin descripción disponible.</span>';
+
+    // Ocultar todos los paneles y mostrar solo el seleccionado
+    paneles.forEach(panel => {
+        if (panel.getAttribute('data-metodo') === metodo) {
+            panel.classList.remove('d-none');
+        } else {
+            panel.classList.add('d-none');
+        }
+    });
+
+    // Re-renderizar el árbol si es necesario
+    const tipo = {
+        digital: 'Digital',
+        tries: 'Tries',
+        multiple: 'Multiple',
+        huffman: 'Huffman'
+    }[metodo];
+
+    if (tipo === 'Digital') renderizarArbolD3('Digital', arbolDigital);
+    else if (tipo === 'Tries') renderizarArbolD3('Tries', raizTries);
+    else if (tipo === 'Multiple') {
+        const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
+        renderizarArbolD3('Multiple', arbolMultiple, grado);
+    }
+    else if (tipo === 'Huffman') renderizarArbolD3('Huffman', huffmanArbol);
+}
+
 // ==================== ÁRBOL DIGITAL ====================
 
 /**
@@ -93,7 +144,7 @@ function insertarDigital() {
         renderizarArbolD3('Digital', arbolDigital);
         mostrarMensajeResiduo('Digital',
             `<strong>"${letra}"</strong> (${num} = ${binario}) insertada como <strong>raíz</strong>`, 'success');
-        mostrarTablaDigital(letra, num, binario, 'raíz', []);
+        mostrarInfoDigital(letra, num, binario);
         return;
     }
 
@@ -113,23 +164,19 @@ function insertarDigital() {
         const bit = binario[bitIdx];
 
         if (bit === undefined) {
-            // Sin más bits: colisión irresolvible (no debería pasar con 5 bits y 26 letras)
             mostrarMensajeResiduo('Digital', 'No hay espacio disponible para esta clave', 'danger');
             return;
         }
 
         const direccion = bit === '1' ? 'der' : 'izq';
-        const dirLabel = bit === '1' ? 'derecha (1)' : 'izquierda (0)';
 
         pasos.push({ bit, direccion, bitIdx, nodoActual: nodo.clave });
 
         if (nodo[direccion] === null) {
-            // Posición libre
             nodo[direccion] = crearNodoDigital(letra);
             posicion = bit === '1' ? 'derecha' : 'izquierda';
             break;
         } else {
-            // Colisión: avanzar al siguiente bit
             nodo = nodo[direccion];
             bitIdx++;
         }
@@ -137,9 +184,9 @@ function insertarDigital() {
 
     input.value = '';
     renderizarArbolD3('Digital', arbolDigital);
-    mostrarTablaDigital(letra, num, binario, posicion, pasos);
+    mostrarInfoDigital(letra, num, binario);
     mostrarMensajeResiduo('Digital',
-        `<strong>"${letra}"</strong> (${num} = ${binario}) insertada. Bits leídos: ${pasos.length + 1}`, 'success');
+        `<strong>"${letra}"</strong> (${num} = ${binario}) insertada. Ruta: <code>${pasos.map(p => p.bit).join('')}</code>`, 'success');
 }
 
 function buscarEnArbolDigital(nodo, letra) {
@@ -164,17 +211,23 @@ function buscarDigital() {
 
     const num = letraANumero(letra);
     const binario = letraBinario(letra, 5);
-    const pasos = [];
+    mostrarInfoDigital(letra, num, binario);
 
     // Raíz
     if (arbolDigital.clave === letra) {
-        mostrarMensajeResiduo('Digital',
-            `<strong>"${letra}"</strong> encontrada en la <strong>raíz</strong>`, 'success');
-        resaltarNodoD3('Digital', letra, 'encontrado');
-        mostrarTablaDigital(letra, num, binario, 'raíz', []);
+        animacionDigitalEnCurso = true;
+        timeoutsDigital.push(setTimeout(() => {
+            resaltarNodoD3('Digital', letra, 'encontrado');
+            mostrarMensajeResiduo('Digital',
+                `<strong>"${letra}"</strong> encontrada en la <strong>raíz</strong>`, 'success');
+            animacionDigitalEnCurso = false;
+        }, 400));
         return;
     }
 
+    // Recorrer según binario con animación
+    const rutaNodos = [arbolDigital]; // nodos visitados
+    const rutaBits = [];
     let nodo = arbolDigital;
     let bitIdx = 0;
     let encontrado = false;
@@ -182,29 +235,52 @@ function buscarDigital() {
     while (nodo && bitIdx < binario.length) {
         const bit = binario[bitIdx];
         const direccion = bit === '1' ? 'der' : 'izq';
-        pasos.push({ bit, bitIdx, nodoActual: nodo.clave });
+        rutaBits.push(bit);
 
         nodo = nodo[direccion];
-        if (nodo && nodo.clave === letra) {
-            encontrado = true;
-            break;
+        if (nodo) {
+            rutaNodos.push(nodo);
+            if (nodo.clave === letra) {
+                encontrado = true;
+                break;
+            }
+        } else {
+            break; // camino terminó (nodo null)
         }
         bitIdx++;
     }
 
-    if (encontrado) {
-        mostrarMensajeResiduo('Digital',
-            `<strong>"${letra}"</strong> (${num} = ${binario}) encontrada. Pasos: ${pasos.length + 1}`, 'success');
-        resaltarNodoD3('Digital', letra, 'encontrado');
-        mostrarTablaDigital(letra, num, binario, 'encontrado', pasos);
-    } else {
-        mostrarMensajeResiduo('Digital',
-            `<strong>"${letra}"</strong> no encontrada en el árbol`, 'danger');
-        mostrarTablaDigital(letra, num, binario, 'no encontrado', pasos);
-    }
+    // Animar recorrido
+    animacionDigitalEnCurso = true;
+    const delay = 500;
+
+    rutaNodos.forEach((n, i) => {
+        timeoutsDigital.push(setTimeout(() => {
+            const claveN = n.clave;
+            if (claveN) resaltarNodoD3Temporal('Digital', claveN, '#FFC107', delay - 100);
+        }, i * delay));
+    });
+
+    // Resultado final
+    timeoutsDigital.push(setTimeout(() => {
+        if (encontrado) {
+            resaltarNodoD3('Digital', letra, 'encontrado');
+            mostrarMensajeResiduo('Digital',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) encontrada. Ruta: <code>${rutaBits.join('')}</code>`, 'success');
+        } else {
+            // Resaltar último nodo visitado en rojo
+            const ultimo = rutaNodos[rutaNodos.length - 1];
+            if (ultimo && ultimo.clave) resaltarNodoD3('Digital', ultimo.clave, 'no-encontrado');
+            mostrarMensajeResiduo('Digital',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) no encontrada. Ruta recorrida: <code>${rutaBits.join('')}</code>`, 'danger');
+        }
+        animacionDigitalEnCurso = false;
+    }, rutaNodos.length * delay));
 }
 
 function eliminarDigital() {
+    if (animacionDigitalEnCurso) limpiarTimeoutsArr(timeoutsDigital);
+
     const letra = document.getElementById('claveDigital').value.trim().toUpperCase();
     if (!letra || !/^[A-Z]$/.test(letra)) {
         mostrarMensajeResiduo('Digital', 'Ingrese una sola letra (A-Z)', 'warning');
@@ -216,32 +292,148 @@ function eliminarDigital() {
         return;
     }
 
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    mostrarInfoDigital(letra, num, binario);
+
     if (!buscarEnArbolDigital(arbolDigital, letra)) {
-        mostrarMensajeResiduo('Digital', `La letra "${letra}" no existe en el árbol`, 'danger');
+        // Animar recorrido hasta la hoja más próxima según binario, luego indicar no encontrado
+        const rutaNodos = [arbolDigital];
+        const rutaBits = [];
+        let nodo = arbolDigital;
+        let bitIdx = 0;
+        while (nodo && bitIdx < binario.length) {
+            const bit = binario[bitIdx];
+            const dir = bit === '1' ? 'der' : 'izq';
+            rutaBits.push(bit);
+            if (!nodo[dir]) break;
+            nodo = nodo[dir];
+            rutaNodos.push(nodo);
+            bitIdx++;
+        }
+        animacionDigitalEnCurso = true;
+        const delay = 500;
+        rutaNodos.forEach((n, i) => {
+            timeoutsDigital.push(setTimeout(() => {
+                if (n.clave) resaltarNodoD3Temporal('Digital', n.clave, '#FFC107', delay - 100);
+            }, i * delay));
+        });
+        timeoutsDigital.push(setTimeout(() => {
+            const ultimo = rutaNodos[rutaNodos.length - 1];
+            if (ultimo && ultimo.clave) resaltarNodoD3('Digital', ultimo.clave, 'no-encontrado');
+            mostrarMensajeResiduo('Digital', `La letra "${letra}" no existe en el árbol. Ruta recorrida: <code>${rutaBits.join('')}</code>`, 'danger');
+            animacionDigitalEnCurso = false;
+        }, rutaNodos.length * delay));
         return;
     }
 
-    if (!confirm(`¿Eliminar la letra "${letra}" del árbol?`)) return;
+    // Si es la raíz, animar solo la raíz
+    if (arbolDigital.clave === letra) {
+        animacionDigitalEnCurso = true;
+        timeoutsDigital.push(setTimeout(() => {
+            resaltarNodoD3Temporal('Digital', letra, '#E74C3C', 600);
+        }, 0));
+        timeoutsDigital.push(setTimeout(() => {
+            arbolDigital = eliminarNodoDigital(arbolDigital, letra);
+            arbolDigital = podarArbolDigital(arbolDigital);
+            document.getElementById('claveDigital').value = '';
+            renderizarArbolD3('Digital', arbolDigital);
+            mostrarMensajeResiduo('Digital', `Letra "${letra}" eliminada del árbol`, 'success');
+            limpiarInfoDigital();
+            animacionDigitalEnCurso = false;
+        }, 700));
+        return;
+    }
 
-    // Eliminar: si es la raíz, poner clave en null (mantener hijos) o null completo
-    arbolDigital = eliminarNodoDigital(arbolDigital, letra);
-    document.getElementById('claveDigital').value = '';
-    renderizarArbolD3('Digital', arbolDigital);
-    mostrarMensajeResiduo('Digital', `Letra "${letra}" eliminada del árbol`, 'success');
-    limpiarTablaDigital();
+    // Encontrar ruta hacia la letra
+    const rutaNodos = [arbolDigital];
+    const rutaBits = [];
+    let nodo = arbolDigital;
+    let bitIdx = 0;
+    while (nodo && bitIdx < binario.length) {
+        const bit = binario[bitIdx];
+        const dir = bit === '1' ? 'der' : 'izq';
+        rutaBits.push(bit);
+        nodo = nodo[dir];
+        if (nodo) {
+            rutaNodos.push(nodo);
+            if (nodo.clave === letra) break;
+        }
+        bitIdx++;
+    }
+
+    // Animar recorrido hasta la letra y luego eliminarla
+    animacionDigitalEnCurso = true;
+    const delay = 500;
+    rutaNodos.forEach((n, i) => {
+        timeoutsDigital.push(setTimeout(() => {
+            if (n.clave) {
+                const color = (n.clave === letra) ? '#E74C3C' : '#FFC107';
+                resaltarNodoD3Temporal('Digital', n.clave, color, delay - 100);
+            }
+        }, i * delay));
+    });
+
+    timeoutsDigital.push(setTimeout(() => {
+        arbolDigital = eliminarNodoDigital(arbolDigital, letra);
+        arbolDigital = podarArbolDigital(arbolDigital);
+        document.getElementById('claveDigital').value = '';
+        renderizarArbolD3('Digital', arbolDigital);
+        mostrarMensajeResiduo('Digital', `Letra "${letra}" eliminada del árbol. Ruta: <code>${rutaBits.join('')}</code>`, 'success');
+        limpiarInfoDigital();
+        animacionDigitalEnCurso = false;
+    }, rutaNodos.length * delay + 200));
 }
 
+/**
+ * Eliminación típica de árbol binario:
+ * - Si el nodo es hoja → se elimina directamente
+ * - Si tiene un solo hijo → se reemplaza por ese hijo
+ * - Si tiene dos hijos → se reemplaza por el sucesor in-order (menor del subárbol derecho)
+ */
 function eliminarNodoDigital(nodo, letra) {
     if (!nodo) return null;
+
     if (nodo.clave === letra) {
-        // Si no tiene hijos, eliminar nodo
+        // Caso 1: Nodo hoja
         if (!nodo.izq && !nodo.der) return null;
-        // Si tiene hijos, solo limpiar la clave (marcar como interno vacío)
-        nodo.clave = null;
+
+        // Caso 2: Solo hijo izquierdo
+        if (!nodo.der) return nodo.izq;
+
+        // Caso 3: Solo hijo derecho
+        if (!nodo.izq) return nodo.der;
+
+        // Caso 4: Dos hijos → reemplazar con sucesor in-order
+        const sucesor = encontrarMinimoDigital(nodo.der);
+        nodo.clave = sucesor.clave;
+        nodo.der = eliminarNodoDigital(nodo.der, sucesor.clave);
         return nodo;
     }
-    nodo.izq = eliminarNodoDigital(nodo.izq, letra);
-    nodo.der = eliminarNodoDigital(nodo.der, letra);
+
+    // Buscar recursivamente en ambos subárboles
+    if (buscarEnArbolDigital(nodo.izq, letra)) {
+        nodo.izq = eliminarNodoDigital(nodo.izq, letra);
+    } else {
+        nodo.der = eliminarNodoDigital(nodo.der, letra);
+    }
+    return nodo;
+}
+
+function encontrarMinimoDigital(nodo) {
+    // Buscar el nodo con clave más a la izquierda (más profundo a la izquierda)
+    if (nodo.izq && nodo.izq.clave !== null) return encontrarMinimoDigital(nodo.izq);
+    if (nodo.clave !== null) return nodo;
+    if (nodo.der) return encontrarMinimoDigital(nodo.der);
+    return nodo;
+}
+
+function podarArbolDigital(nodo) {
+    if (!nodo) return null;
+    nodo.izq = podarArbolDigital(nodo.izq);
+    nodo.der = podarArbolDigital(nodo.der);
+    // Si es un nodo sin clave y sin hijos, eliminarlo
+    if (nodo.clave === null && !nodo.izq && !nodo.der) return null;
     return nodo;
 }
 
@@ -252,7 +444,7 @@ function limpiarDigital() {
     document.getElementById('claveDigital').value = '';
     renderizarArbolD3('Digital', null);
     mostrarMensajeResiduo('Digital', 'Árbol limpiado', 'info');
-    limpiarTablaDigital();
+    limpiarInfoDigital();
 }
 
 function guardarDigital() {
@@ -265,102 +457,295 @@ function cargarDigital() {
     document.getElementById('fileInputDigital').click();
 }
 
-function mostrarTablaDigital(letra, num, binario, resultado, pasos) {
-    const tbody = document.getElementById('tablaDigitalBody');
-    if (!tbody) return;
-
-    // Encabezado con info de la letra
-    let html = `<tr class="table-primary">
-        <td colspan="4"><strong>Letra:</strong> ${letra} | <strong>Número:</strong> ${num} | <strong>Binario (5 bits):</strong> <code>${binario}</code> | <strong>Resultado:</strong> ${resultado}</td>
-    </tr>`;
-
-    if (pasos.length === 0 && resultado === 'raíz') {
-        html += `<tr><td colspan="4" class="text-center text-muted">Insertada directamente como raíz</td></tr>`;
-    } else {
-        pasos.forEach((p, i) => {
-            const dir = p.bit === '1' ? '→ Derecha' : '← Izquierda';
-            html += `<tr>
-                <td>${i + 1}</td>
-                <td>Bit[${p.bitIdx}] = <strong>${p.bit}</strong></td>
-                <td>${dir}</td>
-                <td>${p.nodoActual ? `Colisión con "${p.nodoActual}"` : 'Libre'}</td>
-            </tr>`;
-        });
-    }
-
-    tbody.innerHTML = html;
-    document.getElementById('tablaDigital').classList.remove('d-none');
+function mostrarInfoDigital(letra, num, binario) {
+    const container = document.getElementById('infoDigital');
+    const body = document.getElementById('infoDigitalBody');
+    if (!container || !body) return;
+    body.innerHTML = `<strong>Letra:</strong> ${letra} | <strong>Número:</strong> ${num} | <strong>Binario (5 bits):</strong> <code>${binario}</code>`;
+    container.classList.remove('d-none');
 }
 
-function limpiarTablaDigital() {
-    const tabla = document.getElementById('tablaDigital');
-    if (tabla) tabla.classList.add('d-none');
+function limpiarInfoDigital() {
+    const container = document.getElementById('infoDigital');
+    if (container) container.classList.add('d-none');
 }
 
 // ==================== TRIES (SIMPLE) ====================
 
 /**
- * Nodo de Tries: por cada carácter
- * hijos: {'A': nodo, 'B': nodo, ...}
- * esFinDePalabra: boolean
- * clave: la palabra completa (solo si esFinDePalabra)
+ * Trie Simple binario por residuo:
+ * - Nodos internos siempre vacíos
+ * - Las letras se almacenan SOLO en hojas
+ * - Cada letra se convierte a binario de 5 bits (A=1=00001, ..., Z=26=11010)
+ * - Se recorre bit a bit: 0→izq, 1→der
+ * - Si al insertar se llega a una hoja ocupada (colisión), se expande el árbol
+ *   creando nodos internos hasta que ambas letras divergen en sus bits
  */
-function crearNodoTries() {
-    return { hijos: {}, esFinDePalabra: false, clave: null };
+function crearNodoTries(clave = null) {
+    return { clave, izq: null, der: null };
+}
+
+function esHojaTries(nodo) {
+    return nodo && !nodo.izq && !nodo.der;
 }
 
 function insertarTries() {
     if (animacionTriesEnCurso) limpiarTimeoutsArr(timeoutsTries);
 
     const input = document.getElementById('claveTries');
-    const palabra = input.value.trim().toUpperCase();
+    const letra = input.value.trim().toUpperCase();
 
-    if (!palabra || !/^[A-Z]+$/.test(palabra)) {
-        mostrarMensajeResiduo('Tries', 'Ingrese una palabra (solo letras A-Z)', 'warning');
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Tries', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
 
-    if (!raizTries) raizTries = crearNodoTries();
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    mostrarInfoTries(letra, num, binario);
 
     // Verificar si ya existe
-    if (buscarEnTries(raizTries, palabra)) {
-        mostrarMensajeResiduo('Tries', `La palabra "${palabra}" ya existe`, 'warning');
+    if (raizTries && buscarLetraEnTries(raizTries, letra)) {
+        mostrarMensajeResiduo('Tries', `La letra "${letra}" ya existe en el trie`, 'warning');
         return;
     }
 
-    let nodo = raizTries;
-    const ruta = [];
-
-    for (const c of palabra) {
-        if (!nodo.hijos[c]) {
-            nodo.hijos[c] = crearNodoTries();
-        }
-        ruta.push({ char: c, esNuevo: !nodo.hijos[c]?.esFinDePalabra });
-        nodo = nodo.hijos[c];
+    // Si el árbol está vacío, crear hoja directa
+    if (!raizTries) {
+        raizTries = crearNodoTries(letra);
+        input.value = '';
+        renderizarArbolD3('Tries', raizTries);
+        mostrarMensajeResiduo('Tries',
+            `<strong>"${letra}"</strong> (${num} = ${binario}) insertada como única hoja`, 'success');
+        return;
     }
-    nodo.esFinDePalabra = true;
-    nodo.clave = palabra;
+
+    // Detectar si habrá colisión y recopilar snapshots para animación
+    const snapshots = construirSnapshotsInsercion(raizTries, letra, binario);
 
     input.value = '';
-    renderizarArbolD3('Tries', raizTries);
-    mostrarMensajeResiduo('Tries',
-        `Palabra <strong>"${palabra}"</strong> insertada. Profundidad: ${palabra.length}`, 'success');
+
+    if (snapshots.length > 1) {
+        // Animar la colisión paso a paso: la letra existente "baja" de a poco
+        animacionTriesEnCurso = true;
+        const delay = 600;
+        snapshots.forEach((snap, i) => {
+            timeoutsTries.push(setTimeout(() => {
+                raizTries = snap;
+                renderizarArbolD3('Tries', raizTries);
+            }, i * delay));
+        });
+        timeoutsTries.push(setTimeout(() => {
+            renderizarArbolD3('Tries', raizTries);
+            mostrarMensajeResiduo('Tries',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) insertada correctamente`, 'success');
+            animacionTriesEnCurso = false;
+        }, snapshots.length * delay));
+    } else {
+        // Sin colisión, insertar directo
+        raizTries = insertarEnTriesSinPasos(raizTries, letra, binario, 0);
+        renderizarArbolD3('Tries', raizTries);
+        mostrarMensajeResiduo('Tries',
+            `<strong>"${letra}"</strong> (${num} = ${binario}) insertada correctamente`, 'success');
+    }
 }
 
-function buscarEnTries(raiz, palabra) {
-    if (!raiz) return false;
-    let nodo = raiz;
-    for (const c of palabra) {
-        if (!nodo.hijos[c]) return false;
-        nodo = nodo.hijos[c];
+/**
+ * Construye snapshots (copias del árbol) para animar la colisión paso a paso.
+ * Cada snapshot muestra un nivel más de expansión hasta que las letras divergen.
+ */
+function construirSnapshotsInsercion(raiz, letra, binario) {
+    // Primero encontrar dónde ocurre la colisión
+    const colision = encontrarColision(raiz, binario, 0);
+    if (!colision) {
+        // No hay colisión, inserción directa
+        return [insertarEnTriesSinPasos(clonarTries(raiz), letra, binario, 0)];
     }
-    return nodo.esFinDePalabra;
+
+    const { otraLetra, bitIdxColision } = colision;
+    const binOtra = letraBinario(otraLetra, 5);
+    const snapshots = [];
+
+    // Encontrar dónde divergen
+    let divergeIdx = bitIdxColision;
+    while (divergeIdx < binario.length && divergeIdx < binOtra.length && binario[divergeIdx] === binOtra[divergeIdx]) {
+        divergeIdx++;
+    }
+
+    // Crear snapshots: primero quitar la hoja vieja, luego ir bajando de a un nivel
+    for (let nivel = bitIdxColision; nivel <= divergeIdx; nivel++) {
+        const copia = clonarTries(raiz);
+        // Remover la hoja vieja de su posición original
+        removerHoja(copia, otraLetra);
+
+        if (nivel < divergeIdx) {
+            // Snapshot intermedio: la letra vieja está bajando, aún no se ha colocado la nueva
+            const cadena = construirCadenaInternos(binOtra, bitIdxColision, nivel, otraLetra);
+            colocarSubarbol(copia, binario, bitIdxColision, cadena);
+        } else {
+            // Snapshot final: ambas letras en su posición
+            const cadena = construirCadenaConDosHojas(binario, binOtra, bitIdxColision, divergeIdx, letra, otraLetra);
+            colocarSubarbol(copia, binario, bitIdxColision, cadena);
+        }
+        snapshots.push(copia);
+    }
+
+    // Actualizar raizTries al estado final
+    raizTries = snapshots[snapshots.length - 1];
+    return snapshots;
+}
+
+function encontrarColision(nodo, binario, bitIdx) {
+    if (!nodo) return null;
+    if (esHojaTries(nodo) && nodo.clave !== null) {
+        return { otraLetra: nodo.clave, bitIdxColision: bitIdx };
+    }
+    if (bitIdx >= binario.length) return null;
+    const bit = binario[bitIdx];
+    const dir = bit === '0' ? 'izq' : 'der';
+    return encontrarColision(nodo[dir], binario, bitIdx + 1);
+}
+
+function clonarTries(nodo) {
+    if (!nodo) return null;
+    return {
+        clave: nodo.clave,
+        izq: clonarTries(nodo.izq),
+        der: clonarTries(nodo.der)
+    };
+}
+
+function removerHoja(raiz, letra) {
+    if (!raiz) return null;
+    if (esHojaTries(raiz) && raiz.clave === letra) return null;
+    if (raiz.izq) {
+        if (esHojaTries(raiz.izq) && raiz.izq.clave === letra) {
+            raiz.izq = null;
+        } else {
+            removerHoja(raiz.izq, letra);
+        }
+    }
+    if (raiz.der) {
+        if (esHojaTries(raiz.der) && raiz.der.clave === letra) {
+            raiz.der = null;
+        } else {
+            removerHoja(raiz.der, letra);
+        }
+    }
+    return raiz;
+}
+
+function construirCadenaInternos(binOtra, desde, hasta, otraLetra) {
+    // Construye nodos internos desde 'desde' hasta 'hasta', con la otraLetra al final
+    if (desde > hasta) return crearNodoTries(otraLetra);
+    const nodo = crearNodoTries(null);
+    const bit = binOtra[desde];
+    const dir = bit === '0' ? 'izq' : 'der';
+    if (desde === hasta) {
+        nodo[dir] = crearNodoTries(otraLetra);
+    } else {
+        nodo[dir] = construirCadenaInternos(binOtra, desde + 1, hasta, otraLetra);
+    }
+    return nodo;
+}
+
+function construirCadenaConDosHojas(binA, binB, desde, divergeIdx, letraA, letraB) {
+    // Construye cadena de internos hasta divergeIdx, luego coloca ambas hojas
+    if (desde === divergeIdx) {
+        const nodo = crearNodoTries(null);
+        const dirA = binA[desde] === '0' ? 'izq' : 'der';
+        const dirB = binB[desde] === '0' ? 'izq' : 'der';
+        nodo[dirA] = crearNodoTries(letraA);
+        nodo[dirB] = crearNodoTries(letraB);
+        return nodo;
+    }
+    const nodo = crearNodoTries(null);
+    const bit = binA[desde]; // ambos bits son iguales hasta divergeIdx
+    const dir = bit === '0' ? 'izq' : 'der';
+    nodo[dir] = construirCadenaConDosHojas(binA, binB, desde + 1, divergeIdx, letraA, letraB);
+    return nodo;
+}
+
+function colocarSubarbol(raiz, binario, bitIdx, subarbol) {
+    if (bitIdx === 0) {
+        // Reemplazar la raíz: copiar propiedades del subárbol a raíz
+        raiz.clave = subarbol.clave;
+        raiz.izq = subarbol.izq;
+        raiz.der = subarbol.der;
+        return;
+    }
+    let nodo = raiz;
+    for (let i = 0; i < bitIdx - 1; i++) {
+        const dir = binario[i] === '0' ? 'izq' : 'der';
+        if (!nodo[dir]) nodo[dir] = crearNodoTries(null);
+        nodo = nodo[dir];
+    }
+    const dirFinal = binario[bitIdx - 1] === '0' ? 'izq' : 'der';
+    nodo[dirFinal] = subarbol;
+}
+
+function insertarEnTriesSinPasos(nodo, letra, binario, bitIdx) {
+    if (!nodo) {
+        return crearNodoTries(letra);
+    }
+    if (esHojaTries(nodo) && nodo.clave !== null) {
+        const otraLetra = nodo.clave;
+        if (otraLetra === letra) return nodo;
+        const binOtra = letraBinario(otraLetra, 5);
+        const interno = crearNodoTries(null);
+        return expandirColisionSimple(interno, letra, binario, otraLetra, binOtra, bitIdx);
+    }
+    if (bitIdx >= binario.length) return nodo;
+    const bit = binario[bitIdx];
+    const dir = bit === '0' ? 'izq' : 'der';
+    nodo[dir] = insertarEnTriesSinPasos(nodo[dir], letra, binario, bitIdx + 1);
+    return nodo;
+}
+
+function expandirColisionSimple(nodoRaiz, letraA, binA, letraB, binB, bitIdx) {
+    let actual = nodoRaiz;
+    let idx = bitIdx;
+    while (idx < binA.length && idx < binB.length) {
+        const bitA = binA[idx];
+        const bitB = binB[idx];
+        if (bitA === bitB) {
+            const dir = bitA === '0' ? 'izq' : 'der';
+            actual[dir] = crearNodoTries(null);
+            actual = actual[dir];
+            idx++;
+        } else {
+            actual[binA[idx] === '0' ? 'izq' : 'der'] = crearNodoTries(letraA);
+            actual[binB[idx] === '0' ? 'izq' : 'der'] = crearNodoTries(letraB);
+            return nodoRaiz;
+        }
+    }
+    return nodoRaiz;
+}
+
+function buscarLetraEnTries(nodo, letra) {
+    if (!nodo) return false;
+    if (esHojaTries(nodo)) return nodo.clave === letra;
+    return buscarLetraEnTries(nodo.izq, letra) || buscarLetraEnTries(nodo.der, letra);
+}
+
+function buscarLetraEnTriesConRuta(nodo, letra, binario, bitIdx, ruta) {
+    if (!nodo) return false;
+    if (esHojaTries(nodo)) {
+        return nodo.clave === letra;
+    }
+    if (bitIdx >= binario.length) return false;
+    const bit = binario[bitIdx];
+    ruta.push(bit);
+    const dir = bit === '0' ? 'izq' : 'der';
+    return buscarLetraEnTriesConRuta(nodo[dir], letra, binario, bitIdx + 1, ruta);
 }
 
 function buscarTries() {
-    const palabra = document.getElementById('claveTries').value.trim().toUpperCase();
-    if (!palabra || !/^[A-Z]+$/.test(palabra)) {
-        mostrarMensajeResiduo('Tries', 'Ingrese una palabra (solo letras A-Z)', 'warning');
+    if (animacionTriesEnCurso) limpiarTimeoutsArr(timeoutsTries);
+
+    const letra = document.getElementById('claveTries').value.trim().toUpperCase();
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Tries', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
 
@@ -369,57 +754,228 @@ function buscarTries() {
         return;
     }
 
-    const encontrado = buscarEnTries(raizTries, palabra);
-    if (encontrado) {
-        mostrarMensajeResiduo('Tries', `Palabra <strong>"${palabra}"</strong> encontrada en el trie`, 'success');
-        resaltarRutaTries(palabra);
-    } else {
-        mostrarMensajeResiduo('Tries', `Palabra <strong>"${palabra}"</strong> no encontrada`, 'danger');
-    }
-}
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    mostrarInfoTries(letra, num, binario);
 
-function resaltarRutaTries(palabra) {
-    // Resaltar visualmente la ruta en el SVG
-    const svg = document.getElementById('svgTries');
-    if (!svg) return;
-    // Los nodos tienen data-label con el carácter
-    const nodos = svg.querySelectorAll('.tree-node');
-    // Simple: resaltar todos los nodos que forman el prefijo
-    // La implementación de resaltado está en el renderizado D3
+    // Si la raíz es una hoja
+    if (esHojaTries(raizTries)) {
+        animacionTriesEnCurso = true;
+        const found = raizTries.clave === letra;
+        timeoutsTries.push(setTimeout(() => {
+            if (found) {
+                resaltarNodoD3('Tries', letra, 'encontrado');
+                mostrarMensajeResiduo('Tries',
+                    `<strong>"${letra}"</strong> encontrada en la raíz`, 'success');
+            } else {
+                resaltarNodoD3('Tries', raizTries.clave, 'no-encontrado');
+                mostrarMensajeResiduo('Tries',
+                    `<strong>"${letra}"</strong> no encontrada`, 'danger');
+            }
+            animacionTriesEnCurso = false;
+        }, 400));
+        return;
+    }
+
+    // Recorrer con animación usando D3 node indices
+    const ruta = [];
+    const encontrado = buscarLetraEnTriesConRuta(raizTries, letra, binario, 0, ruta);
+
+    // Build D3 hierarchy to get node indices
+    const datosD3 = arbolTriesAD3(raizTries);
+    const rootH = d3.hierarchy(datosD3);
+    const descs = rootH.descendants();
+    const svgEl = document.getElementById('svgTries');
+    if (!svgEl) return;
+    const todosNodos = svgEl.querySelectorAll('.node');
+
+    // Match path through D3 hierarchy
+    const indicesEnD3 = [];
+    let d3Nodo = rootH;
+    indicesEnD3.push(descs.indexOf(d3Nodo));
+    for (const bit of ruta) {
+        if (d3Nodo.children) {
+            d3Nodo = bit === '0' ? d3Nodo.children[0] : d3Nodo.children[1];
+            indicesEnD3.push(descs.indexOf(d3Nodo));
+        }
+    }
+
+    animacionTriesEnCurso = true;
+    const delay = 500;
+
+    indicesEnD3.forEach((idx, i) => {
+        if (idx < 0 || idx >= todosNodos.length) return;
+        timeoutsTries.push(setTimeout(() => {
+            const circle = todosNodos[idx].querySelector('circle');
+            if (circle) {
+                const orig = circle.getAttribute('fill');
+                circle.setAttribute('fill', '#FFC107');
+                setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+            }
+        }, i * delay));
+    });
+
+    timeoutsTries.push(setTimeout(() => {
+        if (encontrado) {
+            resaltarNodoD3('Tries', letra, 'encontrado');
+            mostrarMensajeResiduo('Tries',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) encontrada. Ruta: <code>${ruta.join('')}</code>`, 'success');
+        } else {
+            // Highlight last node red
+            const lastIdx = indicesEnD3[indicesEnD3.length - 1];
+            if (lastIdx >= 0 && lastIdx < todosNodos.length) {
+                const circle = todosNodos[lastIdx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#E74C3C');
+                    setTimeout(() => circle.setAttribute('fill', orig), 2000);
+                }
+            }
+            mostrarMensajeResiduo('Tries',
+                `<strong>"${letra}"</strong> (${num} = ${binario}) no encontrada. Ruta recorrida: <code>${ruta.join('')}</code>`, 'danger');
+        }
+        animacionTriesEnCurso = false;
+    }, indicesEnD3.length * delay));
 }
 
 function eliminarTries() {
-    const palabra = document.getElementById('claveTries').value.trim().toUpperCase();
-    if (!palabra || !/^[A-Z]+$/.test(palabra)) {
-        mostrarMensajeResiduo('Tries', 'Ingrese una palabra (solo letras A-Z)', 'warning');
+    if (animacionTriesEnCurso) limpiarTimeoutsArr(timeoutsTries);
+
+    const letra = document.getElementById('claveTries').value.trim().toUpperCase();
+    if (!letra || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Tries', 'Ingrese una sola letra (A-Z)', 'warning');
         return;
     }
 
-    if (!raizTries || !buscarEnTries(raizTries, palabra)) {
-        mostrarMensajeResiduo('Tries', `La palabra "${palabra}" no existe`, 'danger');
+    if (!raizTries) {
+        mostrarMensajeResiduo('Tries', 'El trie está vacío', 'warning');
         return;
     }
 
-    if (!confirm(`¿Eliminar la palabra "${palabra}"?`)) return;
+    const num = letraANumero(letra);
+    const binario = letraBinario(letra, 5);
+    mostrarInfoTries(letra, num, binario);
 
-    raizTries = eliminarDeTries(raizTries, palabra, 0);
-    document.getElementById('claveTries').value = '';
-    renderizarArbolD3('Tries', raizTries);
-    mostrarMensajeResiduo('Tries', `Palabra "${palabra}" eliminada`, 'success');
+    if (!buscarLetraEnTries(raizTries, letra)) {
+        // Not found animation: traverse path and show red at end
+        const ruta = [];
+        buscarLetraEnTriesConRuta(raizTries, letra, binario, 0, ruta);
+        const datosD3 = arbolTriesAD3(raizTries);
+        const rootH = d3.hierarchy(datosD3);
+        const descs = rootH.descendants();
+        const svgEl = document.getElementById('svgTries');
+        if (!svgEl) return;
+        const todosNodos = svgEl.querySelectorAll('.node');
+        const indicesEnD3 = [];
+        let d3Nodo = rootH;
+        indicesEnD3.push(descs.indexOf(d3Nodo));
+        for (const bit of ruta) {
+            if (d3Nodo.children) {
+                d3Nodo = bit === '0' ? d3Nodo.children[0] : d3Nodo.children[1];
+                indicesEnD3.push(descs.indexOf(d3Nodo));
+            }
+        }
+        animacionTriesEnCurso = true;
+        const delay = 500;
+        indicesEnD3.forEach((idx, i) => {
+            if (idx < 0 || idx >= todosNodos.length) return;
+            timeoutsTries.push(setTimeout(() => {
+                const circle = todosNodos[idx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#FFC107');
+                    setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+                }
+            }, i * delay));
+        });
+        timeoutsTries.push(setTimeout(() => {
+            const lastIdx = indicesEnD3[indicesEnD3.length - 1];
+            if (lastIdx >= 0 && lastIdx < todosNodos.length) {
+                const circle = todosNodos[lastIdx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#E74C3C');
+                    setTimeout(() => circle.setAttribute('fill', orig), 2000);
+                }
+            }
+            mostrarMensajeResiduo('Tries', `La letra "${letra}" no existe en el trie. Ruta: <code>${ruta.join('')}</code>`, 'danger');
+            animacionTriesEnCurso = false;
+        }, indicesEnD3.length * delay));
+        return;
+    }
+
+    // Found: animate path then delete
+    const ruta = [];
+    buscarLetraEnTriesConRuta(raizTries, letra, binario, 0, ruta);
+    const datosD3 = arbolTriesAD3(raizTries);
+    const rootH = d3.hierarchy(datosD3);
+    const descs = rootH.descendants();
+    const svgEl = document.getElementById('svgTries');
+    if (!svgEl) return;
+    const todosNodos = svgEl.querySelectorAll('.node');
+    const indicesEnD3 = [];
+    let d3Nodo = rootH;
+    indicesEnD3.push(descs.indexOf(d3Nodo));
+    for (const bit of ruta) {
+        if (d3Nodo.children) {
+            d3Nodo = bit === '0' ? d3Nodo.children[0] : d3Nodo.children[1];
+            indicesEnD3.push(descs.indexOf(d3Nodo));
+        }
+    }
+
+    animacionTriesEnCurso = true;
+    const delay = 500;
+    indicesEnD3.forEach((idx, i) => {
+        if (idx < 0 || idx >= todosNodos.length) return;
+        const isTarget = (i === indicesEnD3.length - 1);
+        timeoutsTries.push(setTimeout(() => {
+            const circle = todosNodos[idx].querySelector('circle');
+            if (circle) {
+                const orig = circle.getAttribute('fill');
+                circle.setAttribute('fill', isTarget ? '#E74C3C' : '#FFC107');
+                setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+            }
+        }, i * delay));
+    });
+
+    timeoutsTries.push(setTimeout(() => {
+        raizTries = eliminarDeTries(raizTries, letra, binario, 0);
+        raizTries = compactarTries(raizTries);
+        document.getElementById('claveTries').value = '';
+        renderizarArbolD3('Tries', raizTries);
+        mostrarMensajeResiduo('Tries', `Letra "${letra}" eliminada. Ruta: <code>${ruta.join('')}</code>`, 'success');
+        limpiarInfoTries();
+        animacionTriesEnCurso = false;
+    }, indicesEnD3.length * delay + 200));
 }
 
-function eliminarDeTries(nodo, palabra, idx) {
+function eliminarDeTries(nodo, letra, binario, bitIdx) {
     if (!nodo) return null;
-    if (idx === palabra.length) {
-        nodo.esFinDePalabra = false;
-        nodo.clave = null;
-        if (Object.keys(nodo.hijos).length === 0) return null;
+    // Si es hoja
+    if (esHojaTries(nodo)) {
+        if (nodo.clave === letra) return null;
         return nodo;
     }
-    const c = palabra[idx];
-    nodo.hijos[c] = eliminarDeTries(nodo.hijos[c], palabra, idx + 1);
-    if (!nodo.hijos[c]) delete nodo.hijos[c];
-    if (Object.keys(nodo.hijos).length === 0 && !nodo.esFinDePalabra) return null;
+    // Nodo interno
+    if (bitIdx >= binario.length) return nodo;
+    const bit = binario[bitIdx];
+    const dir = bit === '0' ? 'izq' : 'der';
+    nodo[dir] = eliminarDeTries(nodo[dir], letra, binario, bitIdx + 1);
+    // Si el nodo interno se quedó sin hijos, eliminarlo
+    if (!nodo.izq && !nodo.der) return null;
+    return nodo;
+}
+
+function compactarTries(nodo) {
+    if (!nodo) return null;
+    nodo.izq = compactarTries(nodo.izq);
+    nodo.der = compactarTries(nodo.der);
+    // Si un nodo interno tiene solo un hijo y ese hijo es hoja, subir la hoja
+    if (nodo.clave === null) {
+        if (nodo.izq && !nodo.der && esHojaTries(nodo.izq)) return nodo.izq;
+        if (!nodo.izq && nodo.der && esHojaTries(nodo.der)) return nodo.der;
+        if (!nodo.izq && !nodo.der) return null;
+    }
     return nodo;
 }
 
@@ -430,6 +986,7 @@ function limpiarTries() {
     document.getElementById('claveTries').value = '';
     renderizarArbolD3('Tries', null);
     mostrarMensajeResiduo('Tries', 'Trie limpiado', 'info');
+    limpiarInfoTries();
 }
 
 function guardarTries() {
@@ -440,6 +997,19 @@ function guardarTries() {
 
 function cargarTries() {
     document.getElementById('fileInputTries').click();
+}
+
+function mostrarInfoTries(letra, num, binario) {
+    const container = document.getElementById('infoTries');
+    const body = document.getElementById('infoTriesBody');
+    if (!container || !body) return;
+    body.innerHTML = `<strong>Letra:</strong> ${letra} | <strong>Número:</strong> ${num} | <strong>Binario (5 bits):</strong> <code>${binario}</code>`;
+    container.classList.remove('d-none');
+}
+
+function limpiarInfoTries() {
+    const container = document.getElementById('infoTries');
+    if (container) container.classList.add('d-none');
 }
 
 // ==================== ÁRBOL MÚLTIPLE ====================
@@ -629,110 +1199,59 @@ function mostrarTablaMultiple(num, grado, pasos) {
 // ==================== HUFFMAN ====================
 
 /**
- * Árbol de Huffman basado en frecuencias de palabras/caracteres
- * El usuario agrega palabras con sus frecuencias, luego se construye el árbol
+ * Árbol de Huffman basado en frecuencias de letras
+ * El usuario ingresa una palabra y el programa detecta automáticamente
+ * la frecuencia de cada letra
  */
 
-function agregarPalabraHuffman() {
+function insertarHuffman() {
     const inputPalabra = document.getElementById('palabraHuffman');
-    const inputFreq = document.getElementById('frecuenciaHuffman');
-
     const palabra = inputPalabra.value.trim().toUpperCase();
-    const freq = parseInt(inputFreq.value);
 
     if (!palabra || !/^[A-Z]+$/.test(palabra)) {
         mostrarMensajeResiduo('Huffman', 'Ingrese una palabra válida (solo letras)', 'warning');
         return;
     }
 
-    if (isNaN(freq) || freq < 1) {
-        mostrarMensajeResiduo('Huffman', 'Ingrese una frecuencia válida (≥ 1)', 'warning');
-        return;
+    // Detectar frecuencia de cada letra
+    huffmanLetras = {};
+    huffmanPalabraOriginal = palabra;
+    for (let letra of palabra) {
+        huffmanLetras[letra] = (huffmanLetras[letra] || 0) + 1;
     }
 
-    const existe = huffmanPalabras.find(p => p.palabra === palabra);
-    if (existe) {
-        mostrarMensajeResiduo('Huffman', `La palabra "${palabra}" ya existe. Frecuencia: ${existe.frecuencia}`, 'warning');
-        return;
-    }
-
-    huffmanPalabras.push({ palabra, frecuencia: freq });
     inputPalabra.value = '';
-    inputFreq.value = '';
 
-    renderizarListaHuffman();
-    mostrarMensajeResiduo('Huffman', `Palabra <strong>"${palabra}"</strong> agregada con frecuencia ${freq}`, 'success');
-}
-
-function renderizarListaHuffman() {
-    const lista = document.getElementById('listaHuffman');
-    if (!lista) return;
-
-    if (huffmanPalabras.length === 0) {
-        lista.innerHTML = '<div class="text-muted text-center small">No hay palabras agregadas</div>';
+    // Construir automáticamente si hay al menos 2 letras distintas
+    if (Object.keys(huffmanLetras).length < 2) {
+        mostrarMensajeResiduo('Huffman', 'Se necesitan al menos 2 letras distintas para construir el árbol', 'warning');
+        huffmanArbol = null;
+        huffmanCodigos = {};
+        renderizarArbolD3('Huffman', null);
         return;
     }
 
-    // Ordenar por frecuencia desc
-    const ordenadas = [...huffmanPalabras].sort((a, b) => b.frecuencia - a.frecuencia);
-
-    lista.innerHTML = ordenadas.map(p => `
-        <div class="d-flex justify-content-between align-items-center border rounded px-2 py-1 mb-1 bg-white">
-            <span class="fw-semibold">${p.palabra}</span>
-            <span class="badge bg-primary">f=${p.frecuencia}</span>
-            <button class="btn btn-sm btn-outline-danger py-0" onclick="eliminarPalabraHuffmanLista('${p.palabra}')">×</button>
-        </div>
-    `).join('');
-}
-
-function eliminarPalabraHuffmanLista(palabra) {
-    huffmanPalabras = huffmanPalabras.filter(p => p.palabra !== palabra);
-    renderizarListaHuffman();
-    huffmanArbol = null;
-    huffmanCodigos = {};
-    renderizarArbolD3('Huffman', null);
-    mostrarMensajeResiduo('Huffman', `Palabra "${palabra}" eliminada de la lista`, 'info');
-}
-
-function construirHuffman() {
-    if (huffmanPalabras.length < 2) {
-        mostrarMensajeResiduo('Huffman', 'Se necesitan al menos 2 palabras para construir el árbol', 'warning');
-        return;
-    }
-
-    // Crear nodos hoja
-    let cola = huffmanPalabras.map(p => ({
-        palabra: p.palabra,
-        frecuencia: p.frecuencia,
+    // Crear nodos hoja a partir de las letras detectadas
+    let cola = Object.entries(huffmanLetras).map(([letra, frecuencia]) => ({
+        letra: letra,
+        frecuencia: frecuencia,
         izq: null,
         der: null,
         esHoja: true
     }));
 
     // Algoritmo de Huffman
-    const pasosConstruccion = [];
-
     while (cola.length > 1) {
-        // Ordenar por frecuencia
         cola.sort((a, b) => a.frecuencia - b.frecuencia);
-
         const izq = cola.shift();
         const der = cola.shift();
-
         const nuevo = {
-            palabra: null,
+            letra: null,
             frecuencia: izq.frecuencia + der.frecuencia,
             izq,
             der,
             esHoja: false
         };
-
-        pasosConstruccion.push({
-            izq: izq.palabra || `[${izq.frecuencia}]`,
-            der: der.palabra || `[${der.frecuencia}]`,
-            sumFreq: nuevo.frecuencia
-        });
-
         cola.push(nuevo);
     }
 
@@ -743,27 +1262,95 @@ function construirHuffman() {
     generarCodigosHuffman(huffmanArbol, '');
 
     renderizarArbolD3('Huffman', huffmanArbol);
-    mostrarTablaHuffman(pasosConstruccion);
+    mostrarTablaHuffman();
     mostrarMensajeResiduo('Huffman',
-        `Árbol de Huffman construido con ${huffmanPalabras.length} palabras`, 'success');
+        `Árbol de Huffman construido para <strong>"${palabra}"</strong> — ${Object.keys(huffmanLetras).length} letras distintas, ${palabra.length} caracteres totales`, 'success');
+}
+
+function eliminarHuffmanLetra() {
+    const letra = prompt('Ingrese la letra (hoja) a eliminar del árbol:');
+    if (!letra) return;
+    const letraUpper = letra.trim().toUpperCase();
+
+    if (!letraUpper || letraUpper.length !== 1 || !/^[A-Z]$/.test(letraUpper)) {
+        mostrarMensajeResiduo('Huffman', 'Ingrese una sola letra válida (A-Z)', 'warning');
+        return;
+    }
+
+    if (!huffmanArbol) {
+        mostrarMensajeResiduo('Huffman', 'No hay árbol construido', 'warning');
+        return;
+    }
+
+    if (!huffmanLetras[letraUpper]) {
+        mostrarMensajeResiduo('Huffman', `La letra "${letraUpper}" no existe en el árbol`, 'danger');
+        return;
+    }
+
+    // Eliminar la letra de las frecuencias
+    delete huffmanLetras[letraUpper];
+    delete huffmanCodigos[letraUpper];
+
+    // Recalcular la palabra original sin esa letra
+    huffmanPalabraOriginal = huffmanPalabraOriginal.split('').filter(c => c !== letraUpper).join('');
+
+    // Re-construir el árbol
+    if (Object.keys(huffmanLetras).length < 2) {
+        if (Object.keys(huffmanLetras).length === 0) {
+            huffmanArbol = null;
+            huffmanCodigos = {};
+            huffmanPalabraOriginal = '';
+            renderizarArbolD3('Huffman', null);
+            mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada. El árbol está vacío.`, 'info');
+        } else {
+            huffmanArbol = null;
+            huffmanCodigos = {};
+            renderizarArbolD3('Huffman', null);
+            mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada. Se necesitan al menos 2 letras distintas.`, 'warning');
+        }
+        const tabla = document.getElementById('tablaHuffman');
+        if (tabla) tabla.classList.add('d-none');
+        return;
+    }
+
+    // Reconstruir
+    let cola = Object.entries(huffmanLetras).map(([l, f]) => ({
+        letra: l, frecuencia: f, izq: null, der: null, esHoja: true
+    }));
+    while (cola.length > 1) {
+        cola.sort((a, b) => a.frecuencia - b.frecuencia);
+        const izqN = cola.shift();
+        const derN = cola.shift();
+        cola.push({ letra: null, frecuencia: izqN.frecuencia + derN.frecuencia, izq: izqN, der: derN, esHoja: false });
+    }
+    huffmanArbol = cola[0];
+    huffmanCodigos = {};
+    generarCodigosHuffman(huffmanArbol, '');
+
+    renderizarArbolD3('Huffman', huffmanArbol);
+    mostrarTablaHuffman();
+    mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada y árbol reconstruido`, 'success');
 }
 
 function generarCodigosHuffman(nodo, codigo) {
     if (!nodo) return;
     if (nodo.esHoja) {
-        huffmanCodigos[nodo.palabra] = codigo || '0';
+        huffmanCodigos[nodo.letra] = codigo || '0';
         return;
     }
     generarCodigosHuffman(nodo.izq, codigo + '0');
     generarCodigosHuffman(nodo.der, codigo + '1');
 }
 
-function buscarHuffman() {
-    const inputPalabra = document.getElementById('palabraHuffman');
-    const palabra = inputPalabra.value.trim().toUpperCase();
+function buscarLetraHuffman() {
+    if (animacionHuffmanEnCurso) limpiarTimeoutsArr(timeoutsHuffman);
 
-    if (!palabra) {
-        mostrarMensajeResiduo('Huffman', 'Ingrese una palabra para buscar', 'warning');
+    const input = prompt('Ingrese una letra para buscar su código Huffman:');
+    if (!input) return;
+    const letra = input.trim().toUpperCase();
+
+    if (!letra || letra.length !== 1 || !/^[A-Z]$/.test(letra)) {
+        mostrarMensajeResiduo('Huffman', 'Ingrese una sola letra válida (A-Z)', 'warning');
         return;
     }
 
@@ -772,26 +1359,78 @@ function buscarHuffman() {
         return;
     }
 
-    if (huffmanCodigos[palabra]) {
-        mostrarMensajeResiduo('Huffman',
-            `Palabra <strong>"${palabra}"</strong> | Código Huffman: <code>${huffmanCodigos[palabra]}</code>`, 'success');
-        resaltarNodoD3('Huffman', palabra, 'encontrado');
+    const codigo = huffmanCodigos[letra];
+    if (!codigo) {
+        mostrarMensajeResiduo('Huffman', `Letra <strong>"${letra}"</strong> no encontrada en el árbol`, 'danger');
+        return;
+    }
+
+    // Animar recorrido usando indices de nodos D3
+    animacionHuffmanEnCurso = true;
+    const delay = 500;
+    const svgEl = document.getElementById('svgHuffman');
+
+    if (svgEl) {
+        const todosNodos = svgEl.querySelectorAll('.node');
+
+        // For each node in path, find its index in descendants by matching position in D3 hierarchy
+        // We'll animate sequentially by index
+        const datosD3 = arbolHuffmanAD3(huffmanArbol);
+        const rootH = d3.hierarchy(datosD3);
+        const descs = rootH.descendants();
+
+        // Match path nodes to D3 descendants by traversing the hierarchy the same way
+        const indicesEnD3 = [];
+        let d3Nodo = rootH;
+        indicesEnD3.push(descs.indexOf(d3Nodo));
+        for (const bit of codigo) {
+            if (d3Nodo.children) {
+                d3Nodo = bit === '0' ? d3Nodo.children[0] : d3Nodo.children[1];
+                indicesEnD3.push(descs.indexOf(d3Nodo));
+            }
+        }
+
+        indicesEnD3.forEach((idx, i) => {
+            if (idx < 0 || idx >= todosNodos.length) return;
+            timeoutsHuffman.push(setTimeout(() => {
+                const circle = todosNodos[idx].querySelector('circle');
+                if (circle) {
+                    const orig = circle.getAttribute('fill');
+                    circle.setAttribute('fill', '#FFC107');
+                    setTimeout(() => circle.setAttribute('fill', orig), delay - 100);
+                }
+            }, i * delay));
+        });
+
+        // Resultado final
+        const total = Object.values(huffmanLetras).reduce((s, v) => s + v, 0);
+        const freq = huffmanLetras[letra];
+        timeoutsHuffman.push(setTimeout(() => {
+            resaltarNodoD3('Huffman', letra, 'encontrado');
+            mostrarMensajeResiduo('Huffman',
+                `Letra <strong>"${letra}"</strong> | Código: <code>${codigo}</code> | Frecuencia: <strong>${freq}/${total}</strong> | Longitud: <strong>${codigo.length}</strong>`, 'success');
+            animacionHuffmanEnCurso = false;
+        }, indicesEnD3.length * delay));
     } else {
-        mostrarMensajeResiduo('Huffman', `Palabra <strong>"${palabra}"</strong> no encontrada en el árbol`, 'danger');
+        // Fallback if SVG not found
+        const total = Object.values(huffmanLetras).reduce((s, v) => s + v, 0);
+        const freq = huffmanLetras[letra];
+        resaltarNodoD3('Huffman', letra, 'encontrado');
+        mostrarMensajeResiduo('Huffman',
+            `Letra <strong>"${letra}"</strong> | Código: <code>${codigo}</code> | Frecuencia: <strong>${freq}/${total}</strong> | Longitud: <strong>${codigo.length}</strong>`, 'success');
     }
 }
 
 function limpiarHuffman() {
-    if (!confirm('¿Limpiar todo el árbol y la lista de palabras?')) return;
+    if (!confirm('¿Limpiar todo el árbol y las frecuencias detectadas?')) return;
     limpiarTimeoutsArr(timeoutsHuffman);
-    huffmanPalabras = [];
+    huffmanLetras = {};
+    huffmanPalabraOriginal = '';
     huffmanArbol = null;
     huffmanCodigos = {};
     document.getElementById('palabraHuffman').value = '';
-    document.getElementById('frecuenciaHuffman').value = '';
-    renderizarListaHuffman();
     renderizarArbolD3('Huffman', null);
-    mostrarMensajeResiduo('Huffman', 'Árbol y lista limpiados', 'info');
+    mostrarMensajeResiduo('Huffman', 'Árbol y frecuencias limpiados', 'info');
     const tabla = document.getElementById('tablaHuffman');
     if (tabla) tabla.classList.add('d-none');
 }
@@ -799,8 +1438,9 @@ function limpiarHuffman() {
 function guardarHuffman() {
     const datos = JSON.stringify({
         tipo: 'huffman',
-        palabras: huffmanPalabras,
-        codigos: huffmanCodigos
+        letras: huffmanLetras,
+        codigos: huffmanCodigos,
+        palabraOriginal: huffmanPalabraOriginal
     });
     descargarJSON(datos, 'arbol_huffman.json');
     mostrarMensajeResiduo('Huffman', 'Árbol guardado correctamente', 'success');
@@ -810,34 +1450,29 @@ function cargarHuffman() {
     document.getElementById('fileInputHuffman').click();
 }
 
-function mostrarTablaHuffman(pasos) {
+function mostrarTablaHuffman() {
     const tbody = document.getElementById('tablaHuffmanBody');
     const tabla = document.getElementById('tablaHuffman');
     if (!tbody || !tabla) return;
 
-    let html = `<tr class="table-primary">
-        <td colspan="4"><strong>Pasos de construcción del árbol Huffman</strong></td>
-    </tr>`;
+    const total = Object.values(huffmanLetras).reduce((s, v) => s + v, 0);
+    let html = '';
 
-    pasos.forEach((p, i) => {
-        html += `<tr>
-            <td>${i + 1}</td>
-            <td>${p.izq}</td>
-            <td>${p.der}</td>
-            <td>${p.sumFreq}</td>
-        </tr>`;
-    });
-
-    // Tabla de códigos
-    html += `<tr class="table-info"><td colspan="4"><strong>Códigos generados</strong></td></tr>`;
-    Object.entries(huffmanCodigos).sort((a, b) => a[1].length - b[1].length).forEach(([pal, cod]) => {
-        const freq = huffmanPalabras.find(p => p.palabra === pal)?.frecuencia || '-';
-        html += `<tr>
-            <td><strong>${pal}</strong></td>
-            <td>f=${freq}</td>
-            <td colspan="2"><code>${cod}</code></td>
-        </tr>`;
-    });
+    Object.entries(huffmanCodigos)
+        .sort((a, b) => {
+            const lenDiff = a[1].length - b[1].length;
+            if (lenDiff !== 0) return lenDiff;
+            return huffmanLetras[b[0]] - huffmanLetras[a[0]];
+        })
+        .forEach(([letra, codigo]) => {
+            const freq = huffmanLetras[letra] || 0;
+            html += `<tr>
+                <td><strong>${letra}</strong></td>
+                <td>${freq}/${total}</td>
+                <td><code>${codigo}</code></td>
+                <td>${codigo.length}</td>
+            </tr>`;
+        });
 
     tbody.innerHTML = html;
     tabla.classList.remove('d-none');
@@ -845,28 +1480,47 @@ function mostrarTablaHuffman(pasos) {
 
 // ==================== VISUALIZACIÓN D3.js ====================
 
-function arbolDigitalAD3(nodo, padre = null, label = 'ROOT') {
+function arbolDigitalAD3(nodo) {
     if (!nodo) return null;
-    const name = nodo.clave
-        ? `${nodo.clave}\n(${letraANumero(nodo.clave)}=${letraBinario(nodo.clave, 5)})`
-        : '•';
+    const name = nodo.clave ? nodo.clave : '•';
     const children = [];
-    if (nodo.izq) children.push({ ...arbolDigitalAD3(nodo.izq, nodo, '0'), edgeLabel: '0' });
-    if (nodo.der) children.push({ ...arbolDigitalAD3(nodo.der, nodo, '1'), edgeLabel: '1' });
+    // Si tiene al menos un hijo, incluir ambos lados (placeholder null para el faltante)
+    // Esto garantiza que 0 siempre va a la izquierda y 1 a la derecha visualmente
+    if (nodo.izq || nodo.der) {
+        if (nodo.izq) {
+            children.push({ ...arbolDigitalAD3(nodo.izq), edgeLabel: '0' });
+        } else {
+            children.push({ name: '', originalClave: null, esPlaceholder: true, edgeLabel: '0' });
+        }
+        if (nodo.der) {
+            children.push({ ...arbolDigitalAD3(nodo.der), edgeLabel: '1' });
+        } else {
+            children.push({ name: '', originalClave: null, esPlaceholder: true, edgeLabel: '1' });
+        }
+    }
     return { name, originalClave: nodo.clave, children: children.length ? children : undefined };
 }
 
-function arbolTriesAD3(nodo, char = 'ROOT') {
+function arbolTriesAD3(nodo) {
     if (!nodo) return null;
-    const name = char === 'ROOT' ? '∅' : char;
-    const esFin = nodo.esFinDePalabra;
-    const children = Object.entries(nodo.hijos)
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([c, hijo]) => ({ ...arbolTriesAD3(hijo, c), edgeLabel: c }));
+    const esHoja = !nodo.izq && !nodo.der;
+    const name = esHoja && nodo.clave ? nodo.clave : '';
+    const children = [];
+    if (nodo.izq || nodo.der) {
+        if (nodo.izq) {
+            children.push({ ...arbolTriesAD3(nodo.izq), edgeLabel: '0' });
+        } else {
+            children.push({ name: '', originalClave: null, esPlaceholder: true, edgeLabel: '0' });
+        }
+        if (nodo.der) {
+            children.push({ ...arbolTriesAD3(nodo.der), edgeLabel: '1' });
+        } else {
+            children.push({ name: '', originalClave: null, esPlaceholder: true, edgeLabel: '1' });
+        }
+    }
     return {
         name,
-        esFin,
-        clave: nodo.clave,
+        originalClave: nodo.clave,
         children: children.length ? children : undefined
     };
 }
@@ -883,16 +1537,19 @@ function arbolMultipleAD3(nodo, grado) {
     return { name, originalClave: nodo.clave, children: children.length ? children : undefined };
 }
 
-function arbolHuffmanAD3(nodo) {
+function arbolHuffmanAD3(nodo, total) {
     if (!nodo) return null;
-    const name = nodo.esHoja ? `${nodo.palabra}\nf=${nodo.frecuencia}` : `f=${nodo.frecuencia}`;
+    if (total === undefined) total = Object.values(huffmanLetras).reduce((s, v) => s + v, 0);
+    const name = nodo.esHoja ? nodo.letra : '';
+    const freqLabel = !nodo.esHoja ? `${nodo.frecuencia}/${total}` : null;
     const children = [];
-    if (nodo.izq) children.push({ ...arbolHuffmanAD3(nodo.izq), edgeLabel: '0' });
-    if (nodo.der) children.push({ ...arbolHuffmanAD3(nodo.der), edgeLabel: '1' });
+    if (nodo.izq) children.push({ ...arbolHuffmanAD3(nodo.izq, total), edgeLabel: '0' });
+    if (nodo.der) children.push({ ...arbolHuffmanAD3(nodo.der, total), edgeLabel: '1' });
     return {
         name,
         esHoja: nodo.esHoja,
-        originalClave: nodo.palabra,
+        originalClave: nodo.letra,
+        freqLabel,
         children: children.length ? children : undefined
     };
 }
@@ -933,7 +1590,9 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
     const root = d3.hierarchy(datosD3);
 
     // Layout del árbol
-    const treeFn = d3.tree().nodeSize([70, 80]);
+    const nodeW = (tipo === 'Digital' || tipo === 'Huffman' || tipo === 'Tries') ? 110 : 70;
+    const nodeH = 80;
+    const treeFn = d3.tree().nodeSize([nodeW, nodeH]);
     treeFn(root);
 
     // Calcular bounds
@@ -958,10 +1617,10 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
 
     // Paleta de colores
     const colores = {
-        Digital: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', hoja: '#BDD7EE' },
-        Tries: { nodo: '#70AD47', texto: 'white', borde: '#375623', raiz: '#375623', fin: '#E2F0D9' },
+        Digital: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', hoja: '#5B9BD5' },
+        Tries: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', fin: '#5B9BD5' },
         Multiple: { nodo: '#ED7D31', texto: 'white', borde: '#843C0C', raiz: '#843C0C' },
-        Huffman: { nodo: '#9B59B6', texto: 'white', borde: '#6C3483', raiz: '#6C3483', hoja: '#D7BDE2' }
+        Huffman: { nodo: '#5B9BD5', texto: 'white', borde: '#44546A', raiz: '#44546A', hoja: '#5B9BD5' }
     };
     const col = colores[tipo] || colores.Digital;
 
@@ -972,6 +1631,9 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
         .append('g')
         .attr('class', 'link-group')
         .each(function(d) {
+            // Skip links to placeholder nodes
+            if (d.target.data.esPlaceholder) return;
+
             const grp = d3.select(this);
 
             // Línea curva
@@ -1021,44 +1683,49 @@ function renderizarArbolD3(tipo, arbol, grado = 3) {
 
     // Círculo del nodo
     nodeGrp.append('circle')
-        .attr('r', d => d.depth === 0 ? 24 : 20)
+        .attr('r', d => {
+            if (d.data.esPlaceholder) return 0;
+            return d.depth === 0 ? 24 : 20;
+        })
         .attr('fill', d => {
+            if (d.data.esPlaceholder) return 'none';
             if (d.depth === 0) return col.raiz;
-            if (tipo === 'Tries' && d.data.esFin) return col.fin || col.nodo;
-            if (tipo === 'Huffman' && d.data.esHoja) return col.hoja || col.nodo;
             return col.nodo;
         })
-        .attr('stroke', col.borde)
+        .attr('stroke', d => d.data.esPlaceholder ? 'none' : col.borde)
         .attr('stroke-width', d => d.depth === 0 ? 3 : 2)
         .attr('filter', 'drop-shadow(0 2px 3px rgba(0,0,0,0.15))');
 
-    // Texto del nodo (puede tener saltos de línea)
+    // Texto del nodo
     nodeGrp.each(function(d) {
+        if (d.data.esPlaceholder) return;
         const grp = d3.select(this);
-        const lineas = d.data.name.split('\n');
+        const label = d.data.name;
 
-        if (lineas.length === 1) {
-            grp.append('text')
-                .attr('text-anchor', 'middle')
-                .attr('dy', '0.35em')
-                .attr('font-size', d.depth === 0 ? '13px' : '11px')
-                .attr('font-weight', 'bold')
-                .attr('fill', d.depth === 0 ? 'white' : (tipo === 'Tries' && d.data.esFin ? col.borde : 'white'))
-                .text(lineas[0]);
-        } else {
-            // Multi-línea (para Digital: "A\n(1=00001)")
-            const offsetY = -(lineas.length - 1) * 6;
-            lineas.forEach((linea, i) => {
+        grp.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '0.35em')
+            .attr('font-size', d.depth === 0 ? '13px' : '12px')
+            .attr('font-weight', 'bold')
+            .attr('fill', 'white')
+            .text(label);
+    });
+
+    // Etiqueta de frecuencia encima de nodos internos de Huffman
+    if (tipo === 'Huffman') {
+        nodeGrp.each(function(d) {
+            if (d.data.freqLabel) {
+                const grp = d3.select(this);
                 grp.append('text')
                     .attr('text-anchor', 'middle')
-                    .attr('dy', `${offsetY + i * 12}px`)
-                    .attr('font-size', i === 0 ? '12px' : '8px')
-                    .attr('font-weight', i === 0 ? 'bold' : 'normal')
-                    .attr('fill', 'white')
-                    .text(linea);
-            });
-        }
-    });
+                    .attr('dy', d.depth === 0 ? '-32px' : '-28px')
+                    .attr('font-size', '10px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#44546A')
+                    .text(d.data.freqLabel);
+            }
+        });
+    }
 
     // Ajustar SVG al contenido real
     svg.attr('width', Math.max(ancho, totalAncho));
@@ -1082,6 +1749,28 @@ function resaltarNodoD3(tipo, clave, estado) {
                 setTimeout(() => {
                     circle.setAttribute('fill', colorOriginal);
                 }, 2000);
+            }
+        }
+    });
+}
+
+function resaltarNodoD3Temporal(tipo, clave, color, duracion) {
+    const svgId = `svg${tipo}`;
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+
+    const nodos = svg.querySelectorAll('.node');
+    nodos.forEach(n => {
+        const dc = n.getAttribute('data-clave');
+        const claveStr = clave !== null ? clave.toString() : '';
+        if (dc === claveStr) {
+            const circle = n.querySelector('circle');
+            if (circle) {
+                const colorOriginal = circle.getAttribute('fill');
+                circle.setAttribute('fill', color);
+                setTimeout(() => {
+                    circle.setAttribute('fill', colorOriginal);
+                }, duracion || 400);
             }
         }
     });
@@ -1111,26 +1800,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (panelBienvenida) panelBienvenida.style.display = 'none';
         });
     }
-
-    // ---- Sub-tabs residuo ----
-    ['tab-digital', 'tab-tries', 'tab-multiple', 'tab-huffman'].forEach(tabId => {
-        const tab = document.getElementById(tabId);
-        if (tab) {
-            tab.addEventListener('shown.bs.tab', function () {
-                // Re-renderizar al cambiar de pestaña
-                const tipo = tabId.replace('tab-', '');
-                const tipoMap = { digital: 'Digital', tries: 'Tries', multiple: 'Multiple', huffman: 'Huffman' };
-                const t = tipoMap[tipo];
-                if (t === 'Digital') renderizarArbolD3('Digital', arbolDigital);
-                else if (t === 'Tries') renderizarArbolD3('Tries', raizTries);
-                else if (t === 'Multiple') {
-                    const grado = parseInt(document.getElementById('gradoMultiple').value) || 3;
-                    renderizarArbolD3('Multiple', arbolMultiple, grado);
-                }
-                else if (t === 'Huffman') renderizarArbolD3('Huffman', huffmanArbol);
-            });
-        }
-    });
 
     // ---- Cargar Digital ----
     const fileDigital = document.getElementById('fileInputDigital');
@@ -1210,10 +1879,26 @@ document.addEventListener('DOMContentLoaded', function () {
             reader.onload = function (ev) {
                 try {
                     const datos = JSON.parse(ev.target.result);
-                    huffmanPalabras = datos.palabras || [];
+                    huffmanLetras = datos.letras || {};
                     huffmanCodigos = datos.codigos || {};
-                    renderizarListaHuffman();
-                    if (huffmanPalabras.length >= 2) construirHuffman();
+                    huffmanPalabraOriginal = datos.palabraOriginal || '';
+                    if (Object.keys(huffmanLetras).length >= 2) {
+                        // Reconstruir el árbol
+                        let cola = Object.entries(huffmanLetras).map(([l, f]) => ({
+                            letra: l, frecuencia: f, izq: null, der: null, esHoja: true
+                        }));
+                        while (cola.length > 1) {
+                            cola.sort((a, b) => a.frecuencia - b.frecuencia);
+                            const izqN = cola.shift();
+                            const derN = cola.shift();
+                            cola.push({ letra: null, frecuencia: izqN.frecuencia + derN.frecuencia, izq: izqN, der: derN, esHoja: false });
+                        }
+                        huffmanArbol = cola[0];
+                        huffmanCodigos = {};
+                        generarCodigosHuffman(huffmanArbol, '');
+                        renderizarArbolD3('Huffman', huffmanArbol);
+                        mostrarTablaHuffman();
+                    }
                     mostrarMensajeResiduo('Huffman', 'Datos cargados correctamente', 'success');
                 } catch (err) {
                     mostrarMensajeResiduo('Huffman', 'Error al cargar el archivo', 'danger');
@@ -1229,8 +1914,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id: 'claveDigital', fn: insertarDigital },
         { id: 'claveTries', fn: insertarTries },
         { id: 'claveMultiple', fn: insertarMultiple },
-        { id: 'palabraHuffman', fn: agregarPalabraHuffman },
-        { id: 'frecuenciaHuffman', fn: agregarPalabraHuffman },
+        { id: 'palabraHuffman', fn: insertarHuffman },
     ];
 
     entradas.forEach(({ id, fn }) => {

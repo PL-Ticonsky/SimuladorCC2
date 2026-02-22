@@ -243,40 +243,28 @@
                     </div>
                 </div>
 
-                <!-- Sub-tabs de residuos -->
-                <ul class="nav nav-tabs mb-4" id="residuoTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="tab-digital" data-bs-toggle="tab" data-bs-target="#panel-digital" type="button" role="tab">
-                            🌳 Árbol Digital
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="tab-tries" data-bs-toggle="tab" data-bs-target="#panel-tries" type="button" role="tab">
-                            🔤 Tries (Simple)
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="tab-multiple" data-bs-toggle="tab" data-bs-target="#panel-multiple" type="button" role="tab">
-                            🌿 Árbol Múltiple
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="tab-huffman" data-bs-toggle="tab" data-bs-target="#panel-huffman" type="button" role="tab">
-                            📊 Huffman
-                        </button>
-                    </li>
-                </ul>
+                <!-- Selector de Método -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="metodoResiduo" class="form-label fw-semibold">Método de Búsqueda</label>
+                        <select class="form-select" id="metodoResiduo" onchange="cambiarMetodoResiduo()">
+                            <option value="" selected disabled>-- Seleccione un método --</option>
+                            <option value="digital"> Árbol Digital</option>
+                            <option value="tries"> Tries (Simple)</option>
+                            <option value="multiple"> Árbol Múltiple</option>
+                            <option value="huffman"> Huffman</option>
+                        </select>
+                    </div>
+                </div>
 
-                <div class="tab-content" id="residuoTabContent">
+                <div class="alert alert-info mb-3" id="descripcionResiduo">
+                    <span class="text-muted">Seleccione un método de búsqueda para ver su descripción.</span>
+                </div>
+
+                <div id="residuoTabContent">
 
                     <!-- ======== ÁRBOL DIGITAL ======== -->
-                    <div class="tab-pane fade show active" id="panel-digital" role="tabpanel">
-
-                        <div class="alert alert-light border mb-3">
-                            <strong>Árbol Digital:</strong> Inserta letras (A-Z) una por una. Cada letra se codifica a su número (A=1, B=2...) y luego a binario de 5 bits.
-                            La primera letra es la raíz. Las siguientes se insertan leyendo bit a bit: <code>0 → izquierda</code>, <code>1 → derecha</code>.
-                            Si hay colisión (posición ocupada), se lee el siguiente bit.
-                        </div>
+                    <div class="residuo-panel d-none" id="panel-digital" data-metodo="digital">
 
                         <!-- Controles -->
                         <div class="row mb-3">
@@ -304,22 +292,10 @@
                             </div>
                         </div>
 
-                        <!-- Tabla de pasos -->
-                        <div id="tablaDigital" class="d-none mb-3">
-                            <label class="form-label fw-semibold">Pasos de inserción / búsqueda</label>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered table-hover">
-                                    <thead class="table-dark">
-                                    <tr>
-                                        <th>Paso</th>
-                                        <th>Bit leído</th>
-                                        <th>Dirección</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="tablaDigitalBody"></tbody>
-                                </table>
-                            </div>
+                        <!-- Información -->
+                        <div id="infoDigital" class="d-none mb-3">
+                            <label class="form-label fw-semibold">Información</label>
+                            <div id="infoDigitalBody" class="alert alert-light border mb-0"></div>
                         </div>
 
                         <!-- Visualización D3 -->
@@ -336,20 +312,16 @@
                     </div>
 
                     <!-- ======== TRIES ======== -->
-                    <div class="tab-pane fade" id="panel-tries" role="tabpanel">
-
-                        <div class="alert alert-light border mb-3">
-                            <strong>Tries (Árbol de Prefijos):</strong> Inserta palabras completas (solo letras). Cada carácter de la palabra ocupa un nivel del árbol.
-                            Los nodos con doble borde marcan el fin de una palabra. Permite búsqueda eficiente por prefijo.
-                        </div>
+                    <div class="residuo-panel d-none" id="panel-tries" data-metodo="tries">
 
                         <div class="row mb-3">
-                            <div class="col-md-5">
-                                <label for="claveTries" class="form-label fw-semibold">Palabra (solo letras)</label>
+                            <div class="col-md-4">
+                                <label for="claveTries" class="form-label fw-semibold">Letra (A-Z)</label>
                                 <input type="text"
                                        class="form-control text-uppercase"
                                        id="claveTries"
-                                       placeholder="Ej: CASA"
+                                       maxlength="1"
+                                       placeholder="Ej: P"
                                        oninput="this.value=this.value.toUpperCase()">
                             </div>
                         </div>
@@ -367,8 +339,14 @@
                             </div>
                         </div>
 
+                        <!-- Información -->
+                        <div id="infoTries" class="d-none mb-3">
+                            <label class="form-label fw-semibold">Información</label>
+                            <div id="infoTriesBody" class="alert alert-light border mb-0"></div>
+                        </div>
+
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Árbol Tries</label>
+                            <label class="form-label fw-semibold">Árbol Tries (Simple)</label>
                             <div id="svgTriesContainer"
                                  class="border rounded p-2 bg-light"
                                  style="min-height: 300px; overflow-x: auto;">
@@ -380,12 +358,7 @@
                     </div>
 
                     <!-- ======== ÁRBOL MÚLTIPLE ======== -->
-                    <div class="tab-pane fade" id="panel-multiple" role="tabpanel">
-
-                        <div class="alert alert-light border mb-3">
-                            <strong>Árbol Múltiple (por Residuo):</strong> Cada nodo puede tener hasta <em>grado</em> hijos.
-                            La posición de inserción se calcula como <code>clave mod grado</code>. En colisión, se desciende por ese hijo y se repite.
-                        </div>
+                    <div class="residuo-panel d-none" id="panel-multiple" data-metodo="multiple">
 
                         <div class="row mb-3">
                             <div class="col-md-3">
@@ -441,50 +414,26 @@
                     </div>
 
                     <!-- ======== HUFFMAN ======== -->
-                    <div class="tab-pane fade" id="panel-huffman" role="tabpanel">
+                    <div class="residuo-panel d-none" id="panel-huffman" data-metodo="huffman">
 
-                        <div class="alert alert-light border mb-3">
-                            <strong>Huffman (Codificación por Frecuencia):</strong> Agrega palabras con sus frecuencias de aparición.
-                            Luego presiona <em>"Construir Árbol"</em> para generar el árbol de Huffman. Las palabras más frecuentes
-                            reciben códigos más cortos (0/1). <code>0 → izquierda</code>, <code>1 → derecha</code>.
-                        </div>
-
-                        <!-- Agregar palabras -->
+                        <!-- Ingresar palabra -->
                         <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="palabraHuffman" class="form-label fw-semibold">Palabra / Símbolo</label>
+                            <div class="col-md-6">
+                                <label for="palabraHuffman" class="form-label fw-semibold">Palabra</label>
                                 <input type="text"
                                        class="form-control text-uppercase"
                                        id="palabraHuffman"
-                                       placeholder="Ej: HOLA"
+                                       placeholder="Ej: PROGRAMACION"
                                        oninput="this.value=this.value.toUpperCase()">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="frecuenciaHuffman" class="form-label fw-semibold">Frecuencia</label>
-                                <input type="number" class="form-control" id="frecuenciaHuffman" min="1" placeholder="Ej: 5">
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button class="btn btn-success w-100" onclick="agregarPalabraHuffman()">Agregar</button>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button class="btn btn-info w-100" onclick="construirHuffman()">Construir Árbol</button>
-                            </div>
-                        </div>
-
-                        <!-- Lista de palabras -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Palabras agregadas</label>
-                            <div id="listaHuffman"
-                                 class="border rounded p-2 bg-light"
-                                 style="min-height: 60px; max-height: 150px; overflow-y: auto;">
-                                <div class="text-muted text-center small">No hay palabras agregadas</div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between mb-3 flex-wrap">
                             <div class="d-flex gap-2 flex-wrap">
-                                <button class="btn btn-primary" onclick="buscarHuffman()">Buscar código</button>
-                                <button class="btn btn-warning" onclick="limpiarHuffman()">Limpiar todo</button>
+                                <button class="btn btn-success" onclick="insertarHuffman()">Insertar</button>
+                                <button class="btn btn-primary" onclick="buscarLetraHuffman()">Buscar</button>
+                                <button class="btn btn-danger" onclick="eliminarHuffmanLetra()">Eliminar</button>
+                                <button class="btn btn-warning" onclick="limpiarHuffman()">Limpiar</button>
                             </div>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button class="btn btn-outline-secondary" onclick="cargarHuffman()">Cargar</button>
@@ -492,17 +441,17 @@
                             </div>
                         </div>
 
-                        <!-- Tabla Huffman: pasos y códigos -->
+                        <!-- Tabla Huffman: códigos generados -->
                         <div id="tablaHuffman" class="d-none mb-3">
-                            <label class="form-label fw-semibold">Proceso de construcción y códigos generados</label>
+                            <label class="form-label fw-semibold">Códigos generados</label>
                             <div class="table-responsive">
                                 <table class="table table-sm table-bordered table-hover">
                                     <thead class="table-dark">
                                     <tr>
-                                        <th>Paso / Palabra</th>
-                                        <th>Nodo izquierdo</th>
-                                        <th>Nodo derecho</th>
-                                        <th>Suma / Código</th>
+                                        <th>Letra</th>
+                                        <th>Frecuencia</th>
+                                        <th>Binario</th>
+                                        <th>Longitud</th>
                                     </tr>
                                     </thead>
                                     <tbody id="tablaHuffmanBody"></tbody>
@@ -516,7 +465,7 @@
                             <div id="svgHuffmanContainer"
                                  class="border rounded p-2 bg-light"
                                  style="min-height: 300px; overflow-x: auto;">
-                                <div class="text-muted text-center py-4">Agregue palabras y presione "Construir Árbol"</div>
+                                <div class="text-muted text-center py-4">Ingrese una palabra y presione "Insertar"</div>
                             </div>
                         </div>
 
