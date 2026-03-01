@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsquedas Externas - Simulador CC2</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="busquedasExternas.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header-section mb-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="text-white">
+                <h1 class="header-title mb-1">Ciencias de la Computación 2</h1>
+            </div>
+            <a href="../busquedas.html" class="btn btn-outline-light">
+                Volver atrás
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Navigation Pills -->
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" id="busquedasExtTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-conversion" data-bs-toggle="pill" data-bs-target="#panel-conversion" type="button" role="tab">Conversión de Base</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-bloques" data-bs-toggle="pill" data-bs-target="#panel-bloques" type="button" role="tab">Bloques de Información</button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="busquedasExtTabContent">
+
+        <!-- Panel de Bienvenida -->
+        <div class="text-center py-5" id="panel-bienvenida-ext">
+            <h4 class="text-muted mb-3">Seleccione un tipo de búsqueda</h4>
+            <p class="text-muted">Elija una de las opciones del menú superior para comenzar.</p>
+        </div>
+
+        <!-- ============================================================
+             Panel Conversión de Base
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-conversion" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Conversión de Base</h3>
+                        <p class="panel-subtitle">Convierte cada dígito de la clave usando una base numérica y asigna una posición en la estructura. Colisiones resueltas por lista enlazada.</p>
+                    </div>
+                </div>
+
+                <!-- Fila 1: Tamaño + Base + Crear estructura -->
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="tamanoEstructuraConversion" class="form-label fw-semibold">Tamaño de la estructura</label>
+                        <input type="number" class="form-control" id="tamanoEstructuraConversion" min="5" max="10000" value="100">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="baseConversion" class="form-label fw-semibold">Base a convertir</label>
+                        <input type="number" class="form-control" id="baseConversion" min="2" max="36" value="7">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraConversion()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionConversion">
+                    <span class="text-muted">Configure el tamaño y la base, luego presione "Crear estructura".</span>
+                </div>
+
+                <!-- Fila 2: Clave + Botones -->
+                <div id="conversionControles" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveConversion" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveConversion" placeholder="Ingrese una clave numérica">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="insertarConversion()">Insertar</button>
+                            <button class="btn btn-primary" onclick="buscarConversion()">Buscar</button>
+                            <button class="btn btn-danger" onclick="eliminarConversion()">Eliminar</button>
+                            <button class="btn btn-warning" onclick="limpiarConversion()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarConversion()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarConversion()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionConversion" class="estructura-container border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeConversion" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+        <!-- ============================================================
+             Panel Bloques de Información
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-bloques" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Bloques de Información</h3>
+                        <p class="panel-subtitle">Divide la estructura en bloques de tamaño √n. La búsqueda compara con el último elemento de cada bloque para saltar bloques y luego busca secuencialmente.</p>
+                    </div>
+                </div>
+
+                <!-- Fila 1: Cantidad de datos + Crear estructura -->
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="cantidadDatosBloques" class="form-label fw-semibold">Cantidad de datos</label>
+                        <input type="number" class="form-control" id="cantidadDatosBloques" min="4" max="10000" value="">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraBloques()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionBloques">
+                    <span class="text-muted">Configure la cantidad de datos y presione "Crear estructura".</span>
+                </div>
+
+                <!-- Fila 2: Clave + Botones -->
+                <div id="bloquesControles" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveBloques" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveBloques" placeholder="Ingrese una clave numérica">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="insertarBloques()">Insertar</button>
+                            <button class="btn btn-primary" onclick="buscarBloques()">Buscar</button>
+                            <button class="btn btn-danger" onclick="eliminarBloques()">Eliminar</button>
+                            <button class="btn btn-warning" onclick="limpiarBloques()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarBloques()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarBloques()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionBloques" class="estructura-container-bloques border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeBloques" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+    </div><!-- /tab-content -->
+
+</div>
+
+<!-- Inputs ocultos para cargar archivos -->
+<input type="file" id="fileInputConversion" accept=".json" style="display: none;">
+<input type="file" id="fileInputBloques" accept=".json" style="display: none;">
+
+<!-- Bootstrap JS -->
+<script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+
+<!-- Scripts -->
+<script src="conversionBase.js"></script>
+<script src="bloquesInformacion.js"></script>
+
+</body>
+</html>

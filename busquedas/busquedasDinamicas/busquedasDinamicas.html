@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsquedas Dinámicas - Simulador CC2</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="busquedasDinamicas.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header-section mb-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="text-white">
+                <h1 class="header-title mb-1">Ciencias de la Computación 2</h1>
+            </div>
+            <a href="../busquedas.html" class="btn btn-outline-light">
+                Volver atrás
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Navigation Pills -->
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" id="busquedasDinTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-expTotal" data-bs-toggle="pill" data-bs-target="#panel-expTotal" type="button" role="tab">Expansión Total</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-expParcial" data-bs-toggle="pill" data-bs-target="#panel-expParcial" type="button" role="tab">Expansión Parcial</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link disabled" id="tab-redTotal" type="button" role="tab" aria-disabled="true">Reducción Total</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link disabled" id="tab-redParcial" type="button" role="tab" aria-disabled="true">Reducción Parcial</button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="busquedasDinTabContent">
+
+        <!-- Panel de Bienvenida -->
+        <div class="text-center py-5" id="panel-bienvenida-din">
+            <h4 class="text-muted mb-3">Seleccione un tipo de búsqueda dinámica</h4>
+            <p class="text-muted">Elija una de las opciones del menú superior para comenzar.</p>
+        </div>
+
+        <!-- ============================================================
+             Panel Expansión Total
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-expTotal" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Expansión Total</h3>
+                        <p class="panel-subtitle">Las cubetas se duplican cuando la densidad de ocupación alcanza el 75%. Función hash: H(k) = k mod n.</p>
+                    </div>
+                </div>
+
+                <!-- Fila 1: Cubetas + Registros + Crear -->
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="cubetasExpTotal" class="form-label fw-semibold">Número de cubetas (par)</label>
+                        <input type="number" class="form-control" id="cubetasExpTotal" min="2" max="100" step="2" value="2">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="registrosExpTotal" class="form-label fw-semibold">Registros por cubeta</label>
+                        <input type="number" class="form-control" id="registrosExpTotal" min="1" max="20" value="3">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraExpTotal()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionExpTotal">
+                    <span class="text-muted">Configure las cubetas (par) y registros por cubeta, luego presione "Crear estructura".</span>
+                </div>
+
+                <!-- Controles ocultos hasta crear -->
+                <div id="expTotalControles" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveExpTotal" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveExpTotal" placeholder="Ingrese una clave numérica">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="insertarExpTotal()">Insertar</button>
+                            <button class="btn btn-warning" onclick="limpiarExpTotal()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarExpTotal()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarExpTotal()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionExpTotal" class="estructura-container-din border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeExpTotal" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+        <!-- ============================================================
+             Panel Expansión Parcial
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-expParcial" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Expansión Parcial</h3>
+                        <p class="panel-subtitle">Las cubetas crecen a la mitad del incremento total cuando la D.O. alcanza el 75%. Dos expansiones parciales equivalen a una total.</p>
+                    </div>
+                </div>
+
+                <!-- Fila 1: Cubetas + Registros + Crear -->
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="cubetasExpParcial" class="form-label fw-semibold">Número de cubetas (par)</label>
+                        <input type="number" class="form-control" id="cubetasExpParcial" min="2" max="100" step="2" value="2">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="registrosExpParcial" class="form-label fw-semibold">Registros por cubeta</label>
+                        <input type="number" class="form-control" id="registrosExpParcial" min="1" max="20" value="3">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraExpParcial()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionExpParcial">
+                    <span class="text-muted">Configure las cubetas (par) y registros por cubeta, luego presione "Crear estructura".</span>
+                </div>
+
+                <!-- Controles ocultos hasta crear -->
+                <div id="expParcialControles" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveExpParcial" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveExpParcial" placeholder="Ingrese una clave numérica">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="insertarExpParcial()">Insertar</button>
+                            <button class="btn btn-warning" onclick="limpiarExpParcial()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarExpParcial()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarExpParcial()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionExpParcial" class="estructura-container-din border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeExpParcial" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+    </div><!-- /tab-content -->
+
+</div>
+
+<!-- Inputs ocultos para cargar archivos -->
+<input type="file" id="fileInputExpTotal" accept=".json" style="display: none;">
+<input type="file" id="fileInputExpParcial" accept=".json" style="display: none;">
+
+<!-- Bootstrap JS -->
+<script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+
+<!-- Scripts -->
+<script src="expansionTotal.js"></script>
+<script src="expansionParcial.js"></script>
+
+</body>
+</html>
+

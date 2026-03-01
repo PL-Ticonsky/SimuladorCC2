@@ -1,0 +1,445 @@
+/*
+ * Búsquedas Externas - Estilos Específicos
+ * Reutiliza la paleta de busquedasInternas
+ */
+
+/* ============================================
+   Panel Section (replicado de internas)
+   ============================================ */
+.panel-section {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(68, 84, 106, 0.08);
+    margin-bottom: 24px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #D6DCE5;
+}
+
+.panel-title {
+    color: #44546A;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.panel-subtitle {
+    color: #8497B0;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* Nav pills: estilos heredados de global.css */
+
+/* ============================================
+   Estructura de Conversión de Base (lista enlazada)
+   ============================================ */
+.estructura-container {
+    min-height: 80px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.estructura-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.clave-row {
+    display: flex;
+    align-items: center;
+    border: 1px solid #D6DCE5;
+    border-bottom: none;
+    background: #FFFFFF;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.clave-row:first-child { border-radius: 6px 6px 0 0; }
+.clave-row:last-child { border-bottom: 1px solid #D6DCE5; border-radius: 0 0 6px 6px; }
+.clave-row:only-child { border-radius: 6px; border-bottom: 1px solid #D6DCE5; }
+
+.clave-index-left {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    margin-right: 12px;
+}
+
+.clave-valor-vertical {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #44546A;
+    letter-spacing: 0.5px;
+}
+
+.clave-row:hover {
+    border-color: #BDD7EE;
+    background: #DEEBF7;
+}
+
+/* ============================================
+   Lista Enlazada Vertical (Conversión de Base)
+   ============================================ */
+.lista-enlazada-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.lista-fila-vertical {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.lista-celda-principal {
+    display: flex;
+    align-items: center;
+    border: 1px solid #D6DCE5;
+    border-bottom: none;
+    background: #FFFFFF;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.lista-fila-vertical:first-child .lista-celda-principal { border-radius: 6px 6px 0 0; }
+.lista-fila-vertical:last-child .lista-celda-principal { border-bottom: 1px solid #D6DCE5; border-radius: 0 0 6px 6px; }
+.lista-fila-vertical:only-child .lista-celda-principal { border-radius: 6px; border-bottom: 1px solid #D6DCE5; }
+
+.lista-valor-principal {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #44546A;
+    letter-spacing: 0.5px;
+    min-width: 50px;
+}
+
+.lista-celda-principal:hover {
+    border-color: #BDD7EE;
+    background: #DEEBF7;
+}
+
+.lista-nodos-enlazados {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.lista-flecha-externa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #5B9BD5;
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+.lista-nodo-externo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 38px;
+    padding: 0 12px;
+    background: #FFFFFF;
+    border: 1px solid #5B9BD5;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #44546A;
+    transition: all 0.3s ease;
+}
+
+.lista-nodo-externo:hover { background: #DEEBF7; }
+
+/* ============================================
+   Estados de animación
+   ============================================ */
+/* Buscando */
+.lista-celda-principal.lista-buscando,
+.lista-nodo-externo.lista-buscando,
+.clave-row.clave-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    animation: pulse 0.5s ease infinite;
+}
+
+.lista-celda-principal.lista-buscando .lista-valor-principal,
+.lista-celda-principal.lista-buscando .clave-index-left,
+.clave-row.clave-buscando .clave-valor-vertical,
+.clave-row.clave-buscando .clave-index-left {
+    color: #806000;
+}
+
+.lista-celda-principal.lista-buscando .clave-index-left,
+.clave-row.clave-buscando .clave-index-left {
+    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%);
+}
+
+/* Encontrado */
+.lista-celda-principal.lista-encontrada,
+.lista-nodo-externo.lista-encontrada,
+.clave-row.clave-encontrada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+}
+
+.lista-celda-principal.lista-encontrada .lista-valor-principal,
+.clave-row.clave-encontrada .clave-valor-vertical {
+    color: #375623;
+}
+
+.lista-celda-principal.lista-encontrada .clave-index-left,
+.clave-row.clave-encontrada .clave-index-left {
+    background: linear-gradient(135deg, #A9D18E 0%, #70AD47 100%);
+}
+
+/* Insertado */
+.lista-celda-principal.lista-insertada,
+.lista-nodo-externo.lista-insertada,
+.clave-row.clave-insertada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    animation: highlight 0.5s ease;
+}
+
+.clave-row.clave-insertando {
+    background: #DEEBF7;
+    border-color: #BDD7EE;
+    animation: slideIn 0.4s ease;
+}
+
+/* Eliminando */
+.lista-celda-principal.lista-eliminando,
+.lista-nodo-externo.lista-eliminando,
+.clave-row.clave-eliminando {
+    background: #FCE4D6 !important;
+    border-color: #F4B183 !important;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.lista-celda-principal.lista-eliminando .lista-valor-principal,
+.clave-row.clave-eliminando .clave-valor-vertical {
+    color: #843C0C;
+}
+
+.lista-celda-principal.lista-eliminando .clave-index-left,
+.clave-row.clave-eliminando .clave-index-left {
+    background: linear-gradient(135deg, #F4B183 0%, #C65911 100%);
+}
+
+/* Descartado (para bloques) */
+.clave-row.clave-descartado,
+.bloque-saltado {
+    background: #F2F2F2;
+    border-color: #D6DCE5;
+    opacity: 0.5;
+}
+
+/* ============================================
+   Bloques de Información
+   ============================================ */
+.estructura-container-bloques {
+    min-height: 80px;
+    overflow-y: auto;
+}
+
+.bloques-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+}
+
+.bloque-card {
+    border: 2px solid #D6DCE5;
+    border-radius: 8px;
+    min-width: 120px;
+    background: #FFFFFF;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.bloque-header {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    text-align: center;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.bloque-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.bloque-celda {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #EDEDED;
+    transition: all 0.3s ease;
+    min-height: 36px;
+}
+
+.bloque-celda:last-child { border-bottom: none; }
+
+.bloque-celda-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: #DEEBF7;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #44546A;
+    margin-right: 8px;
+}
+
+.bloque-celda-valor {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #44546A;
+}
+
+.bloque-celda.bloque-vacio {
+    background: #F8F9FA;
+}
+
+.bloque-celda.bloque-vacio .bloque-celda-valor {
+    color: #ADB5BD;
+    font-style: italic;
+}
+
+/* Animación de bloque saltado */
+.bloque-card.bloque-saltado {
+    opacity: 0.4;
+    border-color: #D6DCE5;
+}
+
+/* Animación bloque activo */
+.bloque-card.bloque-activo {
+    border-color: #FFD966;
+    box-shadow: 0 0 8px rgba(255, 217, 102, 0.4);
+}
+
+/* Celda buscando */
+.bloque-celda.celda-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    animation: pulse 0.5s ease infinite;
+}
+
+/* Celda encontrada */
+.bloque-celda.celda-encontrada {
+    background: #E2F0D9 !important;
+}
+
+.bloque-celda.celda-encontrada .bloque-celda-valor {
+    color: #375623;
+}
+
+.bloque-celda.celda-encontrada .bloque-celda-index {
+    background: #A9D18E;
+    color: white;
+}
+
+/* Celda insertando */
+.bloque-celda.celda-insertando {
+    background: #DEEBF7 !important;
+    animation: slideIn 0.4s ease;
+}
+
+/* Celda insertada */
+.bloque-celda.celda-insertada {
+    background: #E2F0D9 !important;
+    animation: highlight 0.5s ease;
+}
+
+/* Celda eliminando */
+.bloque-celda.celda-eliminando {
+    background: #FCE4D6 !important;
+    animation: fadeOut 0.5s ease forwards;
+}
+
+/* Último elemento del bloque resaltado en búsqueda */
+.bloque-celda.celda-ultimo-comparando {
+    background: #E8D5F5 !important;
+    border-color: #9B59B6 !important;
+}
+
+/* ============================================
+   Puntos suspensivos
+   ============================================ */
+.hash-ellipsis {
+    background: transparent;
+    border: none;
+    border-left: 1px solid #D6DCE5;
+    border-right: 1px solid #D6DCE5;
+    padding: 4px 12px 4px 54px;
+}
+
+.hash-ellipsis .clave-valor-vertical {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: #8497B0;
+}
+
+.lista-ellipsis .lista-celda-principal {
+    border: none;
+    border-left: 1px solid #D6DCE5;
+    border-right: 1px solid #D6DCE5;
+    padding-left: 54px;
+}
+
+.lista-ellipsis .lista-valor-principal {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: #8497B0;
+}
+
+/* ============================================
+   Animaciones
+   ============================================ */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes slideIn {
+    0% { opacity: 0; transform: translateY(-15px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes highlight {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+

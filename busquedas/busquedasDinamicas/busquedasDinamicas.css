@@ -1,0 +1,210 @@
+/*
+ * Búsquedas Dinámicas - Estilos Específicos
+ * Reutiliza la paleta de global.css
+ */
+
+/* Nav pills: heredados de global.css */
+
+/* ============================================
+   Estructura contenedora dinámica
+   ============================================ */
+.estructura-container-din {
+    min-height: 80px;
+    overflow-x: auto;
+}
+
+/* ============================================
+   Matriz de Cubetas (Expansión)
+   ============================================ */
+.matriz-cubetas-container {
+    overflow-x: auto;
+}
+
+.tabla-cubetas {
+    border-collapse: collapse;
+    width: auto;
+}
+
+.tabla-cubetas th,
+.tabla-cubetas td {
+    border: 1px solid #D6DCE5;
+    text-align: center;
+    padding: 8px;
+    min-width: 50px;
+    height: 45px;
+}
+
+.cubeta-header {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.cubeta-index {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    min-width: 40px;
+}
+
+.cubeta-celda {
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.cubeta-vacia {
+    background: #F2F2F2;
+    color: #8497B0;
+}
+
+.cubeta-ocupada {
+    background: #FFFFFF;
+    color: #44546A;
+}
+
+.cubeta-celda:hover {
+    background: #DEEBF7;
+}
+
+/* Celda de colisión (desbordamiento) */
+.cubeta-colision {
+    background: #FCE4D6 !important;
+    color: #C65911 !important;
+    border-color: #F4B183 !important;
+    font-weight: 700;
+}
+
+/* Animación insertada */
+.cubeta-insertada {
+    background: #E2F0D9 !important;
+    border-color: #A9D18E !important;
+    color: #375623 !important;
+    animation: highlightCubeta 0.6s ease;
+}
+
+/* Animación buscando */
+.cubeta-buscando {
+    background: #FFF2CC !important;
+    border-color: #FFD966 !important;
+    animation: pulseCubeta 0.5s ease infinite;
+}
+
+/* Resaltar columna de cubeta destino */
+.cubeta-header-activa {
+    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%) !important;
+    color: #44546A !important;
+}
+
+/* Barra de D.O. */
+.do-bar-container {
+    margin-top: 12px;
+}
+
+.do-bar-bg {
+    height: 22px;
+    background: #EDEDED;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.do-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+
+.do-bar-fill.do-normal {
+    background: linear-gradient(90deg, #A9D18E, #70AD47);
+}
+
+.do-bar-fill.do-warning {
+    background: linear-gradient(90deg, #FFD966, #BF9000);
+}
+
+.do-bar-fill.do-danger {
+    background: linear-gradient(90deg, #F4B183, #C65911);
+}
+
+.do-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #44546A;
+}
+
+/* Fila de colisiones debajo de la tabla */
+.colisiones-section {
+    margin-top: 10px;
+}
+
+.colision-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #FFF5F5;
+    border: 1px solid #F4B183;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    animation: slideInColision 0.4s ease;
+}
+
+.colision-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: #C65911;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.colision-texto {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #C65911;
+}
+
+/* Animación de expansión */
+.expansion-overlay {
+    position: relative;
+}
+
+.expansion-msg {
+    text-align: center;
+    padding: 10px;
+    background: #FFF2CC;
+    border: 1px dashed #FFD966;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #806000;
+    animation: slideInColision 0.4s ease;
+}
+
+@keyframes highlightCubeta {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+@keyframes pulseCubeta {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes slideInColision {
+    0% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.5); }
+}
+

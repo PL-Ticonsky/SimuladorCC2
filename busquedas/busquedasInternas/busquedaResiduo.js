@@ -1380,11 +1380,16 @@ function insertarHuffman() {
         return;
     }
 
-    // Detectar frecuencia de cada letra
+    // Detectar frecuencia de cada letra preservando orden de primera aparición
     huffmanLetras = {};
     huffmanPalabraOriginal = palabra;
+    const ordenAparicion = []; // orden en que aparece cada letra por primera vez
     for (let letra of palabra) {
-        huffmanLetras[letra] = (huffmanLetras[letra] || 0) + 1;
+        if (!huffmanLetras[letra]) {
+            huffmanLetras[letra] = 0;
+            ordenAparicion.push(letra);
+        }
+        huffmanLetras[letra]++;
     }
 
     inputPalabra.value = '';
@@ -1398,28 +1403,66 @@ function insertarHuffman() {
         return;
     }
 
-    // Crear nodos hoja a partir de las letras detectadas
-    let cola = Object.entries(huffmanLetras).map(([letra, frecuencia]) => ({
+    const total = palabra.length;
+
+    // Crear nodos hoja — cada uno tiene un campo "orden" para desempate estable
+    let cola = ordenAparicion.map((letra, idx) => ({
         letra: letra,
-        frecuencia: frecuencia,
+        frecuencia: huffmanLetras[letra],
         izq: null,
         der: null,
-        esHoja: true
+        esHoja: true,
+        orden: idx, // orden de primera aparición (menor = apareció primero)
+        etiquetaCombinada: letra
     }));
 
-    // Algoritmo de Huffman
+    // Función de ordenamiento estable: menor frecuencia primero; si empatan, el que apareció primero
+    let contadorOrden = ordenAparicion.length; // para nodos combinados
+    function ordenarCola() {
+        cola.sort((a, b) => {
+            if (a.frecuencia !== b.frecuencia) return a.frecuencia - b.frecuencia;
+            return a.orden - b.orden; // el que apareció primero va antes (menor orden)
+        });
+    }
+
+    // Registrar pasos del procedimiento de Huffman
+    let pasosProcedimiento = [];
+
+    // Paso inicial: las letras individuales ordenadas
+    ordenarCola();
+    pasosProcedimiento.push(cola.map(n => ({
+        etiqueta: n.etiquetaCombinada,
+        frecuencia: n.frecuencia,
+        total: total
+    })));
+
+    // Algoritmo de Huffman con registro de pasos
     while (cola.length > 1) {
-        cola.sort((a, b) => a.frecuencia - b.frecuencia);
+        ordenarCola();
         const izq = cola.shift();
         const der = cola.shift();
+
+        // Etiqueta combinada
+        const etiquetaNueva = `(${izq.etiquetaCombinada}+${der.etiquetaCombinada})`;
+
         const nuevo = {
             letra: null,
             frecuencia: izq.frecuencia + der.frecuencia,
             izq,
             der,
-            esHoja: false
+            esHoja: false,
+            orden: contadorOrden++, // nodos combinados van después
+            etiquetaCombinada: etiquetaNueva
         };
         cola.push(nuevo);
+
+        // Registrar el estado de la cola después de combinar
+        ordenarCola();
+        pasosProcedimiento.push(cola.map(n => ({
+            etiqueta: n.etiquetaCombinada,
+            frecuencia: n.frecuencia,
+            total: total
+        })));
     }
 
     huffmanArbol = cola[0];
@@ -1429,75 +1472,12 @@ function insertarHuffman() {
     generarCodigosHuffman(huffmanArbol, '');
 
     renderizarArbolD3('Huffman', huffmanArbol);
+    mostrarTablaHuffmanProcedimiento(pasosProcedimiento, total);
     mostrarTablaHuffman();
     mostrarMensajeResiduo('Huffman',
         `Árbol de Huffman construido para <strong>"${palabra}"</strong> — ${Object.keys(huffmanLetras).length} letras distintas, ${palabra.length} caracteres totales`, 'success');
 }
 
-function eliminarHuffmanLetra() {
-    const letra = prompt('Ingrese la letra (hoja) a eliminar del árbol:');
-    if (!letra) return;
-    const letraUpper = letra.trim().toUpperCase();
-
-    if (!letraUpper || letraUpper.length !== 1 || !/^[A-Z]$/.test(letraUpper)) {
-        mostrarMensajeResiduo('Huffman', 'Ingrese una sola letra válida (A-Z)', 'warning');
-        return;
-    }
-
-    if (!huffmanArbol) {
-        mostrarMensajeResiduo('Huffman', 'No hay árbol construido', 'warning');
-        return;
-    }
-
-    if (!huffmanLetras[letraUpper]) {
-        mostrarMensajeResiduo('Huffman', `La letra "${letraUpper}" no existe en el árbol`, 'danger');
-        return;
-    }
-
-    // Eliminar la letra de las frecuencias
-    delete huffmanLetras[letraUpper];
-    delete huffmanCodigos[letraUpper];
-
-    // Recalcular la palabra original sin esa letra
-    huffmanPalabraOriginal = huffmanPalabraOriginal.split('').filter(c => c !== letraUpper).join('');
-
-    // Re-construir el árbol
-    if (Object.keys(huffmanLetras).length < 2) {
-        if (Object.keys(huffmanLetras).length === 0) {
-            huffmanArbol = null;
-            huffmanCodigos = {};
-            huffmanPalabraOriginal = '';
-            renderizarArbolD3('Huffman', null);
-            mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada. El árbol está vacío.`, 'info');
-        } else {
-            huffmanArbol = null;
-            huffmanCodigos = {};
-            renderizarArbolD3('Huffman', null);
-            mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada. Se necesitan al menos 2 letras distintas.`, 'warning');
-        }
-        const tabla = document.getElementById('tablaHuffman');
-        if (tabla) tabla.classList.add('d-none');
-        return;
-    }
-
-    // Reconstruir
-    let cola = Object.entries(huffmanLetras).map(([l, f]) => ({
-        letra: l, frecuencia: f, izq: null, der: null, esHoja: true
-    }));
-    while (cola.length > 1) {
-        cola.sort((a, b) => a.frecuencia - b.frecuencia);
-        const izqN = cola.shift();
-        const derN = cola.shift();
-        cola.push({ letra: null, frecuencia: izqN.frecuencia + derN.frecuencia, izq: izqN, der: derN, esHoja: false });
-    }
-    huffmanArbol = cola[0];
-    huffmanCodigos = {};
-    generarCodigosHuffman(huffmanArbol, '');
-
-    renderizarArbolD3('Huffman', huffmanArbol);
-    mostrarTablaHuffman();
-    mostrarMensajeResiduo('Huffman', `Letra "${letraUpper}" eliminada y árbol reconstruido`, 'success');
-}
 
 function generarCodigosHuffman(nodo, codigo) {
     if (!nodo) return;
@@ -1600,6 +1580,8 @@ function limpiarHuffman() {
     mostrarMensajeResiduo('Huffman', 'Árbol y frecuencias limpiados', 'info');
     const tabla = document.getElementById('tablaHuffman');
     if (tabla) tabla.classList.add('d-none');
+    const tablaProc = document.getElementById('tablaHuffmanProcedimiento');
+    if (tablaProc) tablaProc.classList.add('d-none');
 }
 
 function guardarHuffman() {
@@ -1615,6 +1597,53 @@ function guardarHuffman() {
 
 function cargarHuffman() {
     document.getElementById('fileInputHuffman').click();
+}
+
+function mostrarTablaHuffmanProcedimiento(pasos, total) {
+    const container = document.getElementById('tablaHuffmanProcedimientoBody');
+    const wrapper = document.getElementById('tablaHuffmanProcedimiento');
+    if (!container || !wrapper) return;
+
+    let html = '';
+
+    pasos.forEach((paso, idx) => {
+        const titulo = idx === 0
+            ? 'Letras iniciales (ordenadas por frecuencia)'
+            : `Paso ${idx}: combinar los dos de menor frecuencia`;
+
+        html += `<div class="mb-3">`;
+        html += `<small class="text-muted fw-semibold">${titulo}</small>`;
+        html += `<table class="table table-sm table-bordered mb-0 mt-1">`;
+        html += `<thead class="table-dark"><tr><th>Elemento</th><th>Frecuencia</th></tr></thead>`;
+        html += `<tbody>`;
+
+        // Mostrar de abajo hacia arriba: el de menor frecuencia (primero en la cola)
+        // debe quedar en la fila de más abajo de la tabla.
+        // "paso" ya está ordenado de menor a mayor frecuencia,
+        // así que lo invertimos para que el mayor quede arriba y el menor abajo.
+        const pasoInvertido = [...paso].reverse();
+
+        pasoInvertido.forEach(item => {
+            const fraccion = `${item.frecuencia}/${total}`;
+            html += `<tr>`;
+            html += `<td><strong>${item.etiqueta}</strong></td>`;
+            html += `<td>${fraccion}</td>`;
+            html += `</tr>`;
+        });
+
+        // Fila de suma total
+        const sumaFrec = paso.reduce((s, item) => s + item.frecuencia, 0);
+        html += `<tr class="table-secondary fw-bold">`;
+        html += `<td>Σ Total</td>`;
+        html += `<td>${sumaFrec}/${total} = 1</td>`;
+        html += `</tr>`;
+
+        html += `</tbody></table>`;
+        html += `</div>`;
+    });
+
+    container.innerHTML = html;
+    wrapper.classList.remove('d-none');
 }
 
 function mostrarTablaHuffman() {
