@@ -401,7 +401,7 @@ function buscarExpTotal() {
                 const ubicacion = item.tipo === 'col' ? `Colisión #${item.colrow + 1}` : `Fila ${item.row + 1}`;
                 mostrarMensajeET(
                     `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
-                    `<span class="text-success fw-bold">✔ Clave "${clave}" encontrada en ${ubicacion}</span>`,
+                    `<span class="text-success fw-bold">Clave "${clave}" encontrada en ${ubicacion}</span>`,
                     'success'
                 );
 
@@ -413,7 +413,7 @@ function buscarExpTotal() {
             } else {
                 mostrarMensajeET(
                     `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
-                    `<span class="text-danger fw-bold">✘ Clave "${clave}" no encontrada</span>`,
+                    `<span class="text-danger fw-bold">Clave "${clave}" no encontrada</span>`,
                     'danger'
                 );
                 if (header) header.classList.remove('cubeta-header-activa');
