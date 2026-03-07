@@ -255,66 +255,6 @@ body {
 }
 
 /* ============================================
-   Hash Cards - Colores Sobrios
-   ============================================ */
-
-/* Hash Mod - Verde Pastel */
-.card-hash-mod .card-icon {
-    background: #E2F0D9;
-}
-.card-hash-mod .card-icon i {
-    color: #70AD47;
-}
-.card-hash-mod:hover .card-icon {
-    background: #A9D18E;
-}
-.card-hash-mod:hover {
-    border-color: #A9D18E;
-}
-
-/* Hash Cuadrado - Naranja Pastel */
-.card-hash-cuadrado .card-icon {
-    background: #FCE4D6;
-}
-.card-hash-cuadrado .card-icon i {
-    color: #C65911;
-}
-.card-hash-cuadrado:hover .card-icon {
-    background: #F4B183;
-}
-.card-hash-cuadrado:hover {
-    border-color: #F4B183;
-}
-
-/* Hash Plegamiento - Azul Pastel */
-.card-hash-plegamiento .card-icon {
-    background: #DEEBF7;
-}
-.card-hash-plegamiento .card-icon i {
-    color: #5B9BD5;
-}
-.card-hash-plegamiento:hover .card-icon {
-    background: #BDD7EE;
-}
-.card-hash-plegamiento:hover {
-    border-color: #BDD7EE;
-}
-
-/* Hash Truncamiento - Amarillo Pastel */
-.card-hash-truncamiento .card-icon {
-    background: #FFF2CC;
-}
-.card-hash-truncamiento .card-icon i {
-    color: #BF9000;
-}
-.card-hash-truncamiento:hover .card-icon {
-    background: #FFD966;
-}
-.card-hash-truncamiento:hover {
-    border-color: #FFD966;
-}
-
-/* ============================================
    Footer
    ============================================ */
 .footer-section {

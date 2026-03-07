@@ -106,12 +106,21 @@
     background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
-/* Estado: Insertando - Azul brillante */
+/* Estado: Insertando - Amarillo (consistente con animación de búsqueda) */
 .clave-row.clave-insertando {
-    background: #007BFF;
-    border-color: #0069D9;
+    background: #FFC107;
+    border-color: #E0A800;
     animation: slideIn 0.4s ease;
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.clave-row.clave-insertando .clave-valor-vertical,
+.clave-row.clave-insertando .clave-index-left {
+    color: #212529;
+}
+
+.clave-row.clave-insertando .clave-index-left {
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
 }
 
 /* Estado: Insertada - Verde brillante */
@@ -260,10 +269,17 @@
 }
 
 .clave-index {
-    font-size: 0.65rem;
-    color: #8497B0;
-    font-weight: 500;
-    margin-bottom: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    border-radius: 50%;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
 }
 
 .clave-valor {
@@ -295,6 +311,11 @@
     color: #212529;
 }
 
+.clave-buscando .clave-index {
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
+    color: #212529;
+}
+
 /* Estado: Encontrada */
 .clave-encontrada {
     background: #28A745 !important;
@@ -305,6 +326,10 @@
 .clave-encontrada .clave-valor,
 .clave-encontrada .clave-index {
     color: #FFFFFF;
+}
+
+.clave-encontrada .clave-index {
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
 /* Estado: Descartada */
@@ -322,17 +347,28 @@
     color: #8497B0;
 }
 
-/* Estado: Insertando */
+.clave-descartada .clave-index,
+.clave-descartado .clave-index {
+    background: linear-gradient(135deg, #ADB5BD 0%, #6C757D 100%);
+    color: white;
+}
+
+/* Estado: Insertando - Amarillo (consistente con transición de búsqueda) */
 .clave-insertando {
-    background: #007BFF !important;
-    border-color: #0069D9 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
     animation: slideIn 0.4s ease;
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .clave-insertando .clave-valor,
 .clave-insertando .clave-index {
-    color: #FFFFFF;
+    color: #212529;
+}
+
+.clave-insertando .clave-index {
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
+    color: #212529;
 }
 
 /* Estado: Insertada */
@@ -346,6 +382,10 @@
 .clave-insertada .clave-valor,
 .clave-insertada .clave-index {
     color: #FFFFFF;
+}
+
+.clave-insertada .clave-index {
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
 .clave-moviendo {
@@ -363,6 +403,10 @@
 .clave-eliminando .clave-valor,
 .clave-eliminando .clave-index {
     color: #FFFFFF;
+}
+
+.clave-eliminando .clave-index {
+    background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
 }
 
 @keyframes pulse {
@@ -789,8 +833,8 @@
    ============================================ */
 .clave-row-vacia {
     background: #F8F9FA;
-    border-style: dashed;
-    opacity: 0.6;
+    border-style: solid;
+    opacity: 0.7;
 }
 
 .clave-row-vacia .clave-index-left {
@@ -808,12 +852,13 @@
 
 .clave-box-vacia {
     background: #F8F9FA;
-    border-style: dashed;
-    opacity: 0.6;
+    border-style: solid;
+    opacity: 0.7;
 }
 
 .clave-box-vacia .clave-index {
-    color: #ADB5BD;
+    background: linear-gradient(135deg, #ADB5BD 0%, #6C757D 100%);
+    font-size: 0.55rem;
 }
 
 .clave-box-vacia .clave-valor {
@@ -826,10 +871,19 @@
 }
 
 .clave-box-ellipsis {
-    border-style: none;
-    background: transparent;
+    border: 1px solid #D6DCE5;
+    border-right: none;
+    background: #FFFFFF;
     opacity: 1;
     min-width: 30px;
+}
+
+.clave-box-ellipsis .clave-index {
+    background: transparent;
+    color: transparent;
+    min-width: 0;
+    height: 0;
+    margin-bottom: 0;
 }
 
 .clave-box-ellipsis .clave-valor {
@@ -839,7 +893,7 @@
 }
 
 .clave-box-ellipsis:hover {
-    background: transparent;
-    border-color: transparent;
+    background: #FFFFFF;
+    border-color: #D6DCE5;
 }
 

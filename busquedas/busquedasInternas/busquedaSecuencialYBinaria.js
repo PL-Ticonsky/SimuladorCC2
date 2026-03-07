@@ -110,49 +110,68 @@ function renderizarEstructura(tipo) {
     const hayDatos = indicesConDatos.length > 0;
 
     if (tipo === 'Secuencial') {
+        // Mismo diseño que renderizarTablaHashSimple (prueba lineal)
         let html = '<div class="estructura-vertical">';
+
         for (let j = 0; j < indicesOrdenados.length; j++) {
             const i = indicesOrdenados[j];
             const valor = arreglo[i];
             const vacia = valor === null;
 
-            // Puntos suspensivos si hay hueco
-            if (j > 0 && indicesOrdenados[j] - indicesOrdenados[j - 1] > 1 && !hayDatos) {
-                html += `<div class="clave-row hash-row hash-ellipsis">
-                            <span class="clave-valor-vertical text-muted">...</span>
-                         </div>`;
+            // Mostrar puntos suspensivos si hay un hueco entre el índice anterior y el actual
+            // Solo mostrar puntos suspensivos si NO hay datos insertados aún
+            if (j > 0) {
+                const indiceAnterior = indicesOrdenados[j - 1];
+                if (i - indiceAnterior > 1) {
+                    if (!hayDatos) {
+                        html += `<div class="clave-row hash-row hash-ellipsis">
+                                    <span class="clave-valor-vertical text-muted">...</span>
+                                 </div>`;
+                    }
+                }
             }
 
-            html += `<div class="clave-row ${vacia ? 'clave-row-vacia hash-espacio-vacio' : ''}" data-index="${i}">
+            // Mostrar índice base 1 (i + 1) — mismo diseño que hash prueba lineal (sin clases especiales para vacíos)
+            html += `<div class="clave-row hash-row" data-index="${i}"${vacia ? ' data-empty="true"' : ''}>
                         <span class="clave-index-left">${i + 1}</span>
-                        <span class="clave-valor-vertical">${vacia ? '' : valor}</span>
+                        <span class="clave-valor-vertical ${vacia ? 'text-muted' : ''}">${vacia ? '' : valor}</span>
                      </div>`;
         }
+
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} | Tamaño: ${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     } else {
+        // Diseño horizontal para binaria, con el mismo patrón de puntos suspensivos
         let html = '<div class="estructura-horizontal">';
+
         for (let j = 0; j < indicesOrdenados.length; j++) {
             const i = indicesOrdenados[j];
             const valor = arreglo[i];
             const vacia = valor === null;
 
-            // Puntos suspensivos si hay hueco
-            if (j > 0 && indicesOrdenados[j] - indicesOrdenados[j - 1] > 1 && !hayDatos) {
-                html += `<div class="clave-box clave-box-vacia clave-box-ellipsis">
-                            <span class="clave-index">&nbsp;</span>
-                            <span class="clave-valor text-muted">…</span>
-                         </div>`;
+            // Mostrar puntos suspensivos si hay un hueco entre el índice anterior y el actual
+            // Solo mostrar puntos suspensivos si NO hay datos insertados aún
+            if (j > 0) {
+                const indiceAnterior = indicesOrdenados[j - 1];
+                if (i - indiceAnterior > 1) {
+                    if (!hayDatos) {
+                        html += `<div class="clave-box clave-box-ellipsis">
+                                    <span class="clave-index">&nbsp;</span>
+                                    <span class="clave-valor text-muted">…</span>
+                                 </div>`;
+                    }
+                }
             }
 
-            html += `<div class="clave-box ${vacia ? 'clave-box-vacia' : ''}" data-index="${i}">
+            html += `<div class="clave-box" data-index="${i}"${vacia ? ' data-empty="true"' : ''}>
                         <span class="clave-index">${i + 1}</span>
-                        <span class="clave-valor">${vacia ? '' : valor}</span>
+                        <span class="clave-valor ${vacia ? 'text-muted' : ''}">${vacia ? '' : valor}</span>
                      </div>`;
         }
+
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} | Tamaño: ${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     }
 }
@@ -180,6 +199,7 @@ function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
     const indicesOrdenados = Array.from(indicesMostrar).sort((a, b) => a - b);
 
     if (tipo === 'Secuencial') {
+        // Mismo diseño que renderizarTablaHashSimple (prueba lineal)
         let html = '<div class="estructura-vertical">';
         for (let j = 0; j < indicesOrdenados.length; j++) {
             const i = indicesOrdenados[j];
@@ -187,13 +207,13 @@ function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
             const vacia = valor === null;
             const esNuevo = esInsercion && valor === claveNueva;
 
-            html += `<div class="clave-row ${vacia ? 'clave-row-vacia hash-espacio-vacio' : ''} ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}">
+            html += `<div class="clave-row hash-row ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}"${vacia ? ' data-empty="true"' : ''}>
                         <span class="clave-index-left">${i + 1}</span>
-                        <span class="clave-valor-vertical">${vacia ? '' : valor}</span>
+                        <span class="clave-valor-vertical ${vacia ? 'text-muted' : ''}">${vacia ? '' : valor}</span>
                      </div>`;
         }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} | Tamaño: ${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     } else {
         let html = '<div class="estructura-horizontal">';
@@ -203,13 +223,13 @@ function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
             const vacia = valor === null;
             const esNuevo = esInsercion && valor === claveNueva;
 
-            html += `<div class="clave-box ${vacia ? 'clave-box-vacia' : ''} ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}">
+            html += `<div class="clave-box ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}"${vacia ? ' data-empty="true"' : ''}>
                         <span class="clave-index">${i + 1}</span>
-                        <span class="clave-valor">${vacia ? '' : valor}</span>
+                        <span class="clave-valor ${vacia ? 'text-muted' : ''}">${vacia ? '' : valor}</span>
                      </div>`;
         }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} | Tamaño: ${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     }
 
@@ -369,7 +389,7 @@ function buscarSecuencial() {
     });
 
     // Only scan occupied rows
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not(.clave-row-vacia)');
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not([data-empty]):not(.hash-ellipsis)');
 
     if (boxes.length === 0) {
         mostrarMensajeSecuencial('La estructura está vacía', 'warning');
@@ -461,7 +481,7 @@ function eliminarSecuencial() {
         }
     }
 
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not(.clave-row-vacia)');
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not([data-empty]):not(.hash-ellipsis)');
 
     if (boxes.length === 0) {
         mostrarMensajeSecuencial('La estructura está vacía', 'warning');
@@ -578,6 +598,11 @@ function insertarBinaria() {
         limpiarTimeouts();
     }
 
+    // Limpiar resaltados previos de binaria
+    document.querySelectorAll('#visualizacionBinaria .clave-box').forEach(el => {
+        el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada', 'clave-eliminando', 'clave-insertando', 'clave-insertada', 'clave-moviendo');
+    });
+
     if (!sbInicializado) {
         mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
         return;
@@ -642,7 +667,7 @@ function buscarBinaria() {
     }
 
     document.querySelectorAll('#visualizacionBinaria .clave-box').forEach(el => {
-        el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada');
+        el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada', 'clave-eliminando', 'clave-insertando', 'clave-insertada');
     });
 
     const arr = [...estructuraDatos].sort(compararAlfanumerico);
@@ -723,6 +748,11 @@ function eliminarBinaria() {
     if (animacionEnCurso) {
         limpiarTimeouts();
     }
+
+    // Limpiar resaltados previos de binaria
+    document.querySelectorAll('#visualizacionBinaria .clave-box').forEach(el => {
+        el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada', 'clave-eliminando', 'clave-insertando', 'clave-insertada');
+    });
 
     if (!sbInicializado) {
         mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
