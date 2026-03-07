@@ -68,11 +68,21 @@
                     </div>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-4">
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="tamanoEstructuraSecuencial" class="form-label fw-semibold">Tamaño de estructura</label>
+                        <input type="number" class="form-control" id="tamanoEstructuraSecuencial" min="1" max="100" value="10">
+                    </div>
+                    <div class="col-md-3">
                         <label for="tamanoSecuencial" class="form-label fw-semibold">Cantidad de dígitos por clave</label>
                         <input type="number" class="form-control" id="tamanoSecuencial" min="1" max="20" value="2">
                     </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraSecuencial()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
                     <div class="col-md-5">
                         <label for="claveSecuencial" class="form-label fw-semibold">Clave</label>
                         <input type="text" class="form-control" id="claveSecuencial" placeholder="Ingrese una clave numérica">
@@ -95,7 +105,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Visualización de la Estructura</label>
                     <div id="visualizacionSecuencial" class="estructura-container border rounded p-3 bg-light">
-                        <div class="text-muted text-center">La estructura está vacía</div>
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
                     </div>
                 </div>
 
@@ -113,11 +123,21 @@
                     </div>
                 </div>
 
-                <div class="row mb-4">
-                    <div class="col-md-4">
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="tamanoEstructuraBinaria" class="form-label fw-semibold">Tamaño de estructura</label>
+                        <input type="number" class="form-control" id="tamanoEstructuraBinaria" min="1" max="100" value="10">
+                    </div>
+                    <div class="col-md-3">
                         <label for="tamanoBinaria" class="form-label fw-semibold">Cantidad de dígitos por clave</label>
                         <input type="number" class="form-control" id="tamanoBinaria" min="1" max="20" value="2">
                     </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraBinaria()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
                     <div class="col-md-5">
                         <label for="claveBinaria" class="form-label fw-semibold">Clave</label>
                         <input type="text" class="form-control" id="claveBinaria" placeholder="Ingrese una clave numérica">
@@ -140,7 +160,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Visualización de la Estructura</label>
                     <div id="visualizacionBinaria" class="estructura-container border rounded p-3 bg-light">
-                        <div class="text-muted text-center">La estructura está vacía</div>
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
                     </div>
                 </div>
 

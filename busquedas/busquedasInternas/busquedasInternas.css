@@ -74,48 +74,60 @@
     border-top-color: #BDD7EE;
 }
 
-/* Estado: Buscando - Amarillo Pastel */
+/* Estado: Buscando - Amarillo/Naranja brillante */
 .clave-row.clave-buscando {
-    background: #FFF2CC;
-    border-color: #FFD966;
+    background: #FFC107;
+    border-color: #E0A800;
     animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .clave-row.clave-buscando .clave-valor-vertical,
 .clave-row.clave-buscando .clave-index-left {
-    color: #806000;
+    color: #212529;
 }
 
 .clave-row.clave-buscando .clave-index-left {
-    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%);
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
 }
 
-/* Estado: Encontrada - Verde Pastel */
+/* Estado: Encontrada - Verde brillante */
 .clave-row.clave-encontrada {
-    background: #E2F0D9;
-    border-color: #A9D18E;
+    background: #28A745;
+    border-color: #1E7E34;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .clave-row.clave-encontrada .clave-valor-vertical {
-    color: #375623;
+    color: #FFFFFF;
 }
 
 .clave-row.clave-encontrada .clave-index-left {
-    background: linear-gradient(135deg, #A9D18E 0%, #70AD47 100%);
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
-/* Estado: Insertando - Azul Pastel */
+/* Estado: Insertando - Azul brillante */
 .clave-row.clave-insertando {
-    background: #DEEBF7;
-    border-color: #BDD7EE;
+    background: #007BFF;
+    border-color: #0069D9;
     animation: slideIn 0.4s ease;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
 }
 
-/* Estado: Insertada - Verde Pastel */
+/* Estado: Insertada - Verde brillante */
 .clave-row.clave-insertada {
-    background: #E2F0D9;
-    border-color: #A9D18E;
+    background: #28A745;
+    border-color: #1E7E34;
     animation: highlight 0.5s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
+.clave-row.clave-insertada .clave-valor-vertical {
+    color: #FFFFFF;
+}
+
+.clave-row.clave-insertada .clave-index-left {
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
 /* Espacio vacío en Hash (indicador de posiciones intermedias) */
@@ -182,19 +194,20 @@
     animation: moveDown 0.4s ease;
 }
 
-/* Estado: Eliminando - Naranja/Rojo Pastel */
+/* Estado: Eliminando - Rojo brillante */
 .clave-row.clave-eliminando {
-    background: #FCE4D6;
-    border-color: #F4B183;
+    background: #DC3545;
+    border-color: #C82333;
     animation: fadeOut 0.5s ease forwards;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
 }
 
 .clave-row.clave-eliminando .clave-valor-vertical {
-    color: #843C0C;
+    color: #FFFFFF;
 }
 
 .clave-row.clave-eliminando .clave-index-left {
-    background: linear-gradient(135deg, #F4B183 0%, #C65911 100%);
+    background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
 }
 
 @keyframes moveDown {
@@ -271,25 +284,27 @@
 
 /* Estado: Buscando */
 .clave-buscando {
-    background: #FFF2CC !important;
-    border-color: #FFD966 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
     animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .clave-buscando .clave-valor,
 .clave-buscando .clave-index {
-    color: #806000;
+    color: #212529;
 }
 
 /* Estado: Encontrada */
 .clave-encontrada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .clave-encontrada .clave-valor,
 .clave-encontrada .clave-index {
-    color: #375623;
+    color: #FFFFFF;
 }
 
 /* Estado: Descartada */
@@ -309,16 +324,28 @@
 
 /* Estado: Insertando */
 .clave-insertando {
-    background: #DEEBF7 !important;
-    border-color: #BDD7EE !important;
+    background: #007BFF !important;
+    border-color: #0069D9 !important;
     animation: slideIn 0.4s ease;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+}
+
+.clave-insertando .clave-valor,
+.clave-insertando .clave-index {
+    color: #FFFFFF;
 }
 
 /* Estado: Insertada */
 .clave-insertada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
     animation: highlight 0.5s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
+.clave-insertada .clave-valor,
+.clave-insertada .clave-index {
+    color: #FFFFFF;
 }
 
 .clave-moviendo {
@@ -327,14 +354,15 @@
 
 /* Estado: Eliminando */
 .clave-eliminando {
-    background: #FCE4D6 !important;
-    border-color: #F4B183 !important;
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
     animation: fadeOut 0.5s ease forwards;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
 }
 
 .clave-eliminando .clave-valor,
 .clave-eliminando .clave-index {
-    color: #843C0C;
+    color: #FFFFFF;
 }
 
 @keyframes pulse {
@@ -455,27 +483,33 @@
 }
 
 .matriz-buscando {
-    background: #FFF2CC !important;
-    border-color: #FFD966 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
     animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .matriz-encontrada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
-    color: #375623 !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .matriz-insertada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
     animation: highlight 0.5s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+    color: #FFFFFF !important;
 }
 
 .matriz-eliminando {
-    background: #FCE4D6 !important;
-    border-color: #F4B183 !important;
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
     animation: fadeOut 0.5s ease forwards;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+    color: #FFFFFF !important;
 }
 
 /* ============================================
@@ -565,29 +599,34 @@
 }
 
 .lista-buscando {
-    background: #FFF2CC !important;
-    border-color: #FFD966 !important;
-    color: #806000 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
+    color: #212529 !important;
     animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .lista-encontrada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
-    color: #375623 !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .lista-insertada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
     animation: slideIn 0.4s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+    color: #FFFFFF !important;
 }
 
 .lista-eliminando {
-    background: #FCE4D6 !important;
-    border-color: #F4B183 !important;
-    color: #843C0C !important;
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
+    color: #FFFFFF !important;
     animation: fadeOut 0.5s ease forwards;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
 }
 
 .lista-fila.lista-buscando {
@@ -691,53 +730,116 @@
 /* Estados para lista enlazada vertical */
 .lista-celda-principal.lista-buscando,
 .lista-nodo-externo.lista-buscando {
-    background: #FFF2CC !important;
-    border-color: #FFD966 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
     animation: pulse 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
 .lista-celda-principal.lista-buscando .lista-valor-principal,
 .lista-celda-principal.lista-buscando .clave-index-left {
-    color: #806000;
+    color: #212529;
 }
 
 .lista-celda-principal.lista-buscando .clave-index-left {
-    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%);
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
 }
 
 .lista-celda-principal.lista-encontrada,
 .lista-nodo-externo.lista-encontrada {
-    background: #C6EFCE !important;
-    border-color: #70AD47 !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .lista-celda-principal.lista-encontrada .lista-valor-principal {
-    color: #1D6B2F;
+    color: #FFFFFF;
 }
 
 .lista-celda-principal.lista-encontrada .clave-index-left {
-    background: linear-gradient(135deg, #70AD47 0%, #375623 100%);
+    background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
 .lista-celda-principal.lista-insertada,
 .lista-nodo-externo.lista-insertada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
     animation: slideIn 0.4s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
 .lista-celda-principal.lista-eliminando,
 .lista-nodo-externo.lista-eliminando {
-    background: #FCE4D6 !important;
-    border-color: #F4B183 !important;
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
     animation: fadeOut 0.5s ease forwards;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
 }
 
 .lista-celda-principal.lista-eliminando .lista-valor-principal {
-    color: #843C0C;
+    color: #FFFFFF;
 }
 
 .lista-celda-principal.lista-eliminando .clave-index-left {
-    background: linear-gradient(135deg, #F4B183 0%, #C65911 100%);
+    background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
+}
+
+/* ============================================
+   Estructura Estática - Celdas vacías
+   ============================================ */
+.clave-row-vacia {
+    background: #F8F9FA;
+    border-style: dashed;
+    opacity: 0.6;
+}
+
+.clave-row-vacia .clave-index-left {
+    background: linear-gradient(135deg, #ADB5BD 0%, #6C757D 100%);
+}
+
+.clave-row-vacia .clave-valor-vertical {
+    color: transparent;
+}
+
+.clave-row-vacia:hover {
+    background: #F8F9FA;
+    border-color: #D6DCE5;
+}
+
+.clave-box-vacia {
+    background: #F8F9FA;
+    border-style: dashed;
+    opacity: 0.6;
+}
+
+.clave-box-vacia .clave-index {
+    color: #ADB5BD;
+}
+
+.clave-box-vacia .clave-valor {
+    color: transparent;
+}
+
+.clave-box-vacia:hover {
+    background: #F8F9FA;
+    border-color: #D6DCE5;
+}
+
+.clave-box-ellipsis {
+    border-style: none;
+    background: transparent;
+    opacity: 1;
+    min-width: 30px;
+}
+
+.clave-box-ellipsis .clave-valor {
+    color: #8497B0 !important;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+}
+
+.clave-box-ellipsis:hover {
+    background: transparent;
+    border-color: transparent;
 }
 

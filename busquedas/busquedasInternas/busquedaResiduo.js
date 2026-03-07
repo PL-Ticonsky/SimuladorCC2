@@ -1987,10 +1987,15 @@ function resaltarNodoD3(tipo, clave, estado) {
             const circle = n.querySelector('circle');
             if (circle) {
                 const colorOriginal = circle.getAttribute('fill');
-                circle.setAttribute('fill', estado === 'encontrado' ? '#70AD47' : '#E74C3C');
+                const colorEstado = estado === 'encontrado' ? '#28A745' : '#DC3545';
+                circle.setAttribute('fill', colorEstado);
+                circle.setAttribute('stroke', estado === 'encontrado' ? '#1E7E34' : '#C82333');
+                circle.setAttribute('stroke-width', '4');
                 setTimeout(() => {
                     circle.setAttribute('fill', colorOriginal);
-                }, 2000);
+                    circle.setAttribute('stroke', '#5B9BD5');
+                    circle.setAttribute('stroke-width', '2');
+                }, 2500);
             }
         }
     });
@@ -2009,9 +2014,14 @@ function resaltarNodoD3Temporal(tipo, clave, color, duracion) {
             const circle = n.querySelector('circle');
             if (circle) {
                 const colorOriginal = circle.getAttribute('fill');
+                const strokeOriginal = circle.getAttribute('stroke') || '#5B9BD5';
                 circle.setAttribute('fill', color);
+                circle.setAttribute('stroke', '#E0A800');
+                circle.setAttribute('stroke-width', '4');
                 setTimeout(() => {
                     circle.setAttribute('fill', colorOriginal);
+                    circle.setAttribute('stroke', strokeOriginal);
+                    circle.setAttribute('stroke-width', '2');
                 }, duracion || 400);
             }
         }

@@ -77,25 +77,56 @@
     font-weight: 700;
 }
 
-/* Animación insertada */
+/* Animación insertada - Verde brillante */
 .cubeta-insertada {
-    background: #E2F0D9 !important;
-    border-color: #A9D18E !important;
-    color: #375623 !important;
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
     animation: highlightCubeta 0.6s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
-/* Animación buscando */
+/* Animación buscando - Amarillo/Naranja brillante */
 .cubeta-buscando {
-    background: #FFF2CC !important;
-    border-color: #FFD966 !important;
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
+    color: #212529 !important;
     animation: pulseCubeta 0.5s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+/* Animación eliminada (estática) */
+.cubeta-eliminada {
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
+    color: #FFFFFF !important;
+    animation: highlightCubeta 0.6s ease;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+}
+
+/* Animación encontrada - Verde intenso */
+.cubeta-encontrada-anim {
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
+    animation: highlightCubetaFound 1s ease infinite;
+    box-shadow: 0 0 16px rgba(40, 167, 69, 0.6);
+}
+
+/* Animación eliminando - Rojo intenso con fadeout */
+.cubeta-eliminada-anim {
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
+    color: #FFFFFF !important;
+    animation: pulseCubetaRed 0.5s ease infinite;
+    box-shadow: 0 0 14px rgba(220, 53, 69, 0.6);
 }
 
 /* Resaltar columna de cubeta destino */
 .cubeta-header-activa {
-    background: linear-gradient(135deg, #FFD966 0%, #BF9000 100%) !important;
-    color: #44546A !important;
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%) !important;
+    color: #212529 !important;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
 }
 
 /* Barra de D.O. */
@@ -193,9 +224,19 @@
     50% { transform: scale(1.15); }
 }
 
+@keyframes highlightCubetaFound {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(40, 167, 69, 0.3); }
+    50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(40, 167, 69, 0.7); }
+}
+
 @keyframes pulseCubeta {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(255, 193, 7, 0.3); }
+    50% { transform: scale(1.08); box-shadow: 0 0 14px rgba(255, 193, 7, 0.6); }
+}
+
+@keyframes pulseCubetaRed {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 6px rgba(220, 53, 69, 0.3); }
+    50% { transform: scale(1.08); box-shadow: 0 0 14px rgba(220, 53, 69, 0.6); }
 }
 
 @keyframes slideInColision {

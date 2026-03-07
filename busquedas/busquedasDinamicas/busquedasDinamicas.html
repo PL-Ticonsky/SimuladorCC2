@@ -41,10 +41,10 @@
                 <button class="nav-link" id="tab-expParcial" data-bs-toggle="pill" data-bs-target="#panel-expParcial" type="button" role="tab">Expansión Parcial</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" id="tab-redTotal" type="button" role="tab" aria-disabled="true">Reducción Total</button>
+                <button class="nav-link" id="tab-redTotal" data-bs-toggle="pill" data-bs-target="#panel-redTotal" type="button" role="tab">Reducción Total</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link disabled" id="tab-redParcial" type="button" role="tab" aria-disabled="true">Reducción Parcial</button>
+                <button class="nav-link" id="tab-redParcial" data-bs-toggle="pill" data-bs-target="#panel-redParcial" type="button" role="tab">Reducción Parcial</button>
             </li>
         </ul>
     </nav>
@@ -101,6 +101,7 @@
                     <div class="d-flex justify-content-between mb-4 flex-wrap">
                         <div class="d-flex gap-2 flex-wrap">
                             <button class="btn btn-success" onclick="insertarExpTotal()">Insertar</button>
+                            <button class="btn btn-primary" onclick="buscarExpTotal()">Buscar</button>
                             <button class="btn btn-warning" onclick="limpiarExpTotal()">Limpiar</button>
                         </div>
                         <div class="d-flex gap-2 flex-wrap">
@@ -164,6 +165,7 @@
                     <div class="d-flex justify-content-between mb-4 flex-wrap">
                         <div class="d-flex gap-2 flex-wrap">
                             <button class="btn btn-success" onclick="insertarExpParcial()">Insertar</button>
+                            <button class="btn btn-primary" onclick="buscarExpParcial()">Buscar</button>
                             <button class="btn btn-warning" onclick="limpiarExpParcial()">Limpiar</button>
                         </div>
                         <div class="d-flex gap-2 flex-wrap">
@@ -184,6 +186,138 @@
             </section>
         </div>
 
+        <!-- ============================================================
+             Panel Reducción Total
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-redTotal" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Reducción Total</h3>
+                        <p class="panel-subtitle">Cargue una estructura de Expansión Total. Al eliminar, si D.O. &lt; 75 %, las cubetas se reducen a la mitad.</p>
+                    </div>
+                </div>
+
+                <!-- Botón de cargar inicial -->
+                <div id="redTotalCargarInicial" class="text-center py-4">
+                    <p class="text-muted mb-3">Cargue una estructura de <strong>Expansión Total</strong> para comenzar.</p>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="cargarRedTotal()">Cargar estructura</button>
+                </div>
+
+                <!-- Contenido oculto hasta cargar -->
+                <div id="redTotalContenido" class="d-none">
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="cubetasRedTotal" class="form-label fw-semibold">Número de cubetas</label>
+                            <input type="number" class="form-control" id="cubetasRedTotal" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="registrosRedTotal" class="form-label fw-semibold">Registros por cubeta</label>
+                            <input type="number" class="form-control" id="registrosRedTotal" disabled>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-3" id="descripcionRedTotal">
+                        <span class="text-muted">Cargue una estructura para visualizar.</span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveRedTotal" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveRedTotal" placeholder="Ingrese la clave a eliminar o buscar">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-danger" onclick="eliminarRedTotal()">Eliminar</button>
+                            <button class="btn btn-primary" onclick="buscarRedTotal()">Buscar</button>
+                            <button class="btn btn-warning" onclick="limpiarRedTotal()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarRedTotal()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarRedTotal()">Guardar</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                        <div id="visualizacionRedTotal" class="estructura-container-din border rounded p-3 bg-light">
+                            <div class="text-muted text-center">Cargue una estructura para visualizar</div>
+                        </div>
+                    </div>
+
+                    <div id="mensajeRedTotal" class="alert d-none" role="alert"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================
+             Panel Reducción Parcial
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-redParcial" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Reducción Parcial</h3>
+                        <p class="panel-subtitle">Cargue una estructura de Expansión Parcial. Al eliminar, si D.O. &lt; 75 %, las cubetas se reducen parcialmente.</p>
+                    </div>
+                </div>
+
+                <!-- Botón de cargar inicial -->
+                <div id="redParcialCargarInicial" class="text-center py-4">
+                    <p class="text-muted mb-3">Cargue una estructura de <strong>Expansión Parcial</strong> para comenzar.</p>
+                    <button class="btn btn-outline-secondary btn-lg" onclick="cargarRedParcial()">Cargar estructura</button>
+                </div>
+
+                <!-- Contenido oculto hasta cargar -->
+                <div id="redParcialContenido" class="d-none">
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="cubetasRedParcial" class="form-label fw-semibold">Número de cubetas</label>
+                            <input type="number" class="form-control" id="cubetasRedParcial" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="registrosRedParcial" class="form-label fw-semibold">Registros por cubeta</label>
+                            <input type="number" class="form-control" id="registrosRedParcial" disabled>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-3" id="descripcionRedParcial">
+                        <span class="text-muted">Cargue una estructura para visualizar.</span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveRedParcial" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveRedParcial" placeholder="Ingrese la clave a eliminar o buscar">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-danger" onclick="eliminarRedParcial()">Eliminar</button>
+                            <button class="btn btn-primary" onclick="buscarRedParcial()">Buscar</button>
+                            <button class="btn btn-warning" onclick="limpiarRedParcial()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarRedParcial()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarRedParcial()">Guardar</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                        <div id="visualizacionRedParcial" class="estructura-container-din border rounded p-3 bg-light">
+                            <div class="text-muted text-center">Cargue una estructura para visualizar</div>
+                        </div>
+                    </div>
+
+                    <div id="mensajeRedParcial" class="alert d-none" role="alert"></div>
+                </div>
+            </section>
+        </div>
+
     </div><!-- /tab-content -->
 
 </div>
@@ -191,6 +325,8 @@
 <!-- Inputs ocultos para cargar archivos -->
 <input type="file" id="fileInputExpTotal" accept=".json" style="display: none;">
 <input type="file" id="fileInputExpParcial" accept=".json" style="display: none;">
+<input type="file" id="fileInputRedTotal" accept=".json" style="display: none;">
+<input type="file" id="fileInputRedParcial" accept=".json" style="display: none;">
 
 <!-- Bootstrap JS -->
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
@@ -198,6 +334,8 @@
 <!-- Scripts -->
 <script src="expansionTotal.js"></script>
 <script src="expansionParcial.js"></script>
+<script src="reduccionTotal.js"></script>
+<script src="reduccionParcial.js"></script>
 
 </body>
 </html>

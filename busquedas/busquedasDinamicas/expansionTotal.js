@@ -209,7 +209,6 @@ function insertarExpTotal() {
         return;
     }
 
-    // Verificar duplicado
     for (let c = 0; c < etCubetas; c++) {
         if (etMatriz[c].includes(clave) || etColisiones[c].includes(clave)) {
             mostrarMensajeET(`La clave "${clave}" ya existe en la estructura`, 'warning');
@@ -222,41 +221,66 @@ function insertarExpTotal() {
 
     const k   = parseInt(clave, 10);
     const col = k % etCubetas;
-    const res = insertarEnMatriz(clave);
 
-    // Calcular D.O. después de insertar
-    const { ocupados, total, porcentaje } = calcularDO();
-
-    renderizarET();
-    actualizarDescripcionET();
+    // Animación secuencial: recorrer celdas de la cubeta hasta insertar
     etAnimEnCurso = true;
+    renderizarET();
 
-    // Animación: resaltar la celda insertada
+    const celdasRecorrer = [];
+    for (let r = 0; r < etRegistros; r++) {
+        celdasRecorrer.push({ row: r, ocupada: etMatriz[col][r] !== null });
+    }
+
+    let delay = 250;
+    let insertIdx = celdasRecorrer.findIndex(c => !c.ocupada);
+    let esColision = insertIdx === -1;
+
     etTimeouts.push(setTimeout(() => {
-        let celda;
-        if (!res.colision) {
-            celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${res.col}"][data-row="${res.row}"]`);
-        } else {
-            celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${res.col}"][data-colrow="${res.colIdx}"]`);
-        }
-        // Resaltar encabezado de columna
-        const header = document.querySelector(`#visualizacionExpTotal .cubeta-header[data-col="${res.col}"]`);
+        const header = document.querySelector(`#visualizacionExpTotal .cubeta-header[data-col="${col}"]`);
         if (header) header.classList.add('cubeta-header-activa');
 
-        if (celda) celda.classList.add('cubeta-insertada');
+        const pasosAnimar = esColision ? celdasRecorrer.length : insertIdx + 1;
 
-        const colisionMsg = res.colision
-            ? ` — <span class="text-danger fw-bold">¡Colisión! Cubeta ${col} llena, desbordamiento #${res.colIdx + 1}</span>`
-            : '';
+        for (let i = 0; i < pasosAnimar; i++) {
+            etTimeouts.push(setTimeout(() => {
+                const celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-row="${celdasRecorrer[i].row}"]`);
+                if (celda) celda.classList.add('cubeta-buscando');
+                if (i > 0) {
+                    const prev = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-row="${celdasRecorrer[i-1].row}"]`);
+                    if (prev) prev.classList.remove('cubeta-buscando');
+                }
+            }, delay * i));
+        }
 
         etTimeouts.push(setTimeout(() => {
+            // Limpiar buscando
+            document.querySelectorAll(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"]`).forEach(c => c.classList.remove('cubeta-buscando'));
+
+            const res = insertarEnMatriz(clave);
+            const { ocupados, total, porcentaje } = calcularDO();
+            renderizarET();
+            actualizarDescripcionET();
+
+            let celdaInsertada;
+            if (!res.colision) {
+                celdaInsertada = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${res.col}"][data-row="${res.row}"]`);
+            } else {
+                celdaInsertada = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${res.col}"][data-colrow="${res.colIdx}"]`);
+            }
+            const header2 = document.querySelector(`#visualizacionExpTotal .cubeta-header[data-col="${res.col}"]`);
+            if (header2) header2.classList.add('cubeta-header-activa');
+            if (celdaInsertada) celdaInsertada.classList.add('cubeta-insertada');
+
+            const colisionMsg = res.colision
+                ? ` — <span class="text-danger fw-bold">¡Colisión! Cubeta ${col} llena, desbordamiento #${res.colIdx + 1}</span>`
+                : '';
+
             mostrarMensajeET(
                 `D.O. = ${ocupados}/${total} = <strong>${(porcentaje * 100).toFixed(1)} %</strong><br>` +
-                `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}${colisionMsg}` ,
+                `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}${colisionMsg}`,
                 res.colision ? 'warning' : 'success'
             );
 
-            // Verificar si necesita expansión
             if (porcentaje >= 0.75) {
                 etTimeouts.push(setTimeout(() => {
                     const prevN = etCubetas;
@@ -274,7 +298,6 @@ function insertarExpTotal() {
                         'info'
                     );
 
-                    // Resaltar todas las celdas que se reubicaron
                     document.querySelectorAll('#visualizacionExpTotal .cubeta-ocupada').forEach(c => {
                         c.classList.add('cubeta-insertada');
                     });
@@ -284,16 +307,119 @@ function insertarExpTotal() {
                             c.classList.remove('cubeta-insertada');
                         });
                         etAnimEnCurso = false;
-                    }, 1200));
+                    }, 1500));
                 }, 800));
             } else {
                 etTimeouts.push(setTimeout(() => {
-                    if (celda) celda.classList.remove('cubeta-insertada');
+                    if (celdaInsertada) celdaInsertada.classList.remove('cubeta-insertada');
+                    if (header2) header2.classList.remove('cubeta-header-activa');
+                    etAnimEnCurso = false;
+                }, 1500));
+            }
+        }, delay * pasosAnimar + 200));
+    }, 100));
+}
+
+// ==================== ACCIÓN: BUSCAR ====================
+
+function buscarExpTotal() {
+    if (etAnimEnCurso) limpiarTimeoutsET();
+
+    if (!etInicializado) {
+        mostrarMensajeET('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
+    const input = document.getElementById('claveExpTotal');
+    const clave = input.value.trim();
+
+    if (!clave || !/^[0-9]+$/.test(clave)) {
+        mostrarMensajeET('Ingrese una clave numérica válida', 'warning');
+        return;
+    }
+
+    const k = parseInt(clave, 10);
+    const col = k % etCubetas;
+
+    etAnimEnCurso = true;
+    renderizarET();
+
+    // Build ordered list of cells to scan (only in target bucket)
+    const celdas = [];
+    for (let r = 0; r < etRegistros; r++) {
+        celdas.push({ tipo: 'main', row: r, valor: etMatriz[col][r] });
+    }
+    for (let ci = 0; ci < etColisiones[col].length; ci++) {
+        celdas.push({ tipo: 'col', colrow: ci, valor: etColisiones[col][ci] });
+    }
+
+    let delay = 300;
+    let encontradoIdx = -1;
+
+    // Find which index has the match
+    for (let i = 0; i < celdas.length; i++) {
+        if (celdas[i].valor === clave) { encontradoIdx = i; break; }
+    }
+
+    // Only scan up to the found index (or all if not found)
+    const scanHasta = encontradoIdx >= 0 ? encontradoIdx : celdas.length - 1;
+
+    etTimeouts.push(setTimeout(() => {
+        const header = document.querySelector(`#visualizacionExpTotal .cubeta-header[data-col="${col}"]`);
+        if (header) header.classList.add('cubeta-header-activa');
+
+        for (let i = 0; i <= scanHasta; i++) {
+            etTimeouts.push(setTimeout(() => {
+                // Clear previous
+                if (i > 0) {
+                    const prevItem = celdas[i - 1];
+                    let prevCelda;
+                    if (prevItem.tipo === 'main') prevCelda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-row="${prevItem.row}"]`);
+                    else prevCelda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-colrow="${prevItem.colrow}"]`);
+                    if (prevCelda) prevCelda.classList.remove('cubeta-buscando');
+                }
+
+                const item = celdas[i];
+                let celda;
+                if (item.tipo === 'main') celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-row="${item.row}"]`);
+                else celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-colrow="${item.colrow}"]`);
+                if (celda) celda.classList.add('cubeta-buscando');
+            }, delay * i));
+        }
+
+        // Result
+        etTimeouts.push(setTimeout(() => {
+            document.querySelectorAll('#visualizacionExpTotal .cubeta-buscando').forEach(c => c.classList.remove('cubeta-buscando'));
+
+            if (encontradoIdx >= 0) {
+                const item = celdas[encontradoIdx];
+                let celda;
+                if (item.tipo === 'main') celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-row="${item.row}"]`);
+                else celda = document.querySelector(`#visualizacionExpTotal .cubeta-celda[data-col="${col}"][data-colrow="${item.colrow}"]`);
+                if (celda) celda.classList.add('cubeta-encontrada-anim');
+
+                const ubicacion = item.tipo === 'col' ? `Colisión #${item.colrow + 1}` : `Fila ${item.row + 1}`;
+                mostrarMensajeET(
+                    `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
+                    `<span class="text-success fw-bold">✔ Clave "${clave}" encontrada en ${ubicacion}</span>`,
+                    'success'
+                );
+
+                etTimeouts.push(setTimeout(() => {
+                    if (celda) celda.classList.remove('cubeta-encontrada-anim');
                     if (header) header.classList.remove('cubeta-header-activa');
                     etAnimEnCurso = false;
-                }, 1000));
+                }, 2000));
+            } else {
+                mostrarMensajeET(
+                    `H(${clave}) = ${clave} mod ${etCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
+                    `<span class="text-danger fw-bold">✘ Clave "${clave}" no encontrada</span>`,
+                    'danger'
+                );
+                if (header) header.classList.remove('cubeta-header-activa');
+                etAnimEnCurso = false;
             }
-        }, 350));
+        }, delay * (scanHasta + 1) + 200));
     }, 100));
 }
 

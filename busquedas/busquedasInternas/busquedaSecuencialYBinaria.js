@@ -1,11 +1,14 @@
 /**
  * Simulador CC2 - Módulo de Búsquedas
  * Búsqueda Secuencial y Binaria
- * Soporta claves alfanuméricas
+ * Estructura estática con tamaño fijo
  */
 
-// Estructura de datos compartida (ahora almacena strings)
+// Estructura de datos compartida
 let estructuraDatos = [];
+let sbInicializado = false;
+let sbTamanoEstructura = 10;
+let sbTamanoDigitos = 2;
 
 // Variable para controlar la animación
 let animacionEnCurso = false;
@@ -24,39 +27,132 @@ function compararAlfanumerico(a, b) {
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 }
 
-function renderizarEstructura(tipo) {
-    const container = document.getElementById(`visualizacion${tipo}`);
+// ==================== CREAR ESTRUCTURA ====================
 
-    if (estructuraDatos.length === 0) {
-        container.innerHTML = '<div class="text-muted text-center">La estructura está vacía</div>';
+function crearEstructuraSecuencial() {
+    limpiarTimeouts();
+    const tam = parseInt(document.getElementById('tamanoEstructuraSecuencial').value) || 10;
+    const dig = parseInt(document.getElementById('tamanoSecuencial').value) || 2;
+
+    if (tam < 1 || tam > 100) {
+        mostrarMensajeSecuencial('El tamaño debe estar entre 1 y 100', 'warning');
+        return;
+    }
+    if (dig < 1) {
+        mostrarMensajeSecuencial('La cantidad de dígitos debe ser al menos 1', 'warning');
         return;
     }
 
-    // Ordenar los datos alfanuméricamente
-    let datosRender = [...estructuraDatos].sort(compararAlfanumerico);
+    sbTamanoEstructura = tam;
+    sbTamanoDigitos = dig;
+    estructuraDatos = [];
+    sbInicializado = true;
 
-    // Renderizado diferente para Secuencial (vertical) y Binaria (horizontal)
+    // Sync binaria fields
+    document.getElementById('tamanoEstructuraBinaria').value = tam;
+    document.getElementById('tamanoBinaria').value = dig;
+
+    sincronizarVisualizaciones();
+    mostrarMensajeSecuencial(`Estructura creada: ${tam} posiciones, claves de ${dig} dígitos`, 'success');
+}
+
+function crearEstructuraBinaria() {
+    limpiarTimeouts();
+    const tam = parseInt(document.getElementById('tamanoEstructuraBinaria').value) || 10;
+    const dig = parseInt(document.getElementById('tamanoBinaria').value) || 2;
+
+    if (tam < 1 || tam > 100) {
+        mostrarMensajeBinaria('El tamaño debe estar entre 1 y 100', 'warning');
+        return;
+    }
+    if (dig < 1) {
+        mostrarMensajeBinaria('La cantidad de dígitos debe ser al menos 1', 'warning');
+        return;
+    }
+
+    sbTamanoEstructura = tam;
+    sbTamanoDigitos = dig;
+    estructuraDatos = [];
+    sbInicializado = true;
+
+    // Sync secuencial fields
+    document.getElementById('tamanoEstructuraSecuencial').value = tam;
+    document.getElementById('tamanoSecuencial').value = dig;
+
+    sincronizarVisualizaciones();
+    mostrarMensajeBinaria(`Estructura creada: ${tam} posiciones, claves de ${dig} dígitos`, 'success');
+}
+
+function renderizarEstructura(tipo) {
+    const container = document.getElementById(`visualizacion${tipo}`);
+
+    if (!sbInicializado) {
+        container.innerHTML = '<div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>';
+        return;
+    }
+
+    // Construir arreglo estático completo (ordenado, con nulls en vacíos)
+    let datosRender = [...estructuraDatos].sort(compararAlfanumerico);
+    const arreglo = new Array(sbTamanoEstructura).fill(null);
+    for (let i = 0; i < datosRender.length; i++) {
+        arreglo[i] = datosRender[i];
+    }
+
+    // Índices a mostrar: primero, último, y los que tienen datos
+    const primerIndice = 0;
+    const ultimoIndice = sbTamanoEstructura - 1;
+    const indicesConDatos = [];
+    for (let i = 0; i < sbTamanoEstructura; i++) {
+        if (arreglo[i] !== null) indicesConDatos.push(i);
+    }
+    const indicesMostrar = new Set([primerIndice, ultimoIndice, ...indicesConDatos]);
+    const indicesOrdenados = Array.from(indicesMostrar).sort((a, b) => a - b);
+    const hayDatos = indicesConDatos.length > 0;
+
     if (tipo === 'Secuencial') {
         let html = '<div class="estructura-vertical">';
-        datosRender.forEach((valor, index) => {
-            html += `<div class="clave-row" data-index="${index}">
-                        <span class="clave-index-left">${index + 1}</span>
-                        <span class="clave-valor-vertical">${valor}</span>
+        for (let j = 0; j < indicesOrdenados.length; j++) {
+            const i = indicesOrdenados[j];
+            const valor = arreglo[i];
+            const vacia = valor === null;
+
+            // Puntos suspensivos si hay hueco
+            if (j > 0 && indicesOrdenados[j] - indicesOrdenados[j - 1] > 1 && !hayDatos) {
+                html += `<div class="clave-row hash-row hash-ellipsis">
+                            <span class="clave-valor-vertical text-muted">...</span>
+                         </div>`;
+            }
+
+            html += `<div class="clave-row ${vacia ? 'clave-row-vacia hash-espacio-vacio' : ''}" data-index="${i}">
+                        <span class="clave-index-left">${i + 1}</span>
+                        <span class="clave-valor-vertical">${vacia ? '' : valor}</span>
                      </div>`;
-        });
+        }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     } else {
         let html = '<div class="estructura-horizontal">';
-        datosRender.forEach((valor, index) => {
-            html += `<div class="clave-box" data-index="${index}">
-                        <span class="clave-index">${index + 1}</span>
-                        <span class="clave-valor">${valor}</span>
+        for (let j = 0; j < indicesOrdenados.length; j++) {
+            const i = indicesOrdenados[j];
+            const valor = arreglo[i];
+            const vacia = valor === null;
+
+            // Puntos suspensivos si hay hueco
+            if (j > 0 && indicesOrdenados[j] - indicesOrdenados[j - 1] > 1 && !hayDatos) {
+                html += `<div class="clave-box clave-box-vacia clave-box-ellipsis">
+                            <span class="clave-index">&nbsp;</span>
+                            <span class="clave-valor text-muted">…</span>
+                         </div>`;
+            }
+
+            html += `<div class="clave-box ${vacia ? 'clave-box-vacia' : ''}" data-index="${i}">
+                        <span class="clave-index">${i + 1}</span>
+                        <span class="clave-valor">${vacia ? '' : valor}</span>
                      </div>`;
-        });
+        }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     }
 }
@@ -64,44 +160,66 @@ function renderizarEstructura(tipo) {
 function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
     const container = document.getElementById(`visualizacion${tipo}`);
 
-    // Ordenar los datos alfanuméricamente
     let datosRender = [...estructuraDatos].sort(compararAlfanumerico);
-
-    // Encontrar la posición de la clave nueva
     let posicionClave = datosRender.indexOf(claveNueva);
+
+    // Construir arreglo estático completo
+    const arreglo = new Array(sbTamanoEstructura).fill(null);
+    for (let i = 0; i < datosRender.length; i++) {
+        arreglo[i] = datosRender[i];
+    }
+
+    // Índices a mostrar: primero, último, y los que tienen datos
+    const primerIndice = 0;
+    const ultimoIndice = sbTamanoEstructura - 1;
+    const indicesConDatos = [];
+    for (let i = 0; i < sbTamanoEstructura; i++) {
+        if (arreglo[i] !== null) indicesConDatos.push(i);
+    }
+    const indicesMostrar = new Set([primerIndice, ultimoIndice, ...indicesConDatos]);
+    const indicesOrdenados = Array.from(indicesMostrar).sort((a, b) => a - b);
 
     if (tipo === 'Secuencial') {
         let html = '<div class="estructura-vertical">';
-        datosRender.forEach((valor, index) => {
+        for (let j = 0; j < indicesOrdenados.length; j++) {
+            const i = indicesOrdenados[j];
+            const valor = arreglo[i];
+            const vacia = valor === null;
             const esNuevo = esInsercion && valor === claveNueva;
-            html += `<div class="clave-row ${esNuevo ? 'clave-insertando' : ''}" data-index="${index}">
-                        <span class="clave-index-left">${index + 1}</span>
-                        <span class="clave-valor-vertical">${valor}</span>
+
+            html += `<div class="clave-row ${vacia ? 'clave-row-vacia hash-espacio-vacio' : ''} ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}">
+                        <span class="clave-index-left">${i + 1}</span>
+                        <span class="clave-valor-vertical">${vacia ? '' : valor}</span>
                      </div>`;
-        });
+        }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     } else {
         let html = '<div class="estructura-horizontal">';
-        datosRender.forEach((valor, index) => {
+        for (let j = 0; j < indicesOrdenados.length; j++) {
+            const i = indicesOrdenados[j];
+            const valor = arreglo[i];
+            const vacia = valor === null;
             const esNuevo = esInsercion && valor === claveNueva;
-            html += `<div class="clave-box ${esNuevo ? 'clave-insertando' : ''}" data-index="${index}">
-                        <span class="clave-index">${index + 1}</span>
-                        <span class="clave-valor">${valor}</span>
+
+            html += `<div class="clave-box ${vacia ? 'clave-box-vacia' : ''} ${esNuevo ? 'clave-insertando' : ''}" data-index="${i}">
+                        <span class="clave-index">${i + 1}</span>
+                        <span class="clave-valor">${vacia ? '' : valor}</span>
                      </div>`;
-        });
+        }
         html += '</div>';
-        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length} (Estructura dinámica, ordenada)</div>`;
+        html += `<div class="mt-2 text-muted small">Elementos: ${estructuraDatos.length}/${sbTamanoEstructura} (Estructura estática, ordenada)</div>`;
         container.innerHTML = html;
     }
 
-    // Animación de reordenamiento
     if (esInsercion) {
-        const selector = tipo === 'Secuencial' ? '.clave-row' : '.clave-box';
+        const selector = tipo === 'Secuencial' ? '.clave-row:not(.hash-ellipsis)' : '.clave-box:not(.clave-box-ellipsis)';
         const boxes = container.querySelectorAll(selector);
-        boxes.forEach((box, idx) => {
-            if (idx >= posicionClave) {
+        // Find the rendered box that has the new key
+        boxes.forEach((box) => {
+            const idx = parseInt(box.getAttribute('data-index'));
+            if (idx >= posicionClave && idx < estructuraDatos.length) {
                 box.classList.add('clave-moviendo');
                 setTimeout(() => {
                     box.classList.remove('clave-moviendo');
@@ -109,7 +227,6 @@ function renderizarConAnimacion(tipo, claveNueva, esInsercion) {
             }
         });
 
-        // Resaltar el insertado
         setTimeout(() => {
             const insertado = container.querySelector('.clave-insertando');
             if (insertado) {
@@ -184,16 +301,20 @@ function insertarSecuencial() {
     }
     limpiarResaltadosSecuencial();
 
+    if (!sbInicializado) {
+        mostrarMensajeSecuencial('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
     const claveInput = document.getElementById('claveSecuencial');
     const claveValor = claveInput.value.trim();
-    const tamanoMax = parseInt(document.getElementById('tamanoSecuencial').value) || 3;
 
     if (!claveValor) {
         mostrarMensajeSecuencial('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const validacion = validarClave(claveValor, tamanoMax);
+    const validacion = validarClave(claveValor, sbTamanoDigitos);
     if (!validacion.valido) {
         mostrarMensajeSecuencial(validacion.mensaje, 'warning');
         return;
@@ -206,21 +327,29 @@ function insertarSecuencial() {
         return;
     }
 
+    if (estructuraDatos.length >= sbTamanoEstructura) {
+        mostrarMensajeSecuencial(`La estructura está llena (${sbTamanoEstructura}/${sbTamanoEstructura})`, 'danger');
+        return;
+    }
+
     estructuraDatos.push(clave);
     claveInput.value = '';
 
-    // Animación de inserción
     renderizarConAnimacion('Secuencial', clave, true);
     renderizarEstructura('Binaria');
 
-    // Encontrar posición final
     const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(clave) + 1;
-    mostrarMensajeSecuencial(`Clave "${clave}" insertada en posición ${posicion}`, 'success');
+    mostrarMensajeSecuencial(`Clave "${clave}" insertada en posición ${posicion} (${estructuraDatos.length}/${sbTamanoEstructura})`, 'success');
 }
 
 function buscarSecuencial() {
     if (animacionEnCurso) {
         limpiarTimeouts();
+    }
+
+    if (!sbInicializado) {
+        mostrarMensajeSecuencial('Primero debe crear la estructura', 'warning');
+        return;
     }
 
     const claveValor = document.getElementById('claveSecuencial').value.trim();
@@ -230,18 +359,17 @@ function buscarSecuencial() {
         return;
     }
 
-    // Validar que solo contenga números
     if (!/^[0-9]+$/.test(claveValor)) {
         mostrarMensajeSecuencial('La clave solo puede contener números', 'warning');
         return;
     }
 
-    // Limpiar resaltados anteriores
     document.querySelectorAll('#visualizacionSecuencial .clave-row').forEach(el => {
         el.classList.remove('clave-encontrada', 'clave-buscando');
     });
 
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row');
+    // Only scan occupied rows
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not(.clave-row-vacia)');
 
     if (boxes.length === 0) {
         mostrarMensajeSecuencial('La estructura está vacía', 'warning');
@@ -261,7 +389,6 @@ function buscarSecuencial() {
             pasos++;
             const box = boxes[index];
 
-            // Quitar resaltado del anterior
             if (index > 0) {
                 boxes[index - 1].classList.remove('clave-buscando');
             }
@@ -308,6 +435,11 @@ function eliminarSecuencial() {
     }
     limpiarResaltadosSecuencial();
 
+    if (!sbInicializado) {
+        mostrarMensajeSecuencial('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
     const claveValor = document.getElementById('claveSecuencial').value.trim();
 
     if (!claveValor) {
@@ -315,7 +447,6 @@ function eliminarSecuencial() {
         return;
     }
 
-    // Validar que solo contenga números
     if (!/^[0-9]+$/.test(claveValor)) {
         mostrarMensajeSecuencial('La clave solo puede contener números', 'warning');
         return;
@@ -324,22 +455,19 @@ function eliminarSecuencial() {
     const indexEnDatos = estructuraDatos.indexOf(claveValor);
     const existeEnEstructura = indexEnDatos !== -1;
 
-    // Solo pedir confirmación si la clave existe
     if (existeEnEstructura) {
         if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
             return;
         }
     }
 
-
-    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row');
+    const boxes = document.querySelectorAll('#visualizacionSecuencial .clave-row:not(.clave-row-vacia)');
 
     if (boxes.length === 0) {
         mostrarMensajeSecuencial('La estructura está vacía', 'warning');
         return;
     }
 
-    // Encontrar posición antes de eliminar (si existe)
     const posicion = existeEnEstructura
         ? [...estructuraDatos].sort(compararAlfanumerico).indexOf(claveValor) + 1
         : -1;
@@ -376,7 +504,7 @@ function eliminarSecuencial() {
                         estructuraDatos.splice(indexEnDatos, 1);
                         sincronizarVisualizaciones();
                         document.getElementById('claveSecuencial').value = '';
-                        mostrarMensajeSecuencial(`Clave "${claveValor}" eliminada de posición ${posicion} (${pasos} pasos)`, 'success');
+                        mostrarMensajeSecuencial(`Clave "${claveValor}" eliminada de posición ${posicion} (${pasos} pasos). ${estructuraDatos.length}/${sbTamanoEstructura}`, 'success');
                         animacionEnCurso = false;
                     }, 500);
                 }, 200);
@@ -404,7 +532,10 @@ function eliminarSecuencial() {
 }
 
 function limpiarSecuencial() {
-    // Confirmación antes de limpiar
+    if (!sbInicializado) {
+        mostrarMensajeSecuencial('Primero debe crear la estructura', 'warning');
+        return;
+    }
     if (!confirm('¿Está seguro de limpiar toda la estructura?')) {
         return;
     }
@@ -417,7 +548,7 @@ function limpiarSecuencial() {
 }
 
 function guardarSecuencial() {
-    const datos = JSON.stringify(estructuraDatos);
+    const datos = JSON.stringify({ tipo: 'secuencialBinaria', tamano: sbTamanoEstructura, digitos: sbTamanoDigitos, datos: estructuraDatos });
     const blob = new Blob([datos], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -447,16 +578,20 @@ function insertarBinaria() {
         limpiarTimeouts();
     }
 
+    if (!sbInicializado) {
+        mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
     const claveInput = document.getElementById('claveBinaria');
     const claveValor = claveInput.value.trim();
-    const tamanoMax = parseInt(document.getElementById('tamanoBinaria').value) || 3;
 
     if (!claveValor) {
         mostrarMensajeBinaria('Ingrese una clave válida', 'warning');
         return;
     }
 
-    const validacion = validarClave(claveValor, tamanoMax);
+    const validacion = validarClave(claveValor, sbTamanoDigitos);
     if (!validacion.valido) {
         mostrarMensajeBinaria(validacion.mensaje, 'warning');
         return;
@@ -469,21 +604,29 @@ function insertarBinaria() {
         return;
     }
 
+    if (estructuraDatos.length >= sbTamanoEstructura) {
+        mostrarMensajeBinaria(`La estructura está llena (${sbTamanoEstructura}/${sbTamanoEstructura})`, 'danger');
+        return;
+    }
+
     estructuraDatos.push(clave);
     claveInput.value = '';
 
-    // Animación de inserción
     renderizarConAnimacion('Binaria', clave, true);
     renderizarEstructura('Secuencial');
 
-    // Encontrar posición final
     const posicion = [...estructuraDatos].sort(compararAlfanumerico).indexOf(clave) + 1;
-    mostrarMensajeBinaria(`Clave "${clave}" insertada en posición ${posicion}`, 'success');
+    mostrarMensajeBinaria(`Clave "${clave}" insertada en posición ${posicion} (${estructuraDatos.length}/${sbTamanoEstructura})`, 'success');
 }
 
 function buscarBinaria() {
     if (animacionEnCurso) {
         limpiarTimeouts();
+    }
+
+    if (!sbInicializado) {
+        mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
+        return;
     }
 
     const claveValor = document.getElementById('claveBinaria').value.trim();
@@ -493,13 +636,11 @@ function buscarBinaria() {
         return;
     }
 
-    // Validar que solo contenga números
     if (!/^[0-9]+$/.test(claveValor)) {
         mostrarMensajeBinaria('La clave solo puede contener números', 'warning');
         return;
     }
 
-    // Limpiar resaltados anteriores
     document.querySelectorAll('#visualizacionBinaria .clave-box').forEach(el => {
         el.classList.remove('clave-encontrada', 'clave-buscando', 'clave-descartada');
     });
@@ -530,29 +671,44 @@ function buscarBinaria() {
         }
     }
 
-    const boxes = document.querySelectorAll('#visualizacionBinaria .clave-box');
+    // Only target occupied boxes (not empty ones) - use data-index to find them
+    const allBoxes = document.querySelectorAll('#visualizacionBinaria .clave-box[data-index]');
     animacionEnCurso = true;
+
+    // Build a map from data-index to DOM element
+    const boxByIndex = {};
+    allBoxes.forEach(box => {
+        const di = parseInt(box.getAttribute('data-index'));
+        boxByIndex[di] = box;
+    });
 
     pasos.forEach((paso, i) => {
         const timeout = setTimeout(() => {
-            boxes.forEach((box, idx) => {
+            // Clear previous buscando and mark descartados
+            allBoxes.forEach(box => {
+                const di = parseInt(box.getAttribute('data-index'));
                 box.classList.remove('clave-buscando');
-                if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartada');
+                if (di < arr.length) {
+                    if (di < paso.izq || di > paso.der) {
+                        box.classList.add('clave-descartada');
+                    }
                 }
             });
-            boxes[paso.mid].classList.add('clave-buscando');
+            const midBox = boxByIndex[paso.mid];
+            if (midBox) midBox.classList.add('clave-buscando');
 
             if (paso.encontrado) {
                 setTimeout(() => {
-                    boxes[paso.mid].classList.remove('clave-buscando');
-                    boxes[paso.mid].classList.add('clave-encontrada');
+                    if (midBox) {
+                        midBox.classList.remove('clave-buscando');
+                        midBox.classList.add('clave-encontrada');
+                    }
                     mostrarMensajeBinaria(`Clave "${claveValor}" encontrada en posición ${paso.mid + 1} (${i + 1} pasos)`, 'success');
                     animacionEnCurso = false;
                 }, 300);
             } else if (i === pasos.length - 1) {
                 setTimeout(() => {
-                    boxes[paso.mid].classList.remove('clave-buscando');
+                    if (midBox) midBox.classList.remove('clave-buscando');
                     mostrarMensajeBinaria(`Clave "${claveValor}" no encontrada (${pasos.length} pasos)`, 'danger');
                     animacionEnCurso = false;
                 }, 300);
@@ -568,6 +724,11 @@ function eliminarBinaria() {
         limpiarTimeouts();
     }
 
+    if (!sbInicializado) {
+        mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
     const claveValor = document.getElementById('claveBinaria').value.trim();
 
     if (!claveValor) {
@@ -575,7 +736,6 @@ function eliminarBinaria() {
         return;
     }
 
-    // Validar que solo contenga números
     if (!/^[0-9]+$/.test(claveValor)) {
         mostrarMensajeBinaria('La clave solo puede contener números', 'warning');
         return;
@@ -587,16 +747,13 @@ function eliminarBinaria() {
         return;
     }
 
-    // Confirmación antes de eliminar
     if (!confirm(`¿Está seguro de eliminar la clave "${claveValor}"?`)) {
         return;
     }
 
-    // Encontrar posición antes de eliminar
     const arr = [...estructuraDatos].sort(compararAlfanumerico);
     const posicion = arr.indexOf(claveValor) + 1;
 
-    // Animación de búsqueda binaria antes de eliminar
     let izq = 0;
     let der = arr.length - 1;
     let pasos = [];
@@ -616,29 +773,41 @@ function eliminarBinaria() {
         }
     }
 
-    const boxes = document.querySelectorAll('#visualizacionBinaria .clave-box');
+    const allBoxes = document.querySelectorAll('#visualizacionBinaria .clave-box[data-index]');
     animacionEnCurso = true;
+
+    const boxByIndex = {};
+    allBoxes.forEach(box => {
+        const di = parseInt(box.getAttribute('data-index'));
+        boxByIndex[di] = box;
+    });
 
     pasos.forEach((paso, i) => {
         const timeout = setTimeout(() => {
-            boxes.forEach((box, idx) => {
+            allBoxes.forEach(box => {
+                const di = parseInt(box.getAttribute('data-index'));
                 box.classList.remove('clave-buscando');
-                if (idx < paso.izq || idx > paso.der) {
-                    box.classList.add('clave-descartada');
+                if (di < arr.length) {
+                    if (di < paso.izq || di > paso.der) {
+                        box.classList.add('clave-descartada');
+                    }
                 }
             });
-            boxes[paso.mid].classList.add('clave-buscando');
+            const midBox = boxByIndex[paso.mid];
+            if (midBox) midBox.classList.add('clave-buscando');
 
             if (paso.encontrado) {
                 setTimeout(() => {
-                    boxes[paso.mid].classList.remove('clave-buscando');
-                    boxes[paso.mid].classList.add('clave-eliminando');
+                    if (midBox) {
+                        midBox.classList.remove('clave-buscando');
+                        midBox.classList.add('clave-eliminando');
+                    }
 
                     setTimeout(() => {
                         estructuraDatos.splice(index, 1);
                         sincronizarVisualizaciones();
                         document.getElementById('claveBinaria').value = '';
-                        mostrarMensajeBinaria(`Clave "${claveValor}" eliminada de posición ${posicion}`, 'success');
+                        mostrarMensajeBinaria(`Clave "${claveValor}" eliminada de posición ${posicion}. ${estructuraDatos.length}/${sbTamanoEstructura}`, 'success');
                         animacionEnCurso = false;
                     }, 500);
                 }, 300);
@@ -650,7 +819,10 @@ function eliminarBinaria() {
 }
 
 function limpiarBinaria() {
-    // Confirmación antes de limpiar
+    if (!sbInicializado) {
+        mostrarMensajeBinaria('Primero debe crear la estructura', 'warning');
+        return;
+    }
     if (!confirm('¿Está seguro de limpiar toda la estructura?')) {
         return;
     }
@@ -663,7 +835,7 @@ function limpiarBinaria() {
 }
 
 function guardarBinaria() {
-    const datos = JSON.stringify(estructuraDatos);
+    const datos = JSON.stringify({ tipo: 'secuencialBinaria', tamano: sbTamanoEstructura, digitos: sbTamanoDigitos, datos: estructuraDatos });
     const blob = new Blob([datos], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -681,14 +853,27 @@ function cargarBinaria() {
 // ==================== EVENT LISTENERS ====================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Listener para cargar archivo secuencial
     document.getElementById('fileInputSecuencial').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    estructuraDatos = JSON.parse(e.target.result);
+                    const datos = JSON.parse(e.target.result);
+                    if (datos.tipo === 'secuencialBinaria') {
+                        sbTamanoEstructura = datos.tamano;
+                        sbTamanoDigitos = datos.digitos;
+                        estructuraDatos = datos.datos;
+                        sbInicializado = true;
+                        document.getElementById('tamanoEstructuraSecuencial').value = sbTamanoEstructura;
+                        document.getElementById('tamanoSecuencial').value = sbTamanoDigitos;
+                        document.getElementById('tamanoEstructuraBinaria').value = sbTamanoEstructura;
+                        document.getElementById('tamanoBinaria').value = sbTamanoDigitos;
+                    } else {
+                        // Legacy format (plain array)
+                        estructuraDatos = datos;
+                        sbInicializado = true;
+                    }
                     sincronizarVisualizaciones();
                     mostrarMensajeSecuencial('Estructura cargada correctamente', 'success');
                 } catch (error) {
@@ -700,14 +885,26 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = '';
     });
 
-    // Listener para cargar archivo binaria
     document.getElementById('fileInputBinaria').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    estructuraDatos = JSON.parse(e.target.result);
+                    const datos = JSON.parse(e.target.result);
+                    if (datos.tipo === 'secuencialBinaria') {
+                        sbTamanoEstructura = datos.tamano;
+                        sbTamanoDigitos = datos.digitos;
+                        estructuraDatos = datos.datos;
+                        sbInicializado = true;
+                        document.getElementById('tamanoEstructuraSecuencial').value = sbTamanoEstructura;
+                        document.getElementById('tamanoSecuencial').value = sbTamanoDigitos;
+                        document.getElementById('tamanoEstructuraBinaria').value = sbTamanoEstructura;
+                        document.getElementById('tamanoBinaria').value = sbTamanoDigitos;
+                    } else {
+                        estructuraDatos = datos;
+                        sbInicializado = true;
+                    }
                     sincronizarVisualizaciones();
                     mostrarMensajeBinaria('Estructura cargada correctamente', 'success');
                 } catch (error) {

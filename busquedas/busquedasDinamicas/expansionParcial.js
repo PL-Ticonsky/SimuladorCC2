@@ -203,7 +203,6 @@ function insertarExpParcial() {
         return;
     }
 
-    // Duplicado
     for (let c = 0; c < epCubetas; c++) {
         if (epMatriz[c].includes(clave) || epColisiones[c].includes(clave)) {
             mostrarMensajeEP(`La clave "${clave}" ya existe en la estructura`, 'warning');
@@ -216,30 +215,58 @@ function insertarExpParcial() {
 
     const k   = parseInt(clave, 10);
     const col = k % epCubetas;
-    const res = insertarEnMatrizEP(clave);
 
-    const { ocupados, total, porcentaje } = calcularDO_EP();
-
-    renderizarEP();
-    actualizarDescripcionEP();
     epAnimEnCurso = true;
+    renderizarEP();
+
+    const celdasRecorrer = [];
+    for (let r = 0; r < epRegistros; r++) {
+        celdasRecorrer.push({ row: r, ocupada: epMatriz[col][r] !== null });
+    }
+
+    let delay = 250;
+    let insertIdx = celdasRecorrer.findIndex(c => !c.ocupada);
+    let esColision = insertIdx === -1;
 
     epTimeouts.push(setTimeout(() => {
-        let celda;
-        if (!res.colision) {
-            celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${res.col}"][data-row="${res.row}"]`);
-        } else {
-            celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${res.col}"][data-colrow="${res.colIdx}"]`);
-        }
-        const header = document.querySelector(`#visualizacionExpParcial .cubeta-header[data-col="${res.col}"]`);
+        const header = document.querySelector(`#visualizacionExpParcial .cubeta-header[data-col="${col}"]`);
         if (header) header.classList.add('cubeta-header-activa');
-        if (celda) celda.classList.add('cubeta-insertada');
 
-        const colisionMsg = res.colision
-            ? ` — <span class="text-danger fw-bold">¡Colisión! Cubeta ${col} llena, desbordamiento #${res.colIdx + 1}</span>`
-            : '';
+        const pasosAnimar = esColision ? celdasRecorrer.length : insertIdx + 1;
+
+        for (let i = 0; i < pasosAnimar; i++) {
+            epTimeouts.push(setTimeout(() => {
+                const celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-row="${celdasRecorrer[i].row}"]`);
+                if (celda) celda.classList.add('cubeta-buscando');
+                if (i > 0) {
+                    const prev = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-row="${celdasRecorrer[i-1].row}"]`);
+                    if (prev) prev.classList.remove('cubeta-buscando');
+                }
+            }, delay * i));
+        }
 
         epTimeouts.push(setTimeout(() => {
+            document.querySelectorAll(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"]`).forEach(c => c.classList.remove('cubeta-buscando'));
+
+            const res = insertarEnMatrizEP(clave);
+            const { ocupados, total, porcentaje } = calcularDO_EP();
+            renderizarEP();
+            actualizarDescripcionEP();
+
+            let celdaInsertada;
+            if (!res.colision) {
+                celdaInsertada = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${res.col}"][data-row="${res.row}"]`);
+            } else {
+                celdaInsertada = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${res.col}"][data-colrow="${res.colIdx}"]`);
+            }
+            const header2 = document.querySelector(`#visualizacionExpParcial .cubeta-header[data-col="${res.col}"]`);
+            if (header2) header2.classList.add('cubeta-header-activa');
+            if (celdaInsertada) celdaInsertada.classList.add('cubeta-insertada');
+
+            const colisionMsg = res.colision
+                ? ` — <span class="text-danger fw-bold">¡Colisión! Cubeta ${col} llena, desbordamiento #${res.colIdx + 1}</span>`
+                : '';
+
             mostrarMensajeEP(
                 `D.O. = ${ocupados}/${total} = <strong>${(porcentaje * 100).toFixed(1)} %</strong><br>` +
                 `H(${clave}) = ${clave} mod ${epCubetas} = <strong>${col}</strong> → Cubeta ${col}${colisionMsg}`,
@@ -273,16 +300,112 @@ function insertarExpParcial() {
                             c.classList.remove('cubeta-insertada');
                         });
                         epAnimEnCurso = false;
-                    }, 1200));
+                    }, 1500));
                 }, 800));
             } else {
                 epTimeouts.push(setTimeout(() => {
-                    if (celda) celda.classList.remove('cubeta-insertada');
+                    if (celdaInsertada) celdaInsertada.classList.remove('cubeta-insertada');
+                    if (header2) header2.classList.remove('cubeta-header-activa');
+                    epAnimEnCurso = false;
+                }, 1500));
+            }
+        }, delay * pasosAnimar + 200));
+    }, 100));
+}
+
+// ==================== ACCIÓN: BUSCAR ====================
+
+function buscarExpParcial() {
+    if (epAnimEnCurso) limpiarTimeoutsEP();
+
+    if (!epInicializado) {
+        mostrarMensajeEP('Primero debe crear la estructura', 'warning');
+        return;
+    }
+
+    const input = document.getElementById('claveExpParcial');
+    const clave = input.value.trim();
+
+    if (!clave || !/^[0-9]+$/.test(clave)) {
+        mostrarMensajeEP('Ingrese una clave numérica válida', 'warning');
+        return;
+    }
+
+    const k = parseInt(clave, 10);
+    const col = k % epCubetas;
+
+    epAnimEnCurso = true;
+    renderizarEP();
+
+    const celdas = [];
+    for (let r = 0; r < epRegistros; r++) {
+        celdas.push({ tipo: 'main', row: r, valor: epMatriz[col][r] });
+    }
+    for (let ci = 0; ci < epColisiones[col].length; ci++) {
+        celdas.push({ tipo: 'col', colrow: ci, valor: epColisiones[col][ci] });
+    }
+
+    let delay = 300;
+    let encontradoIdx = -1;
+    for (let i = 0; i < celdas.length; i++) {
+        if (celdas[i].valor === clave) { encontradoIdx = i; break; }
+    }
+    const scanHasta = encontradoIdx >= 0 ? encontradoIdx : celdas.length - 1;
+
+    epTimeouts.push(setTimeout(() => {
+        const header = document.querySelector(`#visualizacionExpParcial .cubeta-header[data-col="${col}"]`);
+        if (header) header.classList.add('cubeta-header-activa');
+
+        for (let i = 0; i <= scanHasta; i++) {
+            epTimeouts.push(setTimeout(() => {
+                if (i > 0) {
+                    const prevItem = celdas[i - 1];
+                    let prevCelda;
+                    if (prevItem.tipo === 'main') prevCelda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-row="${prevItem.row}"]`);
+                    else prevCelda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-colrow="${prevItem.colrow}"]`);
+                    if (prevCelda) prevCelda.classList.remove('cubeta-buscando');
+                }
+
+                const item = celdas[i];
+                let celda;
+                if (item.tipo === 'main') celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-row="${item.row}"]`);
+                else celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-colrow="${item.colrow}"]`);
+                if (celda) celda.classList.add('cubeta-buscando');
+            }, delay * i));
+        }
+
+        epTimeouts.push(setTimeout(() => {
+            document.querySelectorAll('#visualizacionExpParcial .cubeta-buscando').forEach(c => c.classList.remove('cubeta-buscando'));
+
+            if (encontradoIdx >= 0) {
+                const item = celdas[encontradoIdx];
+                let celda;
+                if (item.tipo === 'main') celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-row="${item.row}"]`);
+                else celda = document.querySelector(`#visualizacionExpParcial .cubeta-celda[data-col="${col}"][data-colrow="${item.colrow}"]`);
+                if (celda) celda.classList.add('cubeta-encontrada-anim');
+
+                const ubicacion = item.tipo === 'col' ? `Colisión #${item.colrow + 1}` : `Fila ${item.row + 1}`;
+                mostrarMensajeEP(
+                    `H(${clave}) = ${clave} mod ${epCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
+                    `<span class="text-success fw-bold">✔ Clave "${clave}" encontrada en ${ubicacion}</span>`,
+                    'success'
+                );
+
+                epTimeouts.push(setTimeout(() => {
+                    if (celda) celda.classList.remove('cubeta-encontrada-anim');
                     if (header) header.classList.remove('cubeta-header-activa');
                     epAnimEnCurso = false;
-                }, 1000));
+                }, 2000));
+            } else {
+                mostrarMensajeEP(
+                    `H(${clave}) = ${clave} mod ${epCubetas} = <strong>${col}</strong> → Cubeta ${col}<br>` +
+                    `<span class="text-danger fw-bold">✘ Clave "${clave}" no encontrada</span>`,
+                    'danger'
+                );
+                if (header) header.classList.remove('cubeta-header-activa');
+                epAnimEnCurso = false;
             }
-        }, 350));
+        }, delay * (scanHasta + 1) + 200));
     }, 100));
 }
 
