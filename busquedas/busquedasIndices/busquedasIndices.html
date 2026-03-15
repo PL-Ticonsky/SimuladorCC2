@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsquedas por Índices - Simulador CC2</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="busquedasIndices.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header-section mb-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="text-white">
+                <h1 class="header-title mb-1">Ciencias de la Computación 2</h1>
+            </div>
+            <a href="../busquedas.html" class="btn btn-outline-light">
+                Volver atrás
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Navigation Pills -->
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" id="busquedasIndTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-unNivel" data-bs-toggle="pill" data-bs-target="#panel-unNivel" type="button" role="tab">Un Nivel</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-multinivel" data-bs-toggle="pill" data-bs-target="#panel-multinivel" type="button" role="tab">Multinivel</button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="busquedasIndTabContent">
+
+        <!-- Panel de Bienvenida -->
+        <div class="text-center py-5" id="panel-bienvenida-ind">
+            <h4 class="text-muted mb-3">Seleccione un tipo de índice</h4>
+            <p class="text-muted">Elija una de las opciones del menú superior para comenzar.</p>
+        </div>
+
+        <!-- ============================================================
+             Panel Un Nivel
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-unNivel" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Índice de Un Nivel</h3>
+                        <p class="panel-subtitle">
+                            Calcula los bloques del archivo de datos, genera un índice primario (disperso) o secundario (denso)
+                            y visualiza la estructura conectada con sus accesos a disco.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fila de parámetros -->
+                <div class="row mb-3 align-items-end g-3">
+                    <div class="col-md-3">
+                        <label for="rUnNivel" class="form-label fw-semibold">r (registros)</label>
+                        <input type="number" class="form-control" id="rUnNivel" min="1" placeholder="ej. 80000">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="BUnNivel" class="form-label fw-semibold">B (bytes/bloque)</label>
+                        <input type="number" class="form-control" id="BUnNivel" min="1" placeholder="ej. 1024">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="RUnNivel" class="form-label fw-semibold">R (bytes/reg. dato)</label>
+                        <input type="number" class="form-control" id="RUnNivel" min="1" placeholder="ej. 120">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="RiUnNivel" class="form-label fw-semibold">Ri = V+P (bytes/reg. índice)</label>
+                        <input type="number" class="form-control" id="RiUnNivel" min="1" placeholder="ej. 15">
+                    </div>
+                </div>
+
+                <!-- Fila de tipo y creación -->
+                <div class="row mb-3 align-items-end g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Tipo de índice</label>
+                        <select class="form-select" id="tipoIndiceUnNivel">
+                            <option value="primario">Primario (disperso)</option>
+                            <option value="secundario">Secundario (denso)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearUnNivel()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionUnNivel">
+                    <span class="text-muted">Configure los parámetros del archivo y presione "Crear estructura".</span>
+                </div>
+
+                <!-- Botones guardar/cargar -->
+                <div id="unNivelControles" class="d-none">
+                    <div class="d-flex justify-content-end gap-2 mb-4">
+                        <button class="btn btn-outline-secondary" onclick="cargarUnNivel()">Cargar</button>
+                        <button class="btn btn-outline-secondary" onclick="guardarUnNivel()">Guardar</button>
+                    </div>
+                </div>
+
+                <!-- Tabla de resultados -->
+                <div id="tablaUnNivel" class="d-none mb-4">
+                    <label class="form-label fw-semibold">Cálculos</label>
+                    <div class="tabla-calculos-container border rounded p-3 bg-light">
+                        <table class="table table-sm table-bordered mb-0" id="tablaCalcUnNivel"></table>
+                    </div>
+                </div>
+
+                <!-- Visualización -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionUnNivel" class="estructura-container-indices border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeUnNivel" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+        <!-- ============================================================
+             Panel Multinivel
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-multinivel" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Índice Multinivel</h3>
+                        <p class="panel-subtitle">
+                            Construye índices sobre índices (niveles sucesivos) usando el fanout (bfri) hasta reducir a 1 bloque.
+                            Calcula t = log<sub>fo</sub>(b) niveles y muestra cada nivel de la jerarquía.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fila de parámetros -->
+                <div class="row mb-3 align-items-end g-3">
+                    <div class="col-md-3">
+                        <label for="rMultinivel" class="form-label fw-semibold">r (registros)</label>
+                        <input type="number" class="form-control" id="rMultinivel" min="1" placeholder="ej. 80000">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="BMultinivel" class="form-label fw-semibold">B (bytes/bloque)</label>
+                        <input type="number" class="form-control" id="BMultinivel" min="1" placeholder="ej. 1024">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="RMultinivel" class="form-label fw-semibold">R (bytes/reg. dato)</label>
+                        <input type="number" class="form-control" id="RMultinivel" min="1" placeholder="ej. 120">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="RiMultinivel" class="form-label fw-semibold">Ri = V+P (bytes/reg. índice)</label>
+                        <input type="number" class="form-control" id="RiMultinivel" min="1" placeholder="ej. 15">
+                    </div>
+                </div>
+
+                <!-- Fila de tipo y creación -->
+                <div class="row mb-3 align-items-end g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Tipo de índice</label>
+                        <select class="form-select" id="tipoIndiceMultinivel">
+                            <option value="primario">Primario (disperso)</option>
+                            <option value="secundario">Secundario (denso)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearMultinivel()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3" id="descripcionMultinivel">
+                    <span class="text-muted">Configure los parámetros del archivo y presione "Crear estructura".</span>
+                </div>
+
+                <!-- Botones guardar/cargar -->
+                <div id="multiNivelControles" class="d-none">
+                    <div class="d-flex justify-content-end gap-2 mb-4">
+                        <button class="btn btn-outline-secondary" onclick="cargarMultinivel()">Cargar</button>
+                        <button class="btn btn-outline-secondary" onclick="guardarMultinivel()">Guardar</button>
+                    </div>
+                </div>
+
+                <!-- Tabla de resultados -->
+                <div id="tablaMultinivel" class="d-none mb-4">
+                    <label class="form-label fw-semibold">Cálculos</label>
+                    <div class="tabla-calculos-container border rounded p-3 bg-light">
+                        <table class="table table-sm table-bordered mb-0" id="tablaCalcMultinivel"></table>
+                    </div>
+                </div>
+
+                <!-- Visualización -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionMultinivel" class="estructura-container-indices border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeMultinivel" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
+    </div><!-- /tab-content -->
+
+</div>
+
+<!-- Inputs ocultos para cargar archivos -->
+<input type="file" id="fileInputUnNivel" accept=".json" style="display: none;">
+<input type="file" id="fileInputMultinivel" accept=".json" style="display: none;">
+
+<!-- Bootstrap JS -->
+<script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+
+<!-- Scripts -->
+<script src="indiceUnNivel.js"></script>
+<script src="indicesMultinivel.js"></script>
+
+</body>
+</html>

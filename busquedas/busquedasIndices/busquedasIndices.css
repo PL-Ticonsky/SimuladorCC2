@@ -1,0 +1,399 @@
+/*
+ * Búsquedas por Índices - Estilos Específicos
+ * Reutiliza la paleta de busquedasExternas / global.css
+ */
+
+/* ============================================
+   Panel Section (consistente con externas)
+   ============================================ */
+.panel-section {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(68, 84, 106, 0.08);
+    margin-bottom: 24px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #D6DCE5;
+}
+
+.panel-title {
+    color: #44546A;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.panel-subtitle {
+    color: #8497B0;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* ============================================
+   Contenedor principal de la visualización
+   ============================================ */
+.estructura-container-indices {
+    min-height: 120px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* ============================================
+   Tabla de cálculos
+   ============================================ */
+.tabla-calculos-container {
+    overflow-x: auto;
+    border: 1px solid #D6DCE5;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.tabla-calculos-container .table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.tabla-calculos-container .table th {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border-color: #44546A;
+}
+
+.tabla-calculos-container .table thead th:first-child {
+    border-top-left-radius: 10px;
+}
+
+.tabla-calculos-container .table thead th:last-child {
+    border-top-right-radius: 10px;
+}
+
+.tabla-calculos-container .table td {
+    font-size: 0.9rem;
+    color: #44546A;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.tabla-calculos-container .table tr:hover td {
+    background: #DEEBF7;
+}
+
+.tabla-calculos-container .fila-resultado td {
+    background: #EBF5FB;
+    font-weight: 700;
+    color: #1A5276;
+    border-top: 2px solid #5B9BD5;
+}
+
+.tabla-calculos-container .fila-accesos td {
+    background: #D5F5E3;
+    font-weight: 700;
+    color: #1E7E34;
+    border-top: 2px solid #28A745;
+}
+
+.tabla-calculos-container .table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+
+.tabla-calculos-container .table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
+}
+
+/* ============================================
+   Visualización de estructuras conectadas
+   ============================================ */
+.indices-diagrama {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 16px 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-height: 200px;
+}
+
+/* Columna (nivel o estructura) */
+.indices-columna {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.indices-columna-titulo {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #44546A;
+    text-align: center;
+    margin-bottom: 8px;
+    padding: 4px 10px;
+    background: #DEEBF7;
+    border-radius: 20px;
+    border: 1px solid #BDD7EE;
+    white-space: nowrap;
+}
+
+/* Bloque individual dentro de una columna */
+.indices-bloque {
+    border: 0;
+    border-bottom: 1px solid #D6DCE5;
+    border-radius: 0;
+    min-width: 120px;
+    background: #FFFFFF;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 0;
+}
+
+.indices-bloque:last-child {
+    border-bottom: none;
+}
+
+.indices-bloques-stack {
+    border: 2px solid #D6DCE5;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #FFFFFF;
+    min-width: 120px;
+}
+
+.indices-bloque-resumen .indices-bloque-body {
+    background: #F5F8FC;
+}
+
+.indices-bloque-header {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    text-align: center;
+    padding: 5px 10px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.indices-bloque-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.indices-celda {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-bottom: 1px solid #EDEDED;
+    min-height: 32px;
+    transition: all 0.3s ease;
+}
+
+.indices-celda:last-child {
+    border-bottom: none;
+}
+
+.indices-celda-idx {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    background: #DEEBF7;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #44546A;
+    margin-right: 8px;
+}
+
+.indices-celda-valor {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #44546A;
+}
+
+.indices-celda.celda-vacia .indices-celda-valor {
+    color: #ADB5BD;
+    font-style: italic;
+}
+
+/* Puntos suspensivos entre bloques */
+.indices-ellipsis {
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    color: #8497B0;
+    text-align: center;
+    padding: 4px 0;
+    width: 100%;
+}
+
+/* Contador de bloques total */
+.indices-bloques-resumen {
+    font-size: 0.72rem;
+    color: #8497B0;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.indices-ellipsis-vertical {
+    min-height: 84px;              /* ajusta según alto de tus celdas */
+    display: flex;
+    flex-direction: column;
+    align-items: center;           /* centra horizontal */
+    justify-content: center;       /* centra vertical */
+    gap: 4px;
+    color: #8497B0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ============================================
+   Conectores (flechas entre columnas)
+   ============================================ */
+.indices-conector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    flex-shrink: 0;
+    min-width: 60px;
+    gap: 4px;
+}
+
+.indices-flecha {
+    font-size: 1.6rem;
+    color: #5B9BD5;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.indices-flecha-label {
+    font-size: 0.7rem;
+    color: #8497B0;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ============================================
+   Badge de accesos
+   ============================================ */
+.indices-accesos-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #28A745, #1E7E34);
+    color: white;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    margin-top: 12px;
+}
+
+.indices-accesos-sin-indice {
+    background: linear-gradient(135deg, #8497B0, #44546A);
+}
+
+.indices-resumen-accesos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed #D6DCE5;
+}
+
+/* ============================================
+   Niveles multinivel
+   ============================================ */
+.nivel-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+}
+
+.nivel-label.nivel-top {
+    background: linear-gradient(135deg, #E74C3C, #C0392B);
+}
+
+.nivel-label.nivel-mid {
+    background: linear-gradient(135deg, #F39C12, #D68910);
+}
+
+.nivel-label.nivel-base {
+    background: linear-gradient(135deg, #5B9BD5, #44546A);
+}
+
+.nivel-label.nivel-datos {
+    background: linear-gradient(135deg, #27AE60, #1E8449);
+}
+
+/* ============================================
+   Animaciones de entrada
+   ============================================ */
+@keyframes fadeInLeft {
+    0% { opacity: 0; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.indices-columna {
+    animation: fadeInLeft 0.4s ease forwards;
+}
+
+.indices-columna:nth-child(1) { animation-delay: 0s; }
+.indices-columna:nth-child(2) { animation-delay: 0.05s; }
+.indices-columna:nth-child(3) { animation-delay: 0.1s; }
+.indices-columna:nth-child(4) { animation-delay: 0.15s; }
+.indices-columna:nth-child(5) { animation-delay: 0.2s; }
+.indices-columna:nth-child(6) { animation-delay: 0.25s; }
+.indices-columna:nth-child(7) { animation-delay: 0.3s; }
+.indices-columna:nth-child(8) { animation-delay: 0.35s; }
+.indices-columna:nth-child(9) { animation-delay: 0.4s; }
+
+.indices-conector {
+    animation: fadeInLeft 0.4s ease forwards;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .indices-bloque {
+        min-width: 80px;
+    }
+
+    .indices-bloques-stack {
+        min-width: 80px;
+    }
+
+    .indices-flecha {
+        font-size: 1.2rem;
+    }
+
+    .indices-conector {
+        min-width: 40px;
+        padding: 0 4px;
+    }
+}
