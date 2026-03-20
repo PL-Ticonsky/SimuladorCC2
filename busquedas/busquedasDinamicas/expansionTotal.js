@@ -96,7 +96,7 @@ function actualizarDescripcionET() {
         `<strong>Expansión Total</strong> — Cubetas: <code>${etCubetas}</code> | Registros/cubeta: <code>${etRegistros}</code> | ` +
         `Hash: <code>H(k) = k mod ${etCubetas}</code><br>` +
         `D.O. = ${ocupados}/${total} = <strong>${(porcentaje * 100).toFixed(1)} %</strong> ` +
-        `${porcentaje >= 0.75 ? '⚠️ Se expandirá al siguiente insertar' : ''}`;
+        `${porcentaje >= 0.82 ? '⚠️ Se expandirá al siguiente insertar' : ''}`;
 }
 
 // ==================== RENDERIZADO ====================
@@ -151,7 +151,7 @@ function renderizarET() {
     // Barra D.O.
     const { ocupados, total, porcentaje } = calcularDO();
     const pct = (porcentaje * 100).toFixed(1);
-    const clase = porcentaje >= 0.75 ? 'do-danger' : porcentaje >= 0.5 ? 'do-warning' : 'do-normal';
+    const clase = porcentaje > 0.82 ? 'do-danger' : porcentaje >= 0.5 ? 'do-warning' : 'do-normal';
     html += `<div class="do-bar-container">`;
     html += `<div class="d-flex justify-content-between do-label"><span>D.O.</span><span>${ocupados}/${total} = ${pct} %</span></div>`;
     html += `<div class="do-bar-bg"><div class="do-bar-fill ${clase}" style="width:${pct}%"></div></div>`;
@@ -281,7 +281,7 @@ function insertarExpTotal() {
                 res.colision ? 'warning' : 'success'
             );
 
-            if (porcentaje >= 0.75) {
+            if (porcentaje > 0.82) {
                 etTimeouts.push(setTimeout(() => {
                     const prevN = etCubetas;
                     expandirTotal();
@@ -291,7 +291,7 @@ function insertarExpTotal() {
                     const { ocupados: o2, total: t2, porcentaje: p2 } = calcularDO();
                     mostrarMensajeET(
                         `H(${clave}) = ${clave} mod ${prevN} = <strong>${col}</strong> → Cubeta ${col}${colisionMsg}<br>` +
-                        `D.O. alcanzó <strong>${(porcentaje * 100).toFixed(1)} %</strong> (≥ 75 %) → ` +
+                        `D.O. alcanzó <strong>${(porcentaje * 100).toFixed(1)} %</strong> (> 82 %) → ` +
                         `<span class="text-primary fw-bold">Expansión Total: ${prevN} → ${etCubetas} cubetas</span><br>` +
                         `Nueva D.O. = ${o2}/${t2} = <strong>${(p2 * 100).toFixed(1)} %</strong>. ` +
                         `Se re-insertaron ${etOrdenInsert.length} claves con H(k) = k mod ${etCubetas}.`,

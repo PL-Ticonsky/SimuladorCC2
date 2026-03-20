@@ -89,7 +89,7 @@ function actualizarDescripcionRT() {
         `<strong>Reducción Total</strong> — Cubetas: <code>${rtCubetas}</code> | Registros/cubeta: <code>${rtRegistros}</code> | ` +
         `Hash: <code>H(k) = k mod ${rtCubetas}</code><br>` +
         `D.O. = ${registros}/${cubetas} = <strong>${(porcentaje * 100).toFixed(1)} %</strong> ` +
-        `${porcentaje < 0.75 && rtCubetas > 2 ? '⚠️ Se reducirá al siguiente eliminar' : ''}`;
+        `${porcentaje < 1.25 && rtCubetas > 2 ? '⚠️ Se reducirá al siguiente eliminar' : ''}`;
 }
 
 // ==================== RENDERIZADO ====================
@@ -141,7 +141,7 @@ function renderizarRT() {
     // Barra D.O.
     const { registros, cubetas, porcentaje } = calcularDO_RT();
     const pct = (porcentaje * 100).toFixed(1);
-    const clase = porcentaje >= 0.75 ? 'do-normal' : porcentaje >= 0.5 ? 'do-warning' : 'do-danger';
+    const clase = porcentaje >= 1.25 ? 'do-normal' : porcentaje >= 0.5 ? 'do-warning' : 'do-danger';
     html += `<div class="do-bar-container">`;
     html += `<div class="d-flex justify-content-between do-label"><span>D.O.</span><span>${registros}/${cubetas} = ${pct} %</span></div>`;
     html += `<div class="do-bar-bg"><div class="do-bar-fill ${clase}" style="width:${Math.min(pct, 100)}%"></div></div>`;
@@ -261,7 +261,7 @@ function eliminarRedTotal() {
 
                 const ubicacion = foundItem.tipo === 'col' ? `Colisión #${foundItem.colrow + 1}` : `Fila ${foundItem.row + 1}`;
 
-                if (porcentaje < 0.75 && rtCubetas > 2) {
+                if (porcentaje < 1.25 && rtCubetas > 2) {
                     rtTimeouts.push(setTimeout(() => {
                         const prevN = rtCubetas;
                         const exito = reducirTotal();
@@ -274,7 +274,7 @@ function eliminarRedTotal() {
                             const { registros: r2, cubetas: c2, porcentaje: p2 } = calcularDO_RT();
                             mostrarMensajeRT(
                                 `Clave "${clave}" eliminada de Cubeta ${col}, ${ubicacion}.<br>` +
-                                `D.O. = ${regs}/${cubs} = <strong>${(porcentaje * 100).toFixed(1)} %</strong> (&lt; 75 %) → ` +
+                                `D.O. = ${regs}/${cubs} = <strong>${(porcentaje * 100).toFixed(1)} %</strong> (&lt; 125 %) → ` +
                                 `<span class="text-primary fw-bold">Reducción Total: ${prevN} → ${rtCubetas} cubetas</span><br>` +
                                 `Nueva D.O. = ${r2}/${c2} = <strong>${(p2 * 100).toFixed(1)} %</strong>. ` +
                                 `Se re-insertaron ${rtOrdenInsert.length} claves con H(k) = k mod ${rtCubetas}.`,

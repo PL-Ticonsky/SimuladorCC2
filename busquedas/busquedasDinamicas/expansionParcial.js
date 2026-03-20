@@ -93,7 +93,7 @@ function actualizarDescripcionEP() {
         `<strong>Expansión Parcial</strong> — Cubetas: <code>${epCubetas}</code> | Registros/cubeta: <code>${epRegistros}</code> | ` +
         `Hash: <code>H(k) = k mod ${epCubetas}</code><br>` +
         `D.O. = ${ocupados}/${total} = <strong>${(porcentaje * 100).toFixed(1)} %</strong> ` +
-        `${porcentaje >= 0.75 ? '⚠️ Se expandirá al siguiente insertar' : ''}`;
+        `${porcentaje > 0.82 ? '⚠️ Se expandirá al siguiente insertar' : ''}`;
 }
 
 // ==================== RENDERIZADO ====================
@@ -148,7 +148,7 @@ function renderizarEP() {
     // Barra D.O.
     const { ocupados, total, porcentaje } = calcularDO_EP();
     const pct = (porcentaje * 100).toFixed(1);
-    const clase = porcentaje >= 0.75 ? 'do-danger' : porcentaje >= 0.5 ? 'do-warning' : 'do-normal';
+    const clase = porcentaje > 0.82 ? 'do-danger' : porcentaje >= 0.5 ? 'do-warning' : 'do-normal';
     html += `<div class="do-bar-container">`;
     html += `<div class="d-flex justify-content-between do-label"><span>D.O.</span><span>${ocupados}/${total} = ${pct} %</span></div>`;
     html += `<div class="do-bar-bg"><div class="do-bar-fill ${clase}" style="width:${pct}%"></div></div>`;
@@ -273,7 +273,7 @@ function insertarExpParcial() {
                 res.colision ? 'warning' : 'success'
             );
 
-            if (porcentaje >= 0.75) {
+            if (porcentaje > 0.82) {
                 epTimeouts.push(setTimeout(() => {
                     const prevN = epCubetas;
                     const incremento = Math.floor(prevN / 2);
@@ -284,7 +284,7 @@ function insertarExpParcial() {
                     const { ocupados: o2, total: t2, porcentaje: p2 } = calcularDO_EP();
                     mostrarMensajeEP(
                         `H(${clave}) = ${clave} mod ${prevN} = <strong>${col}</strong> → Cubeta ${col}${colisionMsg}<br>` +
-                        `D.O. alcanzó <strong>${(porcentaje * 100).toFixed(1)} %</strong> (≥ 75 %) → ` +
+                        `D.O. alcanzó <strong>${(porcentaje * 100).toFixed(1)} %</strong> (> 82 %) → ` +
                         `<span class="text-primary fw-bold">Expansión Parcial: ${prevN} + ${incremento} = ${epCubetas} cubetas</span><br>` +
                         `Nueva D.O. = ${o2}/${t2} = <strong>${(p2 * 100).toFixed(1)} %</strong>. ` +
                         `Se re-insertaron ${epOrdenInsert.length} claves con H(k) = k mod ${epCubetas}.`,
