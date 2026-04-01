@@ -61,7 +61,7 @@
                     <div>
                         <h3 class="panel-title">Índice de Un Nivel</h3>
                         <p class="panel-subtitle">
-                            Calcula los bloques del archivo de datos, genera un índice primario (disperso) o secundario (denso)
+                            Calcula los bloques del archivo de datos, genera un índice primario (no denso) o secundario (denso)
                             y visualiza la estructura conectada con sus accesos a disco.
                         </p>
                     </div>
@@ -92,7 +92,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tipo de índice</label>
                         <select class="form-select" id="tipoIndiceUnNivel">
-                            <option value="primario">Primario (disperso)</option>
+                            <option value="primario">Primario (no denso)</option>
                             <option value="secundario">Secundario (denso)</option>
                         </select>
                     </div>
@@ -173,7 +173,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tipo de índice</label>
                         <select class="form-select" id="tipoIndiceMultinivel">
-                            <option value="primario">Primario (disperso)</option>
+                            <option value="primario">Primario (no denso)</option>
                             <option value="secundario">Secundario (denso)</option>
                         </select>
                     </div>
@@ -224,6 +224,9 @@
 
 <!-- Bootstrap JS -->
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+
+<!-- D3.js para conectores entre estructuras -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
 <!-- Scripts -->
 <script src="indiceUnNivel.js"></script>

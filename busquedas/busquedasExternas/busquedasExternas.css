@@ -1,5 +1,6 @@
 /*
  * Búsquedas Externas - Estilos Específicos
+ * Incluye estilos de Búsquedas Dinámicas (expansión y reducción)
  * Reutiliza la paleta de busquedasInternas
  */
 
@@ -34,8 +35,6 @@
     font-size: 0.9rem;
     margin-bottom: 0;
 }
-
-/* Nav pills: estilos heredados de global.css */
 
 /* ============================================
    Estructura de Conversión de Base (lista enlazada)
@@ -171,9 +170,8 @@
 .lista-nodo-externo:hover { background: #DEEBF7; }
 
 /* ============================================
-   Estados de animación
+   Estados de animación (lista enlazada)
    ============================================ */
-/* Buscando */
 .lista-celda-principal.lista-buscando,
 .lista-nodo-externo.lista-buscando,
 .clave-row.clave-buscando {
@@ -195,7 +193,6 @@
     background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%);
 }
 
-/* Encontrado */
 .lista-celda-principal.lista-encontrada,
 .lista-nodo-externo.lista-encontrada,
 .clave-row.clave-encontrada {
@@ -214,7 +211,6 @@
     background: linear-gradient(135deg, #28A745 0%, #1E7E34 100%);
 }
 
-/* Insertado */
 .lista-celda-principal.lista-insertada,
 .lista-nodo-externo.lista-insertada,
 .clave-row.clave-insertada {
@@ -232,7 +228,6 @@
     box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
 }
 
-/* Eliminando */
 .lista-celda-principal.lista-eliminando,
 .lista-nodo-externo.lista-eliminando,
 .clave-row.clave-eliminando {
@@ -252,7 +247,6 @@
     background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
 }
 
-/* Descartado (para bloques) */
 .clave-row.clave-descartado,
 .bloque-saltado {
     background: #F2F2F2;
@@ -339,19 +333,16 @@
     font-style: italic;
 }
 
-/* Animación de bloque saltado */
 .bloque-card.bloque-saltado {
     opacity: 0.4;
     border-color: #D6DCE5;
 }
 
-/* Animación bloque activo */
 .bloque-card.bloque-activo {
     border-color: #FFC107;
     box-shadow: 0 0 12px rgba(255, 193, 7, 0.5);
 }
 
-/* Celda buscando */
 .bloque-celda.celda-buscando {
     background: #FFC107 !important;
     border-color: #E0A800 !important;
@@ -359,7 +350,6 @@
     box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
-/* Celda encontrada */
 .bloque-celda.celda-encontrada {
     background: #28A745 !important;
     box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
@@ -374,7 +364,6 @@
     color: white;
 }
 
-/* Celda insertando */
 .bloque-celda.celda-insertando {
     background: #FFC107 !important;
     animation: slideIn 0.4s ease;
@@ -386,21 +375,18 @@
     opacity: 0.7;
 }
 
-/* Celda insertada */
 .bloque-celda.celda-insertada {
     background: #28A745 !important;
     animation: highlight 0.5s ease;
     box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
-/* Celda eliminando */
 .bloque-celda.celda-eliminando {
     background: #DC3545 !important;
     animation: fadeOut 0.5s ease forwards;
     box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
 }
 
-/* Último elemento del bloque resaltado en búsqueda */
 .bloque-celda.celda-ultimo-comparando {
     background: #9B59B6 !important;
     border-color: #8E44AD !important;
@@ -439,7 +425,7 @@
 }
 
 /* ============================================
-   Animaciones
+   Animaciones compartidas
    ============================================ */
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
@@ -461,8 +447,234 @@
     100% { opacity: 0; transform: scale(0.5); }
 }
 
-@keyframes fadeOut {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.5); }
+/* ============================================
+   Búsquedas Dinámicas — Matriz de Cubetas
+   ============================================ */
+.estructura-container-din {
+    min-height: 80px;
+    overflow-x: auto;
 }
 
+.matriz-cubetas-container {
+    overflow-x: auto;
+}
+
+.tabla-cubetas {
+    border-collapse: collapse;
+    width: auto;
+}
+
+.tabla-cubetas th,
+.tabla-cubetas td {
+    border: 1px solid #D6DCE5;
+    text-align: center;
+    padding: 8px;
+    min-width: 50px;
+    height: 45px;
+}
+
+.cubeta-header {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.cubeta-index {
+    background: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    min-width: 40px;
+}
+
+.cubeta-celda {
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.cubeta-vacia {
+    background: #F2F2F2;
+    color: #8497B0;
+}
+
+.cubeta-ocupada {
+    background: #FFFFFF;
+    color: #44546A;
+}
+
+.cubeta-celda:hover { background: #DEEBF7; }
+
+.cubeta-colision {
+    background: #FCE4D6 !important;
+    color: #C65911 !important;
+    border-color: #F4B183 !important;
+    font-weight: 700;
+}
+
+/* Estados animados de cubetas (más lentos para dinámicas) */
+.cubeta-insertada {
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
+    animation: highlightCubetaSlow 0.8s ease;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
+.cubeta-buscando {
+    background: #FFC107 !important;
+    border-color: #E0A800 !important;
+    color: #212529 !important;
+    animation: pulseCubetaSlow 0.7s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.cubeta-eliminada {
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
+    color: #FFFFFF !important;
+    animation: highlightCubetaSlow 0.8s ease;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+}
+
+.cubeta-encontrada-anim {
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    color: #FFFFFF !important;
+    animation: highlightCubetaFoundSlow 1.2s ease infinite;
+    box-shadow: 0 0 16px rgba(40, 167, 69, 0.6);
+}
+
+.cubeta-eliminada-anim {
+    background: #DC3545 !important;
+    border-color: #C82333 !important;
+    color: #FFFFFF !important;
+    animation: pulseCubetaRedSlow 0.7s ease infinite;
+    box-shadow: 0 0 14px rgba(220, 53, 69, 0.6);
+}
+
+.cubeta-header-activa {
+    background: linear-gradient(135deg, #FFC107 0%, #E0A800 100%) !important;
+    color: #212529 !important;
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+}
+
+/* Animaciones de cubetas (velocidad moderada-lenta) */
+@keyframes highlightCubetaSlow {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pulseCubetaSlow {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 6px rgba(255, 193, 7, 0.3); }
+    50%       { transform: scale(1.10); box-shadow: 0 0 18px rgba(255, 193, 7, 0.7); }
+}
+
+@keyframes highlightCubetaFoundSlow {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 8px rgba(40, 167, 69, 0.3); }
+    50%       { transform: scale(1.12); box-shadow: 0 0 24px rgba(40, 167, 69, 0.7); }
+}
+
+@keyframes pulseCubetaRedSlow {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 6px rgba(220, 53, 69, 0.3); }
+    50%       { transform: scale(1.10); box-shadow: 0 0 18px rgba(220, 53, 69, 0.7); }
+}
+
+/* ============================================
+   Búsquedas Dinámicas — Barras de D.O. dobles
+   ============================================ */
+.do-bar-container {
+    margin-top: 8px;
+}
+
+.do-bar-bg {
+    height: 22px;
+    background: #EDEDED;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.do-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.5s ease;
+}
+
+.do-bar-fill.do-normal {
+    background: linear-gradient(90deg, #A9D18E, #70AD47);
+}
+
+.do-bar-fill.do-warning {
+    background: linear-gradient(90deg, #FFD966, #BF9000);
+}
+
+.do-bar-fill.do-danger {
+    background: linear-gradient(90deg, #F4B183, #C65911);
+}
+
+.do-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #44546A;
+    margin-bottom: 4px;
+}
+
+.do-bar-markers {
+    position: relative;
+    height: 16px;
+    margin-top: 2px;
+}
+
+.do-marker {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #8497B0;
+    background: #EDEDED;
+    border-radius: 6px;
+    padding: 1px 5px;
+    border: 1px solid #D6DCE5;
+    white-space: nowrap;
+}
+
+/* ============================================
+   Búsquedas Dinámicas — Nota contextual de modo
+   ============================================ */
+.din-modo-nota {
+    border-left: 4px solid #5B9BD5;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    color: #44546A;
+    transition: background 0.3s ease, border-left-color 0.3s ease;
+}
+
+/* ============================================
+   Botones deshabilitados
+   ============================================ */
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   Nav-pills con 5 ítems — responsive
+   ============================================ */
+@media (max-width: 1100px) {
+    #busquedasExtTabs .nav-link {
+        padding: 10px 12px;
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 768px) {
+    #busquedasExtTabs .nav-link {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+    }
+}

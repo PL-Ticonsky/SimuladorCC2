@@ -221,7 +221,8 @@ function resolverBinaria(clave) {
     let der = datos.length - 1;
 
     while (izq <= der) {
-        const medio = Math.floor((izq + der) / 2);
+        // En rangos pares se fuerza la mitad izquierda (misma convención que internas).
+        const medio = izq + Math.floor((der - izq) / 2);
         ruta.push(medio);
 
         const cmp = compararSBExterna(datos[medio], clave);

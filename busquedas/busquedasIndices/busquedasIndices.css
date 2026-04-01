@@ -123,6 +123,19 @@
     min-height: 200px;
 }
 
+.indices-diagrama-wrapper {
+    position: relative;
+    display: inline-block;
+    min-width: 100%;
+}
+
+.indices-svg-conexiones {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+}
+
 /* Columna (nivel o estructura) */
 .indices-columna {
     display: flex;
@@ -225,6 +238,20 @@
     font-style: italic;
 }
 
+.indices-celda.celda-overflow {
+    background: #ECEFF3;
+    opacity: 0.72;
+}
+
+.indices-celda.celda-overflow .indices-celda-valor {
+    color: #7D8794;
+    font-style: italic;
+}
+
+.indices-celda.celda-ancla {
+    border-left: 3px solid rgba(91, 155, 213, 0.45);
+}
+
 /* Puntos suspensivos entre bloques */
 .indices-ellipsis {
     font-size: 1.4rem;
@@ -282,6 +309,17 @@
     color: #8497B0;
     text-align: center;
     white-space: nowrap;
+}
+
+.indices-linea-conexion {
+    fill: none;
+    stroke: #5B9BD5;
+    stroke-width: 2;
+    opacity: 0.95;
+}
+
+.indices-linea-conexion.alt {
+    stroke: #7E57C2;
 }
 
 /* ============================================

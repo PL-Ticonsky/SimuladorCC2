@@ -41,10 +41,10 @@
                 <button class="nav-link" id="tab-binaria-ext" data-bs-toggle="pill" data-bs-target="#panel-binaria-ext" type="button" role="tab">Búsqueda Binaria</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-hash-ext" data-bs-toggle="pill" data-bs-target="#panel-hash-ext" type="button" role="tab">Búsquedas Hash</button>
+                <button class="nav-link" id="tab-conversion" data-bs-toggle="pill" data-bs-target="#panel-conversion" type="button" role="tab">Conversión de Base</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-conversion" data-bs-toggle="pill" data-bs-target="#panel-conversion" type="button" role="tab">Conversión de Base</button>
+                <button class="nav-link" id="tab-dinamica" data-bs-toggle="pill" data-bs-target="#panel-dinamica" type="button" role="tab">Búsquedas Dinámicas</button>
             </li>
         </ul>
     </nav>
@@ -58,7 +58,9 @@
             <p class="text-muted">Elija una de las opciones del menú superior para comenzar.</p>
         </div>
 
-        <!-- Panel Búsqueda Secuencial Externa -->
+        <!-- ============================================================
+             Panel Búsqueda Secuencial Externa
+        ============================================================ -->
         <div class="tab-pane fade" id="panel-secuencial-ext" role="tabpanel">
             <section class="panel-section">
                 <div class="panel-header">
@@ -113,7 +115,9 @@
             </section>
         </div>
 
-        <!-- Panel Búsqueda Binaria Externa -->
+        <!-- ============================================================
+             Panel Búsqueda Binaria Externa
+        ============================================================ -->
         <div class="tab-pane fade" id="panel-binaria-ext" role="tabpanel">
             <section class="panel-section">
                 <div class="panel-header">
@@ -180,7 +184,6 @@
                     </div>
                 </div>
 
-                <!-- Fila 1: Tamaño + Base + Crear estructura -->
                 <div class="row mb-3 align-items-end">
                     <div class="col-md-3">
                         <label for="tamanoEstructuraConversion" class="form-label fw-semibold">Tamaño de la estructura</label>
@@ -199,7 +202,6 @@
                     <span class="text-muted">Configure el tamaño y la base, luego presione "Crear estructura".</span>
                 </div>
 
-                <!-- Fila 2: Clave + Botones -->
                 <div id="conversionControles" class="d-none">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -233,14 +235,99 @@
             </section>
         </div>
 
+        <!-- ============================================================
+             Panel Búsquedas Dinámicas
+        ============================================================ -->
+        <div class="tab-pane fade" id="panel-dinamica" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Búsquedas Dinámicas</h3>
+                        <p class="panel-subtitle">
+                            La estructura se expande automáticamente al insertar (D.O. ≥ 75 %) y
+                            se reduce automáticamente al eliminar (D.O. &lt; 112 %).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Parámetros -->
+                <div class="row mb-3 align-items-end g-3">
+                    <div class="col-md-2">
+                        <label for="cubetasDinamica" class="form-label fw-semibold">Cubetas (par)</label>
+                        <input type="number" class="form-control" id="cubetasDinamica" min="2" max="200" step="2" value="2">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="registrosDinamica" class="form-label fw-semibold">Registros por cubeta</label>
+                        <input type="number" class="form-control" id="registrosDinamica" min="1" max="20" value="3">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="digitosClaveDinamica" class="form-label fw-semibold">Dígitos por clave</label>
+                        <input type="number" class="form-control" id="digitosClaveDinamica" min="1" max="10" value="3">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="modoDinamica" class="form-label fw-semibold">Modo</label>
+                        <select class="form-select" id="modoDinamica" onchange="cambiarModoDinamica()">
+                            <option value="total">Total</option>
+                            <option value="parcial">Parcial</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-secondary w-100" onclick="crearEstructuraDinamica()">Crear estructura</button>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="alert alert-info mb-3" id="descripcionDinamica">
+                    <span class="text-muted">Configure los parámetros y presione "Crear estructura".</span>
+                </div>
+
+                <!-- Barras de D.O. dobles -->
+                <div id="doBarrasContainer" class="mb-3"></div>
+
+                <!-- Controles de operación -->
+                <div id="dinamicaControles" class="d-none">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claveDinamica" class="form-label fw-semibold">Clave</label>
+                            <input type="text" class="form-control" id="claveDinamica" placeholder="Ingrese una clave numérica">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success" onclick="insertarDinamica()">Insertar</button>
+                            <button class="btn btn-primary" onclick="buscarDinamica()">Buscar</button>
+                            <button class="btn btn-danger" onclick="eliminarDinamica()">Eliminar</button>
+                            <button class="btn btn-warning" onclick="limpiarDinamica()">Limpiar</button>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" onclick="cargarDinamica()">Cargar</button>
+                            <button class="btn btn-outline-secondary" onclick="guardarDinamica()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualización -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Visualización de la Estructura</label>
+                    <div id="visualizacionDinamica" class="estructura-container-din border rounded p-3 bg-light">
+                        <div class="text-muted text-center">Presione "Crear estructura" para inicializar</div>
+                    </div>
+                </div>
+
+                <div id="mensajeDinamica" class="alert d-none" role="alert"></div>
+            </section>
+        </div>
+
     </div><!-- /tab-content -->
 
 </div>
 
-<!-- Inputs ocultos para cargar archivos -->
-<input type="file" id="fileInputConversion" accept=".json" style="display: none;">
+<!-- Inputs ocultos para carga de archivos -->
+<input type="file" id="fileInputConversion"        accept=".json" style="display: none;">
 <input type="file" id="fileInputBloquesSecuencial" accept=".json" style="display: none;">
-<input type="file" id="fileInputBloquesBinaria" accept=".json" style="display: none;">
+<input type="file" id="fileInputBloquesBinaria"    accept=".json" style="display: none;">
+<input type="file" id="fileInputDinamica"          accept=".json" style="display: none;">
 
 <!-- Bootstrap JS -->
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
@@ -248,6 +335,7 @@
 <!-- Scripts -->
 <script src="conversionBase.js"></script>
 <script src="busquedaSecuencialYBinaria.js"></script>
+<script src="busquedaDinamica.js"></script>
 
 </body>
 </html>

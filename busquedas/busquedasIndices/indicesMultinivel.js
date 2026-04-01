@@ -100,7 +100,7 @@ function crearMultinivel() {
     multiNivelParams = calcularMultinivel(tipo, r, B, R, Ri);
     multiNivelInicializado = true;
 
-    const tipoLabel = tipo === 'primario' ? 'Primario (disperso)' : 'Secundario (denso)';
+    const tipoLabel = tipo === 'primario' ? 'Primario (no denso)' : 'Secundario (denso)';
 
     document.getElementById('descripcionMultinivel').innerHTML =
         `<strong>Índice Multinivel ${tipoLabel}:</strong> 
@@ -205,35 +205,61 @@ function renderizarTablaMultinivel(p) {
  */
 function calcularRangoBloqueMulti(indiceBloque, capacidadPorBloque, totalRegistros) {
     const inicio = (indiceBloque * capacidadPorBloque) + 1;
-    if (inicio > totalRegistros) return null;
-    const fin = Math.min((indiceBloque + 1) * capacidadPorBloque, totalRegistros);
-    return { inicio, fin };
+    const finPotencial = (indiceBloque + 1) * capacidadPorBloque;
+    const usados = Math.max(0, Math.min(capacidadPorBloque, totalRegistros - inicio + 1));
+    const finReal = usados > 0 ? (inicio + usados - 1) : null;
+    return {
+        inicio,
+        finReal,
+        finPotencial,
+        usados,
+        capacidad: capacidadPorBloque,
+        sobrantes: Math.max(0, capacidadPorBloque - usados)
+    };
 }
 
-function construirFilasResumenMulti(rango, etiqueta) {
-    if (!rango) {
-        return [{ idx: '-', valor: 'Sin claves', vacia: true }];
+function construirFilasResumenMulti(rango, etiqueta, anclas = new Set()) {
+    if (!rango || rango.usados <= 0) {
+        return [{ idx: '-', valor: 'Sin registros', vacia: true }];
     }
 
-    const segundo = Math.min(rango.inicio + 1, rango.fin);
-    return [
-        { idx: rango.inicio, valor: `${etiqueta} ${rango.inicio}` },
-        { idx: segundo, valor: `${etiqueta} ${segundo}` },
-        { idx: '...', valor: '...', vacia: true },
-        { idx: rango.fin, valor: `${etiqueta} ${rango.fin}` }
-    ];
+    const filas = [];
+    const segundo = Math.min(rango.inicio + 1, rango.finReal);
+    const pushReal = (clave) => {
+        filas.push({
+            idx: clave,
+            valor: `${etiqueta} ${clave}`,
+            key: clave,
+            ancla: anclas.has(clave)
+        });
+    };
+
+    pushReal(rango.inicio);
+    if (segundo !== rango.inicio) pushReal(segundo);
+    if (rango.finReal - rango.inicio > 2) filas.push({ idx: '...', valor: '...', vacia: true });
+    if (rango.finReal !== segundo && rango.finReal !== rango.inicio) pushReal(rango.finReal);
+
+    if (rango.sobrantes > 0) {
+        filas.push({
+            idx: `${rango.finReal + 1} - ${rango.finPotencial}`,
+            valor: `${etiqueta} sin uso`,
+            overflow: true,
+            vacia: true
+        });
+    }
+
+    return filas;
 }
 
-function obtenerIndicesBloquesVisualesMulti(totalBloques) {
+function obtenerIndicesBloquesVisualesMulti(totalBloques, bloquesClave = []) {
     if (totalBloques <= 0) return [];
-    if (totalBloques === 1) return [0];
-    if (totalBloques === 2) return [0, 1];
-    return [0, 1, totalBloques - 1];
+    const base = [0, 1, totalBloques - 1, ...bloquesClave]
+        .filter((idx) => idx >= 0 && idx < totalBloques);
+    return [...new Set(base)].sort((a, b) => a - b);
 }
 
-function generarColumnaMulti(titulo, totalBloques, labelClass, capacidadPorBloque, totalRegistros) {
-    const indicesVisuales = obtenerIndicesBloquesVisualesMulti(totalBloques);
-    const mostrarElipsis = totalBloques > 3;
+function generarColumnaMulti(titulo, totalBloques, labelClass, capacidadPorBloque, totalRegistros, rolColumna, nivel, bloquesClave = [], anclas = new Set()) {
+    const indicesVisuales = obtenerIndicesBloquesVisualesMulti(totalBloques, bloquesClave);
     let html = `<div class="indices-columna">`;
     html += `<div class="indices-columna-titulo">${titulo}</div>`;
     html += `<div class="nivel-label ${labelClass}">${totalBloques} blq.</div>`;
@@ -241,14 +267,20 @@ function generarColumnaMulti(titulo, totalBloques, labelClass, capacidadPorBloqu
 
     indicesVisuales.forEach((indiceBloque, posicion) => {
         const rango = calcularRangoBloqueMulti(indiceBloque, capacidadPorBloque, totalRegistros);
-        const filas = construirFilasResumenMulti(rango, 'Clave');
+        const etiqueta = 'Reg';
+        const filas = construirFilasResumenMulti(rango, etiqueta, anclas);
 
         html += `<div class="indices-bloque">`;
         html += `<div class="indices-bloque-header">B${indiceBloque + 1}</div>`;
         html += `<div class="indices-bloque-body">`;
 
         filas.forEach((fila) => {
-            html += `<div class="indices-celda ${fila.vacia ? 'celda-vacia' : ''}">
+            const claseOverflow = fila.overflow ? 'celda-overflow' : '';
+            const claseAncla = fila.ancla ? 'celda-ancla' : '';
+            const dataKey = Number.isInteger(fila.key)
+                ? `data-col-role="${rolColumna}" data-level="${nivel}" data-key="${fila.key}" data-block="${indiceBloque + 1}"`
+                : '';
+            html += `<div class="indices-celda ${fila.vacia ? 'celda-vacia' : ''} ${claseOverflow} ${claseAncla}" ${dataKey}>
                         <span class="indices-celda-idx">${fila.idx}</span>
                         <span class="indices-celda-valor">${fila.valor}</span>
                      </div>`;
@@ -256,7 +288,8 @@ function generarColumnaMulti(titulo, totalBloques, labelClass, capacidadPorBloqu
 
         html += `</div></div>`;
 
-        if (mostrarElipsis && posicion === 1) {
+        const siguiente = indicesVisuales[posicion + 1];
+        if (siguiente !== undefined && siguiente - indiceBloque > 1) {
             html += `<div class="indices-bloque indices-bloque-resumen">`;
             html += `<div class="indices-bloque-body">`;
             html += `<div class="indices-ellipsis-vertical" aria-label="Bloques omitidos">`;
@@ -289,11 +322,67 @@ function renderizarVisualizacionMultinivel(p) {
     // pero en el DOM ponemos: nivel_t (raíz) → nivel_{t-1} → ... → nivel_1 → datos
     const nivelesVisuales = [...p.niveles].reverse(); // índice más alto (raíz) primero
 
-    let html = `<div class="indices-diagrama">`;
+    const bloquesClavePorNivel = {};
+    const anclasPorNivel = {};
+    const registrarBloque = (nivel, idx) => {
+        if (!bloquesClavePorNivel[nivel]) bloquesClavePorNivel[nivel] = new Set();
+        bloquesClavePorNivel[nivel].add(idx);
+    };
+    const registrarAncla = (nivel, key) => {
+        if (!anclasPorNivel[nivel]) anclasPorNivel[nivel] = new Set();
+        anclasPorNivel[nivel].add(key);
+    };
+
+    const conexiones = [];
+
+    // Conexiones entre niveles de índice
+    for (let nivel = p.t; nivel >= 2; nivel--) {
+        const src = p.niveles[nivel - 1];
+        const claves = [...new Set([1, Math.min(p.fo, src.riEntradas), src.riEntradas].filter((k) => k >= 1))];
+        claves.forEach((clave, idx) => {
+            const bloqueDestino = clave;
+            const claveDestino = ((bloqueDestino - 1) * p.fo) + 1;
+
+            registrarBloque(`idx-${nivel}`, Math.ceil(clave / p.fo) - 1);
+            registrarBloque(`idx-${nivel - 1}`, bloqueDestino - 1);
+            registrarAncla(`idx-${nivel}`, clave);
+            registrarAncla(`idx-${nivel - 1}`, claveDestino);
+
+            conexiones.push({
+                sourceSelector: `[data-col-role="indice"][data-level="idx-${nivel}"][data-key="${clave}"]`,
+                targetSelector: `[data-col-role="indice"][data-level="idx-${nivel - 1}"][data-key="${claveDestino}"]`,
+                alterna: idx === 1
+            });
+        });
+    }
+
+    // Conexiones nivel 1 -> datos
+    const nivelBase = p.niveles[0];
+    const clavesBase = [...new Set([1, Math.min(p.fo, nivelBase.riEntradas), nivelBase.riEntradas].filter((k) => k >= 1))];
+    clavesBase.forEach((clave, idx) => {
+        const bloqueDato = p.tipo === 'primario' ? clave : Math.ceil(clave / p.bfr);
+        const claveDato = p.tipo === 'secundario'
+            ? clave
+            : ((bloqueDato - 1) * p.bfr) + 1;
+
+        registrarBloque('idx-1', Math.ceil(clave / p.fo) - 1);
+        registrarBloque('datos', bloqueDato - 1);
+        registrarAncla('idx-1', clave);
+        registrarAncla('datos', claveDato);
+
+        conexiones.push({
+            sourceSelector: `[data-col-role="indice"][data-level="idx-1"][data-key="${clave}"]`,
+            targetSelector: `[data-col-role="datos"][data-level="datos"][data-key="${claveDato}"]`,
+            alterna: idx === 1
+        });
+    });
+
+    let html = `<div class="indices-diagrama-wrapper"><div class="indices-diagrama">`;
 
     nivelesVisuales.forEach((niv, idx) => {
         const nivelNum = p.t - idx;              // número de nivel real (t = raíz, 1 = base)
         const isRaiz   = nivelNum === p.t;
+        const levelId = `idx-${nivelNum}`;
         const labelClass = isRaiz
             ? 'nivel-top'
             : (nivelNum === p.t - 1 ? 'nivel-mid' : 'nivel-base');
@@ -303,16 +392,30 @@ function renderizarVisualizacionMultinivel(p) {
             niv.bloques,
             labelClass,
             p.fo,
-            niv.riEntradas
+            niv.riEntradas,
+            'indice',
+            levelId,
+            [...(bloquesClavePorNivel[levelId] || new Set())],
+            anclasPorNivel[levelId] || new Set()
         );
 
         html += generarConectorMulti(isRaiz ? 'apunta a' : 'apunta a');
     });
 
     // Columna datos
-    html += generarColumnaMulti('Est. Datos', p.b, 'nivel-datos', p.bfr, p.r);
+    html += generarColumnaMulti(
+        'Est. Datos',
+        p.b,
+        'nivel-datos',
+        p.bfr,
+        p.r,
+        'datos',
+        'datos',
+        [...(bloquesClavePorNivel.datos || new Set())],
+        anclasPorNivel.datos || new Set()
+    );
 
-    html += `</div>`;
+    html += `</div></div>`;
 
     // Resumen de accesos
     html += `<div class="indices-resumen-accesos">
@@ -325,6 +428,11 @@ function renderizarVisualizacionMultinivel(p) {
     </div>`;
 
     container.innerHTML = html;
+    if (typeof dibujarConexionesD3 === 'function') {
+        const wrapper = container.querySelector('.indices-diagrama-wrapper');
+        const diagrama = container.querySelector('.indices-diagrama');
+        if (wrapper && diagrama) dibujarConexionesD3(wrapper, diagrama, conexiones);
+    }
 }
 
 // ==================== GUARDAR / CARGAR ====================
@@ -380,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('multiNivelControles').classList.remove('d-none');
                 document.getElementById('tablaMultinivel').classList.remove('d-none');
 
-                const tipoLabel = p.tipo === 'primario' ? 'Primario (disperso)' : 'Secundario (denso)';
+                const tipoLabel = p.tipo === 'primario' ? 'Primario (no denso)' : 'Secundario (denso)';
                 document.getElementById('descripcionMultinivel').innerHTML =
                     `<strong>Índice Multinivel ${tipoLabel}:</strong> Estructura cargada desde archivo.`;
 
