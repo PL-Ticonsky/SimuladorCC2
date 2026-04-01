@@ -1,0 +1,96 @@
+/* Grafos - Operaciones */
+
+.subpanel {
+    background: #FFFFFF;
+    border: 1px solid #D6DCE5;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(68, 84, 106, 0.06);
+}
+
+.subpanel-title {
+    color: #44546A;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.lista-box {
+    min-height: 78px;
+    max-height: 180px;
+    overflow: auto;
+    border: 1px solid #D6DCE5;
+    border-radius: 8px;
+    background: #F8FAFC;
+    padding: 8px;
+    font-size: 0.9rem;
+}
+
+.lista-box ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.lista-box li {
+    color: #44546A;
+    margin-bottom: 3px;
+}
+
+.ecuacion-box {
+    background: #F8FAFC;
+    border: 1px solid #D6DCE5;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 80px;
+    color: #44546A;
+    font-size: 0.9rem;
+}
+
+.grafo-canvas {
+    border: 1px solid #D6DCE5;
+    border-radius: 10px;
+    background: #FFFFFF;
+    min-height: 320px;
+    position: relative;
+    overflow: hidden;
+}
+
+.grafo-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8497B0;
+    font-size: 0.9rem;
+}
+
+.grafo-svg {
+    width: 100%;
+    height: 320px;
+}
+
+.edge-label {
+    font-size: 0.72rem;
+    fill: #6B7787;
+    font-weight: 600;
+    user-select: none;
+}
+
+.node-label {
+    font-size: 0.8rem;
+    fill: #1F2D3D;
+    font-weight: 700;
+    user-select: none;
+}
+
+.link-line {
+    stroke: #8497B0;
+    stroke-width: 2;
+}
+
+.node-circle {
+    fill: #5B9BD5;
+    stroke: #44546A;
+    stroke-width: 1.5;
+}
+
