@@ -1,6 +1,5 @@
 /**
- * Simulador CC2 - Módulo de Búsquedas
- * Búsqueda Secuencial y Binaria
+ * Simulador CC2 - Módulo de Búsqueda Secuencial y Binaria
  * Estructura estática con tamaño fijo
  */
 

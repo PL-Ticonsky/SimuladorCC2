@@ -1,4 +1,9 @@
-// Simulador CC2 - Grafos / Operaciones
+/**
+ * Simulador CC2 - Módulo de Operaciones entre grafos
+ * Implementa:
+ * Operaciones en un grafo (fusión de vértices, adición/eliminación de vértices y aristas, contracción de aristas, complemento)
+ * Operaciones entre dos grafos (unión, intersección, suma, producto cartesiano, producto tensorial, composición)
+ */
 
 const state = {
     un: {
@@ -8,7 +13,8 @@ const state = {
     dos: {
         g1: { vertices: [], aristas: [] },
         g2: { vertices: [], aristas: [] },
-        resultado: { vertices: [], aristas: [] }
+        resultado: { vertices: [], aristas: [] },
+        operacionActual: ''
     }
 };
 
@@ -40,6 +46,143 @@ function ocultarMensaje(id) {
     if (alert) alert.classList.add('d-none');
 }
 
+function descargarJSON(nombreArchivo, payload) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function limpiarInputsUnGrafo() {
+    ['unVerticeNombre', 'unAristaNombre', 'unAristaInicio', 'unAristaFin'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+}
+
+function limpiarInputsDosGrafos() {
+    [
+        'dosV1Nombre', 'dosV2Nombre',
+        'dosA1Nombre', 'dosA1Inicio', 'dosA1Fin',
+        'dosA2Nombre', 'dosA2Inicio', 'dosA2Fin'
+    ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+}
+
+function limpiarUnGrafo() {
+    if (!confirm('¿Limpiar el grafo actual y su resultado?')) return;
+    state.un.grafo = { vertices: [], aristas: [] };
+    limpiarResultadoUnGrafo();
+    limpiarInputsUnGrafo();
+    renderUnGrafo();
+    mostrarMensaje('mensajeUnGrafo', 'Se limpió el grafo y el resultado.', 'success');
+}
+
+function limpiarDosGrafos() {
+    if (!confirm('¿Limpiar G1, G2 y el resultado?')) return;
+    state.dos.g1 = { vertices: [], aristas: [] };
+    state.dos.g2 = { vertices: [], aristas: [] };
+    limpiarResultadoDosGrafos();
+    limpiarInputsDosGrafos();
+    renderDosGrafos();
+    mostrarMensaje('mensajeDosGrafos', 'Se limpiaron G1, G2 y el resultado.', 'success');
+}
+
+function guardarUnGrafo() {
+    descargarJSON('operaciones_un_grafo.json', {
+        tipo_archivo: 'operaciones_un_grafo',
+        data: {
+            grafo: state.un.grafo,
+            resultado: state.un.resultado
+        }
+    });
+    mostrarMensaje('mensajeUnGrafo', 'Archivo guardado correctamente.', 'success');
+}
+
+function guardarDosGrafos() {
+    descargarJSON('operaciones_dos_grafos.json', {
+        tipo_archivo: 'operaciones_dos_grafos',
+        data: {
+            g1: state.dos.g1,
+            g2: state.dos.g2,
+            resultado: state.dos.resultado,
+            operacionActual: state.dos.operacionActual || ''
+        }
+    });
+    mostrarMensaje('mensajeDosGrafos', 'Archivo guardado correctamente.', 'success');
+}
+
+function cargarUnGrafo() {
+    const input = document.getElementById('fileInputUnGrafo');
+    if (input) input.click();
+}
+
+function cargarDosGrafos() {
+    const input = document.getElementById('fileInputDosGrafos');
+    if (input) input.click();
+}
+
+function bindCargarUnGrafo() {
+    const input = document.getElementById('fileInputUnGrafo');
+    if (!input) return;
+    input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const parsed = JSON.parse(ev.target.result);
+                if (parsed.tipo_archivo !== 'operaciones_un_grafo') throw new Error('Formato inválido para Un grafo');
+                const d = parsed.data || {};
+                state.un.grafo = clonarGrafo(d.grafo || { vertices: [], aristas: [] });
+                state.un.resultado = clonarGrafo(d.resultado || { vertices: [], aristas: [] });
+                limpiarInputsUnGrafo();
+                renderUnGrafo();
+                mostrarMensaje('mensajeUnGrafo', 'Archivo cargado correctamente.', 'success');
+            } catch (err) {
+                mostrarMensaje('mensajeUnGrafo', err.message, 'warning');
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    });
+}
+
+function bindCargarDosGrafos() {
+    const input = document.getElementById('fileInputDosGrafos');
+    if (!input) return;
+    input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const parsed = JSON.parse(ev.target.result);
+                if (parsed.tipo_archivo !== 'operaciones_dos_grafos') throw new Error('Formato inválido para Dos grafos');
+                const d = parsed.data || {};
+                state.dos.g1 = clonarGrafo(d.g1 || { vertices: [], aristas: [] });
+                state.dos.g2 = clonarGrafo(d.g2 || { vertices: [], aristas: [] });
+                state.dos.resultado = clonarGrafo(d.resultado || { vertices: [], aristas: [] });
+                state.dos.operacionActual = d.operacionActual || '';
+                const select = document.getElementById('dosOperacion');
+                if (select && state.dos.operacionActual) select.value = state.dos.operacionActual;
+                limpiarInputsDosGrafos();
+                renderDosGrafos();
+                mostrarMensaje('mensajeDosGrafos', 'Archivo cargado correctamente.', 'success');
+            } catch (err) {
+                mostrarMensaje('mensajeDosGrafos', err.message, 'warning');
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    });
+}
+
 function existeVertice(g, v) {
     return g.vertices.includes(v);
 }
@@ -55,15 +198,15 @@ function existeAristaPar(g, u, v) {
 
 function agregarVertice(g, nombre) {
     const n = normalizarTexto(nombre);
-    if (!n) throw new Error('Ingrese el nombre del vertice.');
-    if (existeVertice(g, n)) throw new Error('El vertice ya existe.');
+    if (!n) throw new Error('Ingrese el nombre del vértice.');
+    if (existeVertice(g, n)) throw new Error('El vértice ya existe.');
     g.vertices.push(n);
 }
 
 function eliminarVertice(g, nombre) {
     const n = normalizarTexto(nombre);
-    if (!n) throw new Error('Ingrese el vertice a eliminar.');
-    if (!existeVertice(g, n)) throw new Error('El vertice no existe.');
+    if (!n) throw new Error('Ingrese el vértice a eliminar.');
+    if (!existeVertice(g, n)) throw new Error('El vértice no existe.');
     g.vertices = g.vertices.filter((v) => v !== n);
     g.aristas = g.aristas.filter((a) => a.inicio !== n && a.fin !== n);
 }
@@ -75,9 +218,8 @@ function agregarArista(g, nombre, inicio, fin) {
 
     if (!n || !u || !v) throw new Error('Complete nombre, inicio y fin de la arista.');
     if (!existeVertice(g, u) || !existeVertice(g, v)) throw new Error('Los vertices de la arista deben existir.');
-    if (u === v) throw new Error('No se permiten bucles en esta simulacion.');
+    if (u === v) throw new Error('No se permiten bucles en esta simulación.');
     if (existeAristaNombre(g, n)) throw new Error('Ya existe una arista con ese nombre.');
-    if (existeAristaPar(g, u, v)) throw new Error('Ya existe una arista entre esos vertices.');
 
     g.aristas.push({ nombre: n, inicio: u, fin: v });
 }
@@ -100,7 +242,8 @@ function deduplicarAristasPorPar(g, prefijo = 'a') {
         const k = claveArista(a.inicio, a.fin);
         if (usadas.has(k)) continue;
         usadas.add(k);
-        aristas.push({ nombre: `${prefijo}${idx++}`, inicio: a.inicio, fin: a.fin });
+        const nombre = normalizarTexto(a.nombre) || `${prefijo}${idx++}`;
+        aristas.push({ nombre, inicio: a.inicio, fin: a.fin });
     }
     g.aristas = aristas;
 }
@@ -122,15 +265,15 @@ function grafoComplemento(g) {
     return r;
 }
 
-function fusionarVertices(g, v1, v2, nuevo) {
+function fusionarVertices(g, v1, v2) {
     const a = normalizarTexto(v1);
     const b = normalizarTexto(v2);
-    const n = normalizarTexto(nuevo);
+    const n = `${a},${b}`;
 
-    if (!a || !b || !n) throw new Error('Complete v1, v2 y el nuevo vertice.');
-    if (a === b) throw new Error('v1 y v2 deben ser diferentes.');
-    if (!existeVertice(g, a) || !existeVertice(g, b)) throw new Error('Los vertices a fusionar deben existir.');
-    if (n !== a && n !== b && existeVertice(g, n)) throw new Error('El nombre nuevo ya existe.');
+    if (!a || !b) throw new Error('Complete los vértices.');
+    if (a === b) throw new Error('Los vértices deben ser diferentes.');
+    if (!existeVertice(g, a) || !existeVertice(g, b)) throw new Error('Los vértices a fusionar deben existir.');
+    if (existeVertice(g, n) && n !== a && n !== b) throw new Error('El nombre resultante ya existe.');
 
     const verticesNuevos = g.vertices.filter((v) => v !== a && v !== b);
     verticesNuevos.push(n);
@@ -141,26 +284,34 @@ function fusionarVertices(g, v1, v2, nuevo) {
         const fin = (ar.fin === a || ar.fin === b) ? n : ar.fin;
         return { ...ar, inicio, fin };
     });
-
-    deduplicarAristasPorPar(g, 'f');
 }
 
-function contraccionVertice(g, origen, destino) {
-    const o = normalizarTexto(origen);
-    const d = normalizarTexto(destino);
+function contraccionArista(g, nombreArista) {
+    const nAr = normalizarTexto(nombreArista);
+    if (!nAr) throw new Error('Ingrese el nombre de la arista a contraer.');
 
-    if (!o || !d) throw new Error('Complete vertice a contraer y vertice destino.');
+    const arista = g.aristas.find((a) => a.nombre === nAr);
+    if (!arista) throw new Error('La arista a contraer no existe.');
+
+    const o = normalizarTexto(arista.inicio);
+    const d = normalizarTexto(arista.fin);
+    const n = `${o},${d}`;
+
+    if (!o || !d) throw new Error('La arista seleccionada no es valida.');
     if (o === d) throw new Error('Origen y destino deben ser diferentes.');
-    if (!existeVertice(g, o) || !existeVertice(g, d)) throw new Error('Los vertices deben existir.');
+    if (!existeVertice(g, o) || !existeVertice(g, d)) throw new Error('Los vértices deben existir.');
+    if (existeVertice(g, n) && n !== o && n !== d) throw new Error('El nombre resultante ya existe.');
 
-    g.vertices = g.vertices.filter((v) => v !== o);
+    // La arista contraida desaparece; las demas se reubican al nuevo vertice.
+    g.aristas = g.aristas.filter((a) => a.nombre !== nAr);
+
+    g.vertices = g.vertices.filter((v) => v !== o && v !== d);
+    g.vertices.push(n);
     g.aristas = g.aristas.map((ar) => {
-        const inicio = ar.inicio === o ? d : ar.inicio;
-        const fin = ar.fin === o ? d : ar.fin;
+        const inicio = (ar.inicio === o || ar.inicio === d) ? n : ar.inicio;
+        const fin = (ar.fin === o || ar.fin === d) ? n : ar.fin;
         return { ...ar, inicio, fin };
     });
-
-    deduplicarAristasPorPar(g, 'k');
 }
 
 function operarUnGrafo(grafo, operacion, params) {
@@ -168,7 +319,7 @@ function operarUnGrafo(grafo, operacion, params) {
 
     switch (operacion) {
         case 'fusion_vertices':
-            fusionarVertices(r, params.v1, params.v2, params.nuevo);
+            fusionarVertices(r, params.v1, params.v2);
             return r;
         case 'adicion_vertices':
             agregarVertice(r, params.vertice);
@@ -176,8 +327,8 @@ function operarUnGrafo(grafo, operacion, params) {
         case 'eliminacion_vertice':
             eliminarVertice(r, params.vertice);
             return r;
-        case 'contraccion_vertice':
-            contraccionVertice(r, params.origen, params.destino);
+        case 'contraccion_arista':
+            contraccionArista(r, params.nombreArista);
             return r;
         case 'adicion_arista':
             agregarArista(r, params.nombre, params.inicio, params.fin);
@@ -196,6 +347,29 @@ function obtenerConjuntoAristas(g) {
     return new Set(g.aristas.map((a) => claveArista(a.inicio, a.fin)));
 }
 
+function obtenerMapaAristasPorPar(g) {
+    const mapa = new Map();
+    g.aristas.forEach((a) => {
+        const k = claveArista(a.inicio, a.fin);
+        // Para operaciones por conjuntos, tomamos una representante por par.
+        if (!mapa.has(k)) mapa.set(k, { ...a });
+    });
+    return mapa;
+}
+
+function nombreUnico(base, usados, prefijo = 'e') {
+    const limpio = normalizarTexto(base) || prefijo;
+    if (!usados.has(limpio)) {
+        usados.add(limpio);
+        return limpio;
+    }
+    let i = 2;
+    while (usados.has(`${limpio}_${i}`)) i++;
+    const final = `${limpio}_${i}`;
+    usados.add(final);
+    return final;
+}
+
 function reconstruirAristasDesdeClaves(claves, prefijo = 'r') {
     let idx = 1;
     return [...claves].map((k) => {
@@ -206,8 +380,18 @@ function reconstruirAristasDesdeClaves(claves, prefijo = 'r') {
 
 function unionGrafos(g1, g2) {
     const vertices = [...new Set([...g1.vertices, ...g2.vertices])];
-    const claves = new Set([...obtenerConjuntoAristas(g1), ...obtenerConjuntoAristas(g2)]);
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'u') };
+    const m1 = obtenerMapaAristasPorPar(g1);
+    const m2 = obtenerMapaAristasPorPar(g2);
+    const usados = new Set();
+    const aristas = [];
+
+    const claves = [...new Set([...m1.keys(), ...m2.keys()])];
+    claves.forEach((k) => {
+        const a = m1.get(k) || m2.get(k);
+        aristas.push({ ...a, nombre: nombreUnico(a.nombre, usados, 'u') });
+    });
+
+    return { vertices, aristas };
 }
 
 function interseccionGrafos(g1, g2) {
@@ -215,57 +399,122 @@ function interseccionGrafos(g1, g2) {
     const vertices = g1.vertices.filter((v) => v2.has(v));
     const vr = new Set(vertices);
 
-    const c1 = obtenerConjuntoAristas(g1);
-    const c2 = obtenerConjuntoAristas(g2);
-    const claves = new Set();
-    c1.forEach((k) => {
-        if (!c2.has(k)) return;
+    const m1 = obtenerMapaAristasPorPar(g1);
+    const m2 = obtenerMapaAristasPorPar(g2);
+    const usados = new Set();
+    const aristas = [];
+
+    m1.forEach((a1, k) => {
+        if (!m2.has(k)) return;
         const [u, v] = k.split('||');
-        if (vr.has(u) && vr.has(v)) claves.add(k);
+        if (!vr.has(u) || !vr.has(v)) return;
+        aristas.push({ ...a1, nombre: nombreUnico(a1.nombre, usados, 'i') });
     });
 
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'i') };
+    return { vertices, aristas };
 }
 
 function sumaAnilloGrafos(g1, g2) {
     const vertices = [...new Set([...g1.vertices, ...g2.vertices])];
-    const c1 = obtenerConjuntoAristas(g1);
-    const c2 = obtenerConjuntoAristas(g2);
-    const claves = new Set();
+    const m1 = obtenerMapaAristasPorPar(g1);
+    const m2 = obtenerMapaAristasPorPar(g2);
+    const usados = new Set();
+    const aristas = [];
 
-    c1.forEach((k) => { if (!c2.has(k)) claves.add(k); });
-    c2.forEach((k) => { if (!c1.has(k)) claves.add(k); });
+    m1.forEach((a1, k) => {
+        if (m2.has(k)) return;
+        aristas.push({ ...a1, nombre: nombreUnico(a1.nombre, usados, 'sr') });
+    });
+    m2.forEach((a2, k) => {
+        if (m1.has(k)) return;
+        aristas.push({ ...a2, nombre: nombreUnico(a2.nombre, usados, 'sr') });
+    });
 
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'sr') };
+    return { vertices, aristas };
 }
 
 function sumaGrafos(g1, g2) {
-    const base = unionGrafos(g1, g2);
-    const inG1 = new Set(g1.vertices);
-    const inG2 = new Set(g2.vertices);
-    const claves = new Set(base.aristas.map((a) => claveArista(a.inicio, a.fin)));
+    const repetidos = new Set(g1.vertices.filter((v) => g2.vertices.includes(v)));
 
-    for (const u of base.vertices) {
-        for (const v of base.vertices) {
-            if (u >= v) continue;
-            const unoG1 = inG1.has(u);
-            const otroG1 = inG1.has(v);
-            const unoG2 = inG2.has(u);
-            const otroG2 = inG2.has(v);
-            if ((unoG1 && otroG2) || (unoG2 && otroG1)) {
-                claves.add(claveArista(u, v));
-            }
+    const usadosVertices = new Set();
+    const mapV1 = new Map();
+    const mapV2 = new Map();
+
+    g1.vertices.forEach((v) => {
+        const base = repetidos.has(v) ? `${v}_g1` : v;
+        mapV1.set(v, nombreUnico(base, usadosVertices, 'v'));
+    });
+    g2.vertices.forEach((v) => {
+        const base = repetidos.has(v) ? `${v}_g2` : v;
+        mapV2.set(v, nombreUnico(base, usadosVertices, 'v'));
+    });
+
+    const vertices = [...mapV1.values(), ...mapV2.values()];
+    const usadosAristas = new Set();
+    const aristas = [];
+    const pares = new Set();
+
+    const nombresG1 = new Set(g1.aristas.map((a) => normalizarTexto(a.nombre)).filter(Boolean));
+    const repetidosAristas = new Set(
+        g2.aristas
+            .map((a) => normalizarTexto(a.nombre))
+            .filter((n) => n && nombresG1.has(n))
+    );
+
+    const nombreAristaConOrigen = (nombreBase, origen) => {
+        const base = normalizarTexto(nombreBase) || 's';
+        if (repetidosAristas.has(base)) {
+            return nombreUnico(`${base}_${origen}`, usadosAristas, 's');
         }
-    }
+        if (!usadosAristas.has(base)) {
+            usadosAristas.add(base);
+            return base;
+        }
+        const conOrigen = `${base}_${origen}`;
+        return nombreUnico(conOrigen, usadosAristas, 's');
+    };
 
-    return { vertices: base.vertices, aristas: reconstruirAristasDesdeClaves(claves, 's') };
+    g1.aristas.forEach((a) => {
+        const inicio = mapV1.get(a.inicio);
+        const fin = mapV1.get(a.fin);
+        if (!inicio || !fin) return;
+        aristas.push({ nombre: nombreAristaConOrigen(a.nombre, 'g1'), inicio, fin });
+        pares.add(claveArista(inicio, fin));
+    });
+
+    g2.aristas.forEach((a) => {
+        const inicio = mapV2.get(a.inicio);
+        const fin = mapV2.get(a.fin);
+        if (!inicio || !fin) return;
+        aristas.push({ nombre: nombreAristaConOrigen(a.nombre, 'g2'), inicio, fin });
+        pares.add(claveArista(inicio, fin));
+    });
+
+    // Suma: agregar conexiones faltantes entre todos los vertices de G1 y G2.
+    let idx = 1;
+    mapV1.forEach((u) => {
+        mapV2.forEach((v) => {
+            const k = claveArista(u, v);
+            if (pares.has(k)) return;
+            pares.add(k);
+            aristas.push({
+                nombre: nombreUnico(`s${idx++}`, usadosAristas, 's'),
+                inicio: u,
+                fin: v,
+                esConexionSuma: true,
+                grupoSuma: u
+            });
+        });
+    });
+
+    return { vertices, aristas };
 }
 
 function productoCartesiano(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u}|${v}`);
+            vertices.push(`${u},${v}`);
         }
     }
 
@@ -278,10 +527,10 @@ function productoCartesiano(g1, g2) {
             for (const u2 of g1.vertices) {
                 for (const v2 of g2.vertices) {
                     if (u1 === u2 && e2.has(claveArista(v1, v2))) {
-                        claves.add(claveArista(`${u1}|${v1}`, `${u2}|${v2}`));
+                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
                     }
                     if (v1 === v2 && e1.has(claveArista(u1, u2))) {
-                        claves.add(claveArista(`${u1}|${v1}`, `${u2}|${v2}`));
+                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
                     }
                 }
             }
@@ -295,7 +544,7 @@ function productoTensorial(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u}|${v}`);
+            vertices.push(`${u},${v}`);
         }
     }
 
@@ -308,7 +557,7 @@ function productoTensorial(g1, g2) {
             for (const u2 of g1.vertices) {
                 for (const v2 of g2.vertices) {
                     if (e1.has(claveArista(u1, u2)) && e2.has(claveArista(v1, v2))) {
-                        claves.add(claveArista(`${u1}|${v1}`, `${u2}|${v2}`));
+                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
                     }
                 }
             }
@@ -322,7 +571,7 @@ function composicionGrafos(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u}|${v}`);
+            vertices.push(`${u},${v}`);
         }
     }
 
@@ -337,7 +586,7 @@ function composicionGrafos(g1, g2) {
                     const cond1 = e1.has(claveArista(u1, u2));
                     const cond2 = (u1 === u2) && e2.has(claveArista(v1, v2));
                     if (cond1 || cond2) {
-                        claves.add(claveArista(`${u1}|${v1}`, `${u2}|${v2}`));
+                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
                     }
                 }
             }
@@ -368,9 +617,14 @@ function operarDosGrafos(g1, g2, operacion) {
     }
 }
 
-function notacion(g, nombre) {
-    const s = `{${g.vertices.join(', ')}}`;
-    const a = `{${g.aristas.map((e) => `${e.nombre}:(${e.inicio},${e.fin})`).join(', ')}}`;
+function formatearVerticeNotacion(v, marcarFusionado) {
+    if (!marcarFusionado || !v.includes(',')) return v;
+    return `<span class="vertice-fusionado">${v}</span>`;
+}
+
+function notacion(g, nombre, marcarFusionados = false) {
+    const s = `{${g.vertices.map((v) => formatearVerticeNotacion(v, marcarFusionados)).join(', ')}}`;
+    const a = `{${g.aristas.map((e) => e.nombre).join(', ')}}`;
     return `<strong>${nombre}</strong> = (S, A)<br>S = ${s}<br>A = ${a}`;
 }
 
@@ -387,7 +641,7 @@ function renderLista(id, elementos, formatear) {
     box.innerHTML = `<ul>${items}</ul>`;
 }
 
-function renderGrafoD3(containerId, grafo) {
+function renderGrafoD3(containerId, grafo, opciones = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
@@ -399,6 +653,13 @@ function renderGrafoD3(containerId, grafo) {
 
     const width = Math.max(260, container.clientWidth || 260);
     const height = 320;
+    const radioNodo = 16;
+    const margen = 6;
+    const minX = radioNodo + margen;
+    const maxX = width - radioNodo - margen;
+    const minY = radioNodo + margen;
+    const maxY = height - radioNodo - margen;
+    const limitar = (valor, min, max) => Math.max(min, Math.min(max, valor));
 
     const svg = d3.select(container)
         .append('svg')
@@ -407,7 +668,52 @@ function renderGrafoD3(containerId, grafo) {
         .attr('preserveAspectRatio', 'xMidYMid meet');
 
     const nodes = grafo.vertices.map((v) => ({ id: v }));
-    const links = grafo.aristas.map((a) => ({ source: a.inicio, target: a.fin, nombre: a.nombre }));
+    const links = grafo.aristas.map((a) => ({
+        source: a.inicio,
+        target: a.fin,
+        nombre: a.nombre,
+        esConexionSuma: !!a.esConexionSuma,
+        grupoSuma: a.grupoSuma || ''
+    }));
+
+    const PALETA_SUMA = [
+        '#1F4E79', '#8E24AA', '#0B8043', '#C62828', '#EF6C00',
+        '#1565C0', '#6A1B9A', '#2E7D32', '#AD1457', '#283593'
+    ];
+    const mapaColoresSuma = new Map();
+    function colorConexionSuma(d) {
+        if (!opciones.colorearSumaConexiones || !d.esConexionSuma) return null;
+        const key = d.grupoSuma || 's';
+        if (!mapaColoresSuma.has(key)) {
+            mapaColoresSuma.set(key, PALETA_SUMA[mapaColoresSuma.size % PALETA_SUMA.length]);
+        }
+        return mapaColoresSuma.get(key);
+    }
+
+    // Agrupa aristas paralelas por par no dirigido para separarlas visualmente.
+    const gruposParalelos = new Map();
+    links.forEach((l) => {
+        const k = claveArista(String(l.source), String(l.target));
+        if (!gruposParalelos.has(k)) gruposParalelos.set(k, []);
+        gruposParalelos.get(k).push(l);
+    });
+    gruposParalelos.forEach((grupo) => {
+        const n = grupo.length;
+        if (n % 2 === 1) {
+            const centro = (n - 1) / 2;
+            grupo.forEach((l, idx) => {
+                l.parallelIndex = idx - centro; // ..., -1, 0, 1, ...
+                l.parallelCount = n;
+            });
+        } else {
+            // Para pares evita índices ±0.5; usa ..., -2, -1, 1, 2, ...
+            grupo.forEach((l, idx) => {
+                const paso = idx < n / 2 ? idx - n / 2 : idx - n / 2 + 1;
+                l.parallelIndex = paso;
+                l.parallelCount = n;
+            });
+        }
+    });
 
     const sim = d3.forceSimulation(nodes)
         .force('link', d3.forceLink(links).id((d) => d.id).distance(90))
@@ -416,11 +722,13 @@ function renderGrafoD3(containerId, grafo) {
         .force('collide', d3.forceCollide().radius(24));
 
     const link = svg.append('g')
-        .selectAll('line')
+        .selectAll('path')
         .data(links)
         .enter()
-        .append('line')
-        .attr('class', 'link-line');
+        .append('path')
+        .attr('class', 'link-line')
+        .style('stroke', (d) => colorConexionSuma(d) || null)
+        .style('stroke-width', (d) => colorConexionSuma(d) ? '2.8px' : null);
 
     const edgeLabel = svg.append('g')
         .selectAll('text')
@@ -428,6 +736,7 @@ function renderGrafoD3(containerId, grafo) {
         .enter()
         .append('text')
         .attr('class', 'edge-label')
+        .style('fill', (d) => colorConexionSuma(d) || null)
         .text((d) => d.nombre);
 
     const node = svg.append('g')
@@ -436,16 +745,16 @@ function renderGrafoD3(containerId, grafo) {
         .enter()
         .append('circle')
         .attr('class', 'node-circle')
-        .attr('r', 16)
+        .attr('r', radioNodo)
         .call(d3.drag()
             .on('start', (event, d) => {
                 if (!event.active) sim.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
+                d.fx = limitar(d.x ?? width / 2, minX, maxX);
+                d.fy = limitar(d.y ?? height / 2, minY, maxY);
             })
             .on('drag', (event, d) => {
-                d.fx = event.x;
-                d.fy = event.y;
+                d.fx = limitar(event.x, minX, maxX);
+                d.fy = limitar(event.y, minY, maxY);
             })
             .on('end', (event, d) => {
                 if (!event.active) sim.alphaTarget(0);
@@ -464,12 +773,63 @@ function renderGrafoD3(containerId, grafo) {
         .attr('dy', 5)
         .text((d) => d.id);
 
+    function obtenerGeometriaArista(d) {
+        let s = d.source;
+        let t = d.target;
+        // Normaliza orientación para que aristas paralelas del mismo par
+        // no se dibujen invertidas una sobre otra cuando cambia source/target.
+        if (String(s.id) > String(t.id)) {
+            const tmp = s;
+            s = t;
+            t = tmp;
+        }
+
+        const x1 = s.x;
+        const y1 = s.y;
+        const x2 = t.x;
+        const y2 = t.y;
+
+        // Lazo: se dibuja como una curva sobre el mismo vertice.
+        if (s.id === t.id) {
+            const idxAbs = Math.abs(d.parallelIndex);
+            const radioBase = 20;
+            const incremento = Math.min(12, 4 + (d.parallelCount * 0.8));
+            const radioLazo = radioBase + (idxAbs * incremento);
+            const signo = d.parallelIndex === 0 ? 1 : Math.sign(d.parallelIndex);
+            const spreadX = 8 + Math.min(18, d.parallelCount * 2);
+            const cx = x1 + (signo * spreadX * Math.max(1, idxAbs));
+            const cy = y1 - radioLazo;
+            const path = `M ${x1} ${y1 - 12} C ${cx - radioLazo} ${cy - radioLazo}, ${cx + radioLazo} ${cy - radioLazo}, ${x1} ${y1 - 12}`;
+            return { path, lx: cx, ly: cy - radioLazo + 4 };
+        }
+
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const dist = Math.hypot(dx, dy) || 1;
+        const nx = -dy / dist;
+        const ny = dx / dist;
+        const separacionBase = Math.max(18, Math.min(34, dist * 0.12));
+        const factorCantidad = 1 + Math.min(0.8, (d.parallelCount - 1) * 0.08);
+        const separacion = separacionBase * factorCantidad;
+        const offset = d.parallelIndex * separacion;
+        const cx = (x1 + x2) / 2 + nx * offset;
+        const cy = (y1 + y2) / 2 + ny * offset;
+        const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+
+        // Punto medio de curva cuadratica (t=0.5) para ubicar etiqueta.
+        const lx = 0.25 * x1 + 0.5 * cx + 0.25 * x2;
+        const ly = 0.25 * y1 + 0.5 * cy + 0.25 * y2;
+        return { path, lx, ly };
+    }
+
     sim.on('tick', () => {
+        nodes.forEach((d) => {
+            d.x = limitar(d.x ?? width / 2, minX, maxX);
+            d.y = limitar(d.y ?? height / 2, minY, maxY);
+        });
+
         link
-            .attr('x1', (d) => d.source.x)
-            .attr('y1', (d) => d.source.y)
-            .attr('x2', (d) => d.target.x)
-            .attr('y2', (d) => d.target.y);
+            .attr('d', (d) => obtenerGeometriaArista(d).path);
 
         node
             .attr('cx', (d) => d.x)
@@ -480,22 +840,34 @@ function renderGrafoD3(containerId, grafo) {
             .attr('y', (d) => d.y);
 
         edgeLabel
-            .attr('x', (d) => (d.source.x + d.target.x) / 2)
-            .attr('y', (d) => (d.source.y + d.target.y) / 2 - 4);
+            .attr('x', (d) => obtenerGeometriaArista(d).lx)
+            .attr('y', (d) => obtenerGeometriaArista(d).ly - 4);
     });
+}
+
+function limpiarResultadoUnGrafo() {
+    state.un.resultado = { vertices: [], aristas: [] };
+}
+
+function limpiarResultadoDosGrafos() {
+    state.dos.resultado = { vertices: [], aristas: [] };
+    state.dos.operacionActual = '';
 }
 
 function renderUnGrafo() {
     const g = state.un.grafo;
     const r = state.un.resultado;
 
-    renderLista('unVerticesLista', g.vertices, (v) => `Reg ${v}`);
-    renderLista('unAristasLista', g.aristas, (a) => `${a.nombre}: (${a.inicio}, ${a.fin})`);
-
     document.getElementById('unNotacionInicial').innerHTML = notacion(g, 'G inicial');
-    document.getElementById('unNotacionResultado').innerHTML = notacion(r, 'G resultado');
+    document.getElementById('unNotacionResultado').innerHTML = notacion(r, 'G resultado', true);
 
     renderGrafoD3('unGrafoInicial', g);
+    renderGrafoD3('unGrafoResultado', r);
+}
+
+function renderUnResultado() {
+    const r = state.un.resultado;
+    document.getElementById('unNotacionResultado').innerHTML = notacion(r, 'G resultado', true);
     renderGrafoD3('unGrafoResultado', r);
 }
 
@@ -504,18 +876,19 @@ function renderDosGrafos() {
     const g2 = state.dos.g2;
     const r = state.dos.resultado;
 
-    renderLista('dosVertices1Lista', g1.vertices, (v) => `Reg ${v}`);
-    renderLista('dosVertices2Lista', g2.vertices, (v) => `Reg ${v}`);
-    renderLista('dosAristas1Lista', g1.aristas, (a) => `${a.nombre}: (${a.inicio}, ${a.fin})`);
-    renderLista('dosAristas2Lista', g2.aristas, (a) => `${a.nombre}: (${a.inicio}, ${a.fin})`);
-
     document.getElementById('dosNotacionG1').innerHTML = notacion(g1, 'G1');
     document.getElementById('dosNotacionG2').innerHTML = notacion(g2, 'G2');
     document.getElementById('dosNotacionResultado').innerHTML = notacion(r, 'G resultado');
 
     renderGrafoD3('dosGrafo1', g1);
     renderGrafoD3('dosGrafo2', g2);
-    renderGrafoD3('dosGrafoResultado', r);
+    renderGrafoD3('dosGrafoResultado', r, { colorearSumaConexiones: state.dos.operacionActual === 'suma' });
+}
+
+function renderDosResultado() {
+    const r = state.dos.resultado;
+    document.getElementById('dosNotacionResultado').innerHTML = notacion(r, 'G resultado', true);
+    renderGrafoD3('dosGrafoResultado', r, { colorearSumaConexiones: state.dos.operacionActual === 'suma' });
 }
 
 function plantillaCamposUnGrafo(operacion) {
@@ -526,7 +899,7 @@ function plantillaCamposUnGrafo(operacion) {
 
     switch (operacion) {
         case 'fusion_vertices':
-            base.innerHTML = `${campo('paramFusionV1', 'Vertice 1')}${campo('paramFusionV2', 'Vertice 2')}${campo('paramFusionNuevo', 'Nuevo vertice')}`;
+            base.innerHTML = `${campo('paramFusionV1', 'Vertice 1')}${campo('paramFusionV2', 'Vertice 2')}`;
             break;
         case 'adicion_vertices':
             base.innerHTML = campo('paramAddVertice', 'Vertice a agregar');
@@ -534,8 +907,8 @@ function plantillaCamposUnGrafo(operacion) {
         case 'eliminacion_vertice':
             base.innerHTML = campo('paramDelVertice', 'Vertice a eliminar');
             break;
-        case 'contraccion_vertice':
-            base.innerHTML = `${campo('paramContraccionOrigen', 'Vertice a contraer')}${campo('paramContraccionDestino', 'Vertice destino')}`;
+        case 'contraccion_arista':
+            base.innerHTML = campo('paramContraccionArista', 'Nombre de la arista a contraer');
             break;
         case 'adicion_arista':
             base.innerHTML = `${campo('paramAddAristaNombre', 'Nombre arista')}${campo('paramAddAristaInicio', 'Vertice inicio')}${campo('paramAddAristaFin', 'Vertice fin')}`;
@@ -553,13 +926,13 @@ function leerParamsUnGrafo(operacion) {
 
     switch (operacion) {
         case 'fusion_vertices':
-            return { v1: val('paramFusionV1'), v2: val('paramFusionV2'), nuevo: val('paramFusionNuevo') };
+            return { v1: val('paramFusionV1'), v2: val('paramFusionV2') };
         case 'adicion_vertices':
             return { vertice: val('paramAddVertice') };
         case 'eliminacion_vertice':
             return { vertice: val('paramDelVertice') };
-        case 'contraccion_vertice':
-            return { origen: val('paramContraccionOrigen'), destino: val('paramContraccionDestino') };
+        case 'contraccion_arista':
+            return { nombreArista: val('paramContraccionArista') };
         case 'adicion_arista':
             return { nombre: val('paramAddAristaNombre'), inicio: val('paramAddAristaInicio'), fin: val('paramAddAristaFin') };
         case 'eliminacion_arista':
@@ -570,11 +943,15 @@ function leerParamsUnGrafo(operacion) {
 }
 
 function bindEventosUnGrafo() {
+    document.getElementById('btnUnLimpiar').addEventListener('click', limpiarUnGrafo);
+    document.getElementById('btnUnGuardar').addEventListener('click', guardarUnGrafo);
+    document.getElementById('btnUnCargar').addEventListener('click', cargarUnGrafo);
+
     document.getElementById('btnUnAgregarVertice').addEventListener('click', () => {
         try {
             agregarVertice(state.un.grafo, document.getElementById('unVerticeNombre').value);
             document.getElementById('unVerticeNombre').value = '';
-            state.un.resultado = clonarGrafo(state.un.grafo);
+            limpiarResultadoUnGrafo();
             renderUnGrafo();
             ocultarMensaje('mensajeUnGrafo');
         } catch (e) {
@@ -584,9 +961,9 @@ function bindEventosUnGrafo() {
 
     document.getElementById('btnUnEliminarVertice').addEventListener('click', () => {
         try {
-            eliminarVertice(state.un.grafo, document.getElementById('unVerticeEliminar').value);
-            document.getElementById('unVerticeEliminar').value = '';
-            state.un.resultado = clonarGrafo(state.un.grafo);
+            eliminarVertice(state.un.grafo, document.getElementById('unVerticeNombre').value);
+            document.getElementById('unVerticeNombre').value = '';
+            limpiarResultadoUnGrafo();
             renderUnGrafo();
             ocultarMensaje('mensajeUnGrafo');
         } catch (e) {
@@ -605,7 +982,7 @@ function bindEventosUnGrafo() {
             document.getElementById('unAristaNombre').value = '';
             document.getElementById('unAristaInicio').value = '';
             document.getElementById('unAristaFin').value = '';
-            state.un.resultado = clonarGrafo(state.un.grafo);
+            limpiarResultadoUnGrafo();
             renderUnGrafo();
             ocultarMensaje('mensajeUnGrafo');
         } catch (e) {
@@ -615,9 +992,11 @@ function bindEventosUnGrafo() {
 
     document.getElementById('btnUnEliminarArista').addEventListener('click', () => {
         try {
-            eliminarArista(state.un.grafo, document.getElementById('unAristaEliminar').value);
-            document.getElementById('unAristaEliminar').value = '';
-            state.un.resultado = clonarGrafo(state.un.grafo);
+            eliminarArista(state.un.grafo, document.getElementById('unAristaNombre').value);
+            document.getElementById('unAristaNombre').value = '';
+            document.getElementById('unAristaInicio').value = '';
+            document.getElementById('unAristaFin').value = '';
+            limpiarResultadoUnGrafo();
             renderUnGrafo();
             ocultarMensaje('mensajeUnGrafo');
         } catch (e) {
@@ -633,7 +1012,7 @@ function bindEventosUnGrafo() {
             const op = selectOp.value;
             const params = leerParamsUnGrafo(op);
             state.un.resultado = operarUnGrafo(state.un.grafo, op, params);
-            renderUnGrafo();
+            renderUnResultado();
             ocultarMensaje('mensajeUnGrafo');
         } catch (e) {
             mostrarMensaje('mensajeUnGrafo', e.message, 'warning');
@@ -644,11 +1023,16 @@ function bindEventosUnGrafo() {
 }
 
 function bindEventosDosGrafos() {
-    const vincular = (btnAddV, inputV, btnDelV, inputVD, btnAddA, aNom, aIni, aFin, btnDelA, aDel, grafo, alertaId) => {
+    document.getElementById('btnDosLimpiar').addEventListener('click', limpiarDosGrafos);
+    document.getElementById('btnDosGuardar').addEventListener('click', guardarDosGrafos);
+    document.getElementById('btnDosCargar').addEventListener('click', cargarDosGrafos);
+
+    const vincular = (btnAddV, inputV, btnDelV, btnAddA, aNom, aIni, aFin, btnDelA, grafo, alertaId) => {
         document.getElementById(btnAddV).addEventListener('click', () => {
             try {
                 agregarVertice(grafo, document.getElementById(inputV).value);
                 document.getElementById(inputV).value = '';
+                limpiarResultadoDosGrafos();
                 renderDosGrafos();
                 ocultarMensaje(alertaId);
             } catch (e) {
@@ -658,8 +1042,9 @@ function bindEventosDosGrafos() {
 
         document.getElementById(btnDelV).addEventListener('click', () => {
             try {
-                eliminarVertice(grafo, document.getElementById(inputVD).value);
-                document.getElementById(inputVD).value = '';
+                eliminarVertice(grafo, document.getElementById(inputV).value);
+                document.getElementById(inputV).value = '';
+                limpiarResultadoDosGrafos();
                 renderDosGrafos();
                 ocultarMensaje(alertaId);
             } catch (e) {
@@ -678,6 +1063,7 @@ function bindEventosDosGrafos() {
                 document.getElementById(aNom).value = '';
                 document.getElementById(aIni).value = '';
                 document.getElementById(aFin).value = '';
+                limpiarResultadoDosGrafos();
                 renderDosGrafos();
                 ocultarMensaje(alertaId);
             } catch (e) {
@@ -687,8 +1073,11 @@ function bindEventosDosGrafos() {
 
         document.getElementById(btnDelA).addEventListener('click', () => {
             try {
-                eliminarArista(grafo, document.getElementById(aDel).value);
-                document.getElementById(aDel).value = '';
+                eliminarArista(grafo, document.getElementById(aNom).value);
+                document.getElementById(aNom).value = '';
+                document.getElementById(aIni).value = '';
+                document.getElementById(aFin).value = '';
+                limpiarResultadoDosGrafos();
                 renderDosGrafos();
                 ocultarMensaje(alertaId);
             } catch (e) {
@@ -697,13 +1086,15 @@ function bindEventosDosGrafos() {
         });
     };
 
-    vincular('btnDosAgregarV1', 'dosV1Nombre', 'btnDosEliminarV1', 'dosV1Eliminar', 'btnDosAgregarA1', 'dosA1Nombre', 'dosA1Inicio', 'dosA1Fin', 'btnDosEliminarA1', 'dosA1Eliminar', state.dos.g1, 'mensajeDosGrafos');
-    vincular('btnDosAgregarV2', 'dosV2Nombre', 'btnDosEliminarV2', 'dosV2Eliminar', 'btnDosAgregarA2', 'dosA2Nombre', 'dosA2Inicio', 'dosA2Fin', 'btnDosEliminarA2', 'dosA2Eliminar', state.dos.g2, 'mensajeDosGrafos');
+    vincular('btnDosAgregarV1', 'dosV1Nombre', 'btnDosEliminarV1', 'btnDosAgregarA1', 'dosA1Nombre', 'dosA1Inicio', 'dosA1Fin', 'btnDosEliminarA1', state.dos.g1, 'mensajeDosGrafos');
+    vincular('btnDosAgregarV2', 'dosV2Nombre', 'btnDosEliminarV2', 'btnDosAgregarA2', 'dosA2Nombre', 'dosA2Inicio', 'dosA2Fin', 'btnDosEliminarA2', state.dos.g2, 'mensajeDosGrafos');
 
     document.getElementById('btnDosOperar').addEventListener('click', () => {
         try {
-            state.dos.resultado = operarDosGrafos(state.dos.g1, state.dos.g2, document.getElementById('dosOperacion').value);
-            renderDosGrafos();
+            const op = document.getElementById('dosOperacion').value;
+            state.dos.operacionActual = op;
+            state.dos.resultado = operarDosGrafos(state.dos.g1, state.dos.g2, op);
+            renderDosResultado();
             ocultarMensaje('mensajeDosGrafos');
         } catch (e) {
             mostrarMensaje('mensajeDosGrafos', e.message, 'warning');
@@ -724,9 +1115,11 @@ function inicializarTabs() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    state.un.resultado = clonarGrafo(state.un.grafo);
-    state.dos.resultado = clonarGrafo(state.dos.g1);
+    limpiarResultadoUnGrafo();
+    limpiarResultadoDosGrafos();
 
+    bindCargarUnGrafo();
+    bindCargarDosGrafos();
     bindEventosUnGrafo();
     bindEventosDosGrafos();
     inicializarTabs();

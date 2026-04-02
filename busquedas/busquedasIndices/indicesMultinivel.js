@@ -351,7 +351,8 @@ function renderizarVisualizacionMultinivel(p) {
             conexiones.push({
                 sourceSelector: `[data-col-role="indice"][data-level="idx-${nivel}"][data-key="${clave}"]`,
                 targetSelector: `[data-col-role="indice"][data-level="idx-${nivel - 1}"][data-key="${claveDestino}"]`,
-                alterna: idx === 1
+                alterna: idx === 1,
+                sinPunta: true
             });
         });
     }
@@ -373,7 +374,8 @@ function renderizarVisualizacionMultinivel(p) {
         conexiones.push({
             sourceSelector: `[data-col-role="indice"][data-level="idx-1"][data-key="${clave}"]`,
             targetSelector: `[data-col-role="datos"][data-level="datos"][data-key="${claveDato}"]`,
-            alterna: idx === 1
+            alterna: idx === 1,
+            sinPunta: true
         });
     });
 

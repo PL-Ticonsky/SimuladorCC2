@@ -72,13 +72,13 @@
 .edge-label {
     font-size: 0.72rem;
     fill: #6B7787;
-    font-weight: 600;
+    font-weight: 700;
     user-select: none;
 }
 
 .node-label {
     font-size: 0.8rem;
-    fill: #1F2D3D;
+    fill: #FFFFFF;
     font-weight: 700;
     user-select: none;
 }
@@ -86,6 +86,7 @@
 .link-line {
     stroke: #8497B0;
     stroke-width: 2;
+    fill: none;
 }
 
 .node-circle {
@@ -94,3 +95,11 @@
     stroke-width: 1.5;
 }
 
+.vertice-fusionado {
+    text-decoration: overline;
+    text-decoration-thickness: 2px;
+}
+
+#unOperacionParams .form-control:last-child {
+    margin-bottom: 0 !important;
+}

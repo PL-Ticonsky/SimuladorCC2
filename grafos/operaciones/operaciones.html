@@ -65,16 +65,12 @@
                 <div class="row g-3 mb-3">
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Vertices</h6>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="unVerticeNombre" placeholder="Nombre del vertice">
-                                <button class="btn btn-secondary" id="btnUnAgregarVertice">Agregar</button>
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="unVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnUnAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnUnEliminarVertice">Eliminar</button>
                             </div>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="unVerticeEliminar" placeholder="Vertice a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnUnEliminarVertice">Eliminar</button>
-                            </div>
-                            <div id="unVerticesLista" class="lista-box"></div>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -85,37 +81,47 @@
                                 <div class="col-6"><input type="text" class="form-control" id="unAristaInicio" placeholder="Vertice inicio"></div>
                                 <div class="col-6"><input type="text" class="form-control" id="unAristaFin" placeholder="Vertice fin"></div>
                             </div>
-                            <button class="btn btn-secondary w-100 mb-3" id="btnUnAgregarArista">Agregar arista</button>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="unAristaEliminar" placeholder="Arista a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnUnEliminarArista">Eliminar</button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnUnAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnUnEliminarArista">Eliminar arista</button>
                             </div>
-                            <div id="unAristasLista" class="lista-box"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="subpanel mb-3">
-                    <h6 class="subpanel-title">Operacion</h6>
+                    <h6 class="subpanel-title">Operación</h6>
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-4">
                             <label for="unOperacion" class="form-label fw-semibold">Tipo</label>
                             <select class="form-select" id="unOperacion">
-                                <option value="fusion_vertices">Fusion vertices</option>
-                                <option value="adicion_vertices">Adicion vertices</option>
-                                <option value="eliminacion_vertice">Eliminacion de vertice</option>
-                                <option value="contraccion_vertice">Contraccion de vertice</option>
-                                <option value="adicion_arista">Adicion arista</option>
-                                <option value="eliminacion_arista">Eliminacion arista</option>
+                                <option value="fusion_vertices">Fusión de vértices</option>
+                                <option value="adicion_vertices">Adición de vértices</option>
+                                <option value="eliminacion_vertice">Eliminación de vértice</option>
+                                <option value="contraccion_arista">Contracción de aristas</option>
+                                <option value="adicion_arista">Adición de arista</option>
+                                <option value="eliminacion_arista">Eliminación de arista</option>
                                 <option value="complemento">Complemento</option>
                             </select>
                         </div>
                         <div class="col-lg-6" id="unOperacionParams"></div>
                         <div class="col-lg-2 d-grid">
-                            <button class="btn btn-secondary" id="btnUnOperar">Operar</button>
+                            <button class="btn btn-primary" id="btnUnOperar">Operar</button>
                         </div>
                     </div>
                 </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-warning" id="btnUnLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnUnCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnUnGuardar">Guardar</button>
+                    </div>
+                </div>
+
+                <div id="mensajeUnGrafo" class="alert d-none mb-3" role="alert"></div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-lg-6"><div class="ecuacion-box" id="unNotacionInicial"></div></div>
@@ -132,8 +138,6 @@
                         <div class="grafo-canvas" id="unGrafoResultado"></div>
                     </div>
                 </div>
-
-                <div id="mensajeUnGrafo" class="alert d-none mt-3" role="alert"></div>
             </section>
         </div>
 
@@ -143,37 +147,29 @@
                 <div class="panel-header">
                     <div>
                         <h3 class="panel-title">Operaciones sobre dos grafos</h3>
-                        <p class="panel-subtitle">Defina G1 y G2, ejecute la operacion y visualice el resultado.</p>
+                        <p class="panel-subtitle">Defina G1 y G2, ejecute la operación y visualice el resultado.</p>
                     </div>
                 </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Grafo 1 - Vertices</h6>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="dosV1Nombre" placeholder="Nombre del vertice">
-                                <button class="btn btn-secondary" id="btnDosAgregarV1">Agregar</button>
+                            <h6 class="subpanel-title">Grafo 1 - Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="dosV1Nombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDosAgregarV1">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnDosEliminarV1">Eliminar</button>
                             </div>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="dosV1Eliminar" placeholder="Vertice a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnDosEliminarV1">Eliminar</button>
-                            </div>
-                            <div id="dosVertices1Lista" class="lista-box"></div>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Grafo 2 - Vertices</h6>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="dosV2Nombre" placeholder="Nombre del vertice">
-                                <button class="btn btn-secondary" id="btnDosAgregarV2">Agregar</button>
+                            <h6 class="subpanel-title">Grafo 2 - Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="dosV2Nombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDosAgregarV2">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnDosEliminarV2">Eliminar</button>
                             </div>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="dosV2Eliminar" placeholder="Vertice a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnDosEliminarV2">Eliminar</button>
-                            </div>
-                            <div id="dosVertices2Lista" class="lista-box"></div>
                         </div>
                     </div>
                 </div>
@@ -187,12 +183,10 @@
                                 <div class="col-6"><input type="text" class="form-control" id="dosA1Inicio" placeholder="Vertice inicio"></div>
                                 <div class="col-6"><input type="text" class="form-control" id="dosA1Fin" placeholder="Vertice fin"></div>
                             </div>
-                            <button class="btn btn-secondary w-100 mb-3" id="btnDosAgregarA1">Agregar arista</button>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="dosA1Eliminar" placeholder="Arista a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnDosEliminarA1">Eliminar</button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDosAgregarA1">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnDosEliminarA1">Eliminar arista</button>
                             </div>
-                            <div id="dosAristas1Lista" class="lista-box"></div>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -203,36 +197,46 @@
                                 <div class="col-6"><input type="text" class="form-control" id="dosA2Inicio" placeholder="Vertice inicio"></div>
                                 <div class="col-6"><input type="text" class="form-control" id="dosA2Fin" placeholder="Vertice fin"></div>
                             </div>
-                            <button class="btn btn-secondary w-100 mb-3" id="btnDosAgregarA2">Agregar arista</button>
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="dosA2Eliminar" placeholder="Arista a eliminar">
-                                <button class="btn btn-outline-secondary" id="btnDosEliminarA2">Eliminar</button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDosAgregarA2">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnDosEliminarA2">Eliminar arista</button>
                             </div>
-                            <div id="dosAristas2Lista" class="lista-box"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="subpanel mb-3">
-                    <h6 class="subpanel-title">Operacion entre grafos</h6>
+                    <h6 class="subpanel-title">Operación entre grafos</h6>
                     <div class="row g-3 align-items-end">
                         <div class="col-lg-8">
                             <label for="dosOperacion" class="form-label fw-semibold">Tipo</label>
                             <select class="form-select" id="dosOperacion">
-                                <option value="union">Union</option>
-                                <option value="interseccion">Interseccion</option>
+                                <option value="union">Unión</option>
+                                <option value="interseccion">Intersección</option>
                                 <option value="suma_anillo">Suma anillo</option>
                                 <option value="suma">Suma</option>
                                 <option value="producto_cartesiano">Producto cartesiano</option>
                                 <option value="producto_tensorial">Producto tensorial</option>
-                                <option value="composicion">Composicion</option>
+                                <option value="composicion">Composición</option>
                             </select>
                         </div>
                         <div class="col-lg-4 d-grid">
-                            <button class="btn btn-secondary" id="btnDosOperar">Operar</button>
+                            <button class="btn btn-primary" id="btnDosOperar">Operar</button>
                         </div>
                     </div>
                 </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-warning" id="btnDosLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnDosCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnDosGuardar">Guardar</button>
+                    </div>
+                </div>
+
+                <div id="mensajeDosGrafos" class="alert d-none mb-3" role="alert"></div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-lg-4"><div class="ecuacion-box" id="dosNotacionG1"></div></div>
@@ -254,18 +258,20 @@
                         <div class="grafo-canvas" id="dosGrafoResultado"></div>
                     </div>
                 </div>
-
-                <div id="mensajeDosGrafos" class="alert d-none mt-3" role="alert"></div>
             </section>
         </div>
     </div>
 </div>
 
+<!-- Inputs ocultos para cargar archivos -->
+<input type="file" id="fileInputUnGrafo" accept=".json" style="display:none;">
+<input type="file" id="fileInputDosGrafos" accept=".json" style="display:none;">
+
 <!-- Bootstrap JS -->
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
 
 <!-- D3.js v7 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="../../d3/d3.v7.js"></script>
 
 <!-- Scripts de Operaciones -->
 <script src="operaciones.js"></script>

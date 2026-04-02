@@ -253,12 +253,18 @@ function dinRenderizarBarras(ocupados, totalCeldas, porcExp, porcRed) {
     const pctExp  = (porcExp * 100).toFixed(1);
     const pctRed  = (porcRed * 100).toFixed(1);
     const fillExp = Math.min(parseFloat(pctExp), 100);
-    const fillRed = Math.min(parseFloat(pctRed), 100);
+
+    // La barra de reducción se dibuja con escala 0..300% para visualizar D.O. > 100%.
+    const ESCALA_RED_MAX = 300;
+    const UMBRAL_RED = 112;
+    const valorRed = parseFloat(pctRed);
+    const fillRed = Math.min((valorRed / ESCALA_RED_MAX) * 100, 100);
+    const markerRedLeft = (UMBRAL_RED / ESCALA_RED_MAX) * 100;
 
     // Barra expansión: verde < 75%, roja ≥ 75%
     const clsExp = porcExp >= 0.75 ? 'do-danger' : porcExp >= 0.5 ? 'do-warning' : 'do-normal';
     // Barra reducción: roja < 112%, verde ≥ 112%
-    const clsRed = porcRed * 100 < 112 ? 'do-danger' : porcRed * 100 < 150 ? 'do-warning' : 'do-normal';
+    const clsRed = porcRed * 100 < UMBRAL_RED ? 'do-danger' : porcRed * 100 < 150 ? 'do-warning' : 'do-normal';
 
     cont.innerHTML = `
         <div class="do-bar-container">
@@ -282,7 +288,7 @@ function dinRenderizarBarras(ocupados, totalCeldas, porcExp, porcRed) {
                 <div class="do-bar-fill do-bar-umbral-red ${clsRed}" style="width:${fillRed}%"></div>
             </div>
             <div class="do-bar-markers">
-                <span class="do-marker" style="left:${Math.min(112, 100)}%">112 %</span>
+                <span class="do-marker" style="left:${markerRedLeft}%">112 %</span>
             </div>
         </div>`;
 }
