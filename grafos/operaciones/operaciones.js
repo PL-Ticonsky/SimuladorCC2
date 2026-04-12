@@ -26,6 +26,10 @@ function claveArista(u, v) {
     return [u, v].sort().join('||');
 }
 
+function verticeProducto(u, v) {
+    return `${u}${v}`;
+}
+
 function clonarGrafo(g) {
     return {
         vertices: [...g.vertices],
@@ -370,11 +374,13 @@ function nombreUnico(base, usados, prefijo = 'e') {
     return final;
 }
 
-function reconstruirAristasDesdeClaves(claves, prefijo = 'r') {
+function reconstruirAristasDesdeClaves(claves, nombrarArista = (idx) => `r${idx}`) {
     let idx = 1;
-    return [...claves].map((k) => {
+    return [...claves].sort().map((k) => {
         const [u, v] = k.split('||');
-        return { nombre: `${prefijo}${idx++}`, inicio: u, fin: v };
+        const nombre = nombrarArista(idx, u, v);
+        idx += 1;
+        return { nombre, inicio: u, fin: v };
     });
 }
 
@@ -514,7 +520,7 @@ function productoCartesiano(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u},${v}`);
+            vertices.push(verticeProducto(u, v));
         }
     }
 
@@ -527,24 +533,24 @@ function productoCartesiano(g1, g2) {
             for (const u2 of g1.vertices) {
                 for (const v2 of g2.vertices) {
                     if (u1 === u2 && e2.has(claveArista(v1, v2))) {
-                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
+                        claves.add(claveArista(verticeProducto(u1, v1), verticeProducto(u2, v2)));
                     }
                     if (v1 === v2 && e1.has(claveArista(u1, u2))) {
-                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
+                        claves.add(claveArista(verticeProducto(u1, v1), verticeProducto(u2, v2)));
                     }
                 }
             }
         }
     }
 
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'pc') };
+    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, (_, u, v) => `${u}-${v}`) };
 }
 
 function productoTensorial(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u},${v}`);
+            vertices.push(verticeProducto(u, v));
         }
     }
 
@@ -557,21 +563,21 @@ function productoTensorial(g1, g2) {
             for (const u2 of g1.vertices) {
                 for (const v2 of g2.vertices) {
                     if (e1.has(claveArista(u1, u2)) && e2.has(claveArista(v1, v2))) {
-                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
+                        claves.add(claveArista(verticeProducto(u1, v1), verticeProducto(u2, v2)));
                     }
                 }
             }
         }
     }
 
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'pt') };
+    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, (_, u, v) => `${u}-${v}`) };
 }
 
 function composicionGrafos(g1, g2) {
     const vertices = [];
     for (const u of g1.vertices) {
         for (const v of g2.vertices) {
-            vertices.push(`${u},${v}`);
+            vertices.push(verticeProducto(u, v));
         }
     }
 
@@ -586,14 +592,14 @@ function composicionGrafos(g1, g2) {
                     const cond1 = e1.has(claveArista(u1, u2));
                     const cond2 = (u1 === u2) && e2.has(claveArista(v1, v2));
                     if (cond1 || cond2) {
-                        claves.add(claveArista(`${u1},${v1}`, `${u2},${v2}`));
+                        claves.add(claveArista(verticeProducto(u1, v1), verticeProducto(u2, v2)));
                     }
                 }
             }
         }
     }
 
-    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, 'co') };
+    return { vertices, aristas: reconstruirAristasDesdeClaves(claves, (idx) => String(idx)) };
 }
 
 function operarDosGrafos(g1, g2, operacion) {

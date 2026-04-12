@@ -259,7 +259,8 @@
    ============================================ */
 .estructura-container-bloques {
     min-height: 80px;
-    overflow-y: auto;
+    max-height: 460px;
+    overflow: auto;
 }
 
 .bloques-grid {
@@ -393,6 +394,186 @@
     box-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
     color: #FFFFFF !important;
 }
+
+.hashx-celda {
+    align-items: flex-start;
+}
+
+#visualizacionHashExterna {
+    overflow: auto;
+    max-height: 460px;
+}
+
+.hashx-scroll-inner {
+    width: max-content;
+    min-width: 100%;
+}
+
+.hashx-bloques-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    justify-content: flex-start;
+}
+
+.hashx-valor {
+    display: inline-block;
+    line-height: 1.25;
+    word-break: break-word;
+    font-size: 0.82rem;
+    max-width: 220px;
+}
+
+.hashx-matriz-bloques {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.hashx-columna-bloques {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 132px;
+}
+
+.hashx-bloque-pegado {
+    border-radius: 0;
+    margin-top: -1px;
+    box-shadow: none;
+}
+
+.hashx-columna-bloques .hashx-bloque-pegado:first-child {
+    margin-top: 0;
+    border-radius: 8px 8px 0 0;
+}
+
+.hashx-columna-bloques .hashx-bloque-pegado:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.hashx-columna-colision .bloque-header {
+    background: linear-gradient(135deg, #8497B0 0%, #5B9BD5 100%);
+}
+
+.hashx-enlazada-v2 .hashx-bloque-colision .bloque-header {
+    background: linear-gradient(135deg, #8497B0 0%, #5B9BD5 100%);
+}
+
+.hashx-bloque-espacio {
+    border: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    margin-top: -1px;
+    width: 148px;
+    min-width: 148px;
+}
+
+.hashx-bloque-espacio-header {
+    height: 33px;
+}
+
+.hashx-bloque-espacio-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.hashx-bloque-espacio-celda {
+    min-height: 36px;
+}
+
+.hashx-columna-enlazada {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 148px;
+    min-width: 148px;
+    position: relative;
+}
+
+.hashx-columna-enlazada.hashx-columna-colision {
+    margin-left: 14px;
+}
+
+.hashx-bloque-enlazado {
+    border-radius: 0;
+    box-shadow: none;
+    margin-top: -1px;
+    width: 148px;
+}
+
+.hashx-bloque-colision-lvl {
+    position: relative;
+}
+
+.hashx-bloque-colision-lvl::before {
+    content: '->';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #5B9BD5;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.hashx-columna-enlazada .hashx-bloque-enlazado:first-child {
+    border-radius: 8px 8px 0 0;
+    margin-top: 0;
+}
+
+.hashx-columna-enlazada .hashx-bloque-enlazado:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.hashx-fila-enlazada {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #EDEDED;
+    padding: 0 10px;
+    min-height: 38px;
+}
+
+.hashx-fila-enlazada:last-child {
+    border-bottom: none;
+}
+
+.hashx-fila-enlazada .hashx-celda {
+    border-bottom: none;
+    min-width: 124px;
+    padding: 4px 8px;
+}
+
+.hashx-colisiones-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hashx-flecha {
+    color: #5B9BD5;
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.hashx-celda-colision .bloque-celda-index {
+    background: #E8F0FA;
+}
+
+.hashx-celda-colision {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 4px 10px;
+    border: 1px solid #5B9BD5;
+    border-radius: 6px;
+    background: #FFFFFF;
+}
+
 
 /* ============================================
    Puntos suspensivos
