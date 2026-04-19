@@ -1,0 +1,145 @@
+/* Matrices de grafos */
+
+.subpanel {
+	background: #ffffff;
+	border: 1px solid #d6dce5;
+	border-radius: 10px;
+	padding: 14px;
+	box-shadow: 0 2px 8px rgba(68, 84, 106, 0.06);
+}
+
+.subpanel-title {
+	color: #44546a;
+	font-weight: 700;
+	margin-bottom: 12px;
+}
+
+.ecuacion-box {
+	background: #f8fafc;
+	border: 1px solid #d6dce5;
+	border-radius: 8px;
+	padding: 10px;
+	min-height: 92px;
+	color: #44546a;
+	font-size: 0.9rem;
+	overflow: auto;
+}
+
+.grafo-canvas {
+	border: 1px solid #d6dce5;
+	border-radius: 10px;
+	background: #ffffff;
+	min-height: 320px;
+	position: relative;
+	overflow: hidden;
+}
+
+.grafo-empty {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #8497b0;
+	font-size: 0.9rem;
+	padding: 12px;
+	text-align: center;
+}
+
+.grafo-svg {
+	width: 100%;
+	height: 320px;
+}
+
+.link-line {
+	stroke: #8497b0;
+	stroke-width: 2;
+	fill: none;
+}
+
+.link-line.result {
+	stroke: #28a745;
+	stroke-width: 2.8;
+}
+
+.node-circle {
+	fill: #5b9bd5;
+	stroke: #44546a;
+	stroke-width: 1.5;
+	cursor: grab;
+}
+
+.node-circle.active {
+	fill: #70ad47;
+	stroke: #3f6a29;
+	stroke-width: 2;
+}
+
+.node-label {
+	font-size: 0.8rem;
+	fill: #ffffff;
+	font-weight: 700;
+	user-select: none;
+}
+
+.node-subtext {
+	font-size: 0.68rem;
+	fill: #44546a;
+	font-weight: 700;
+	user-select: none;
+}
+
+.edge-label {
+	font-size: 0.72rem;
+	fill: #6b7787;
+	font-weight: 700;
+	user-select: none;
+}
+
+.result-table,
+.matrix-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.84rem;
+	min-width: 520px;
+}
+
+.result-table th,
+.result-table td,
+.matrix-table th,
+.matrix-table td {
+	border: 1px solid #d6dce5;
+	padding: 6px 8px;
+	text-align: center;
+}
+
+.result-table th,
+.matrix-table th {
+	background: #eef3f9;
+	font-weight: 700;
+}
+
+.matrix-wrap {
+	overflow: auto;
+	border: 1px solid #d6dce5;
+	border-radius: 8px;
+	padding: 8px;
+	margin-bottom: 10px;
+	background: #ffffff;
+}
+
+.matrix-title {
+	font-weight: 700;
+	color: #44546a;
+	margin-bottom: 6px;
+}
+
+.metric-list {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.metric-list li {
+	margin-bottom: 2px;
+}
+
