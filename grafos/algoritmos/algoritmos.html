@@ -1,10 +1,351 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmos - Simulador CC2</title>
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="algoritmos.css">
 </head>
 <body>
+<header class="header-section mb-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="text-white">
+                <h1 class="header-title mb-1">Ciencias de la Computación 2</h1>
+            </div>
+            <a href="../grafos.html" class="btn btn-outline-light">Volver atrás</a>
+        </div>
+    </div>
+</header>
 
+<div class="container pb-4">
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-ordinal" data-bs-toggle="pill" data-bs-target="#panel-ordinal" type="button" role="tab">Función Ordinal</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-bellman" data-bs-toggle="pill" data-bs-target="#panel-bellman" type="button" role="tab">Bellman</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-dijkstra" data-bs-toggle="pill" data-bs-target="#panel-dijkstra" type="button" role="tab">Dijkstra</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-floyd" data-bs-toggle="pill" data-bs-target="#panel-floyd" type="button" role="tab">Floyd</button>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="tab-content">
+        <div class="text-center py-5" id="panel-bienvenida-algoritmos">
+            <h4 class="text-muted mb-3">Seleccione un algoritmo</h4>
+            <p class="text-muted">Trabaje con grafos dirigidos conexos y aplique Función Ordinal, Bellman, Dijkstra o Floyd.</p>
+        </div>
+
+        <div class="tab-pane fade" id="panel-ordinal" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Función Ordinal (Grafo dirigido)</h3>
+                        <p class="panel-subtitle">Se etiquetan los vértices según su predecesor.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="oVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnOAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnOEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas dirigidas</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><input type="text" class="form-control" id="oAristaInicio" placeholder="Inicio"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="oAristaFin" placeholder="Fin"></div>
+                                <div class="col-4">
+                                    <select class="form-select" id="oAristaDireccion">
+                                        <option value="forward">Inicio -&gt; Fin</option>
+                                        <option value="reverse">Fin -&gt; Inicio</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnOAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnOEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnOOperar">Aplicar algoritmo</button>
+                        <button class="btn btn-warning" id="btnOLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnOCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnOGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputOrdinal" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeOrdinal" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4"><div class="ecuacion-box" id="oNotacion"></div></div>
+                    <div class="col-lg-8"><div class="ecuacion-box" id="oResultado"></div></div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo dirigido</label>
+                        <div class="grafo-canvas" id="oGrafoOriginal"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Resultado</label>
+                        <div class="grafo-canvas" id="oGrafoResultado"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panel-bellman" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Bellman (Mínimo camino en grafo dirigido)</h3>
+                        <p class="panel-subtitle">Primero calcula ordinal y luego procesa predecesores con λ(j)=min(λ(i)+Vij).</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="bVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnBAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnBEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas dirigidas con peso</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-3"><input type="text" class="form-control" id="bAristaInicio" placeholder="Inicio"></div>
+                                <div class="col-3"><input type="text" class="form-control" id="bAristaFin" placeholder="Fin"></div>
+                                <div class="col-3">
+                                    <select class="form-select" id="bAristaDireccion">
+                                        <option value="forward">Inicio -&gt; Fin</option>
+                                        <option value="reverse">Fin -&gt; Inicio</option>
+                                    </select>
+                                </div>
+                                <div class="col-3"><input type="number" class="form-control" id="bAristaPeso" placeholder="Peso"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnBAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnBEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnBOperar">Aplicar algoritmo</button>
+                        <button class="btn btn-warning" id="btnBLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnBCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnBGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputBellman" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeBellman" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4"><div class="ecuacion-box" id="bNotacion"></div></div>
+                    <div class="col-lg-8"><div class="ecuacion-box" id="bResultado"></div></div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo dirigido</label>
+                        <div class="grafo-canvas" id="bGrafoOriginal"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Camino mínimo</label>
+                        <div class="grafo-canvas" id="bGrafoResultado"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panel-dijkstra" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Dijkstra (Mínimo camino en grafo dirigido)</h3>
+                        <p class="panel-subtitle">Etiquetas temporales [d,i] y definitivas [d,i]* con selección de menor distancia.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="dVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnDEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas dirigidas con peso</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-3"><input type="text" class="form-control" id="dAristaInicio" placeholder="Inicio"></div>
+                                <div class="col-3"><input type="text" class="form-control" id="dAristaFin" placeholder="Fin"></div>
+                                <div class="col-3">
+                                    <select class="form-select" id="dAristaDireccion">
+                                        <option value="forward">Inicio -&gt; Fin</option>
+                                        <option value="reverse">Fin -&gt; Inicio</option>
+                                    </select>
+                                </div>
+                                <div class="col-3"><input type="number" class="form-control" id="dAristaPeso" placeholder="Peso"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnDEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnDOperar">Aplicar algoritmo</button>
+                        <button class="btn btn-warning" id="btnDLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnDCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnDGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputDijkstra" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeDijkstra" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4"><div class="ecuacion-box" id="dNotacion"></div></div>
+                    <div class="col-lg-8"><div class="ecuacion-box" id="dResultado"></div></div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo dirigido</label>
+                        <div class="grafo-canvas" id="dGrafoOriginal"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Resultado</label>
+                        <div class="grafo-canvas" id="dGrafoResultado"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panel-floyd" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Floyd (Mínimo camino entre todos los pares)</h3>
+                        <p class="panel-subtitle">Encuentra los caminos más cortos entre todos los pares de vértices de un grafo ponderado usando la ecuación Dᵢⱼ + Dⱼₖ &lt; Dᵢₖ.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="fVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnFAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnFEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas dirigidas con peso</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-3"><input type="text" class="form-control" id="fAristaInicio" placeholder="Inicio"></div>
+                                <div class="col-3"><input type="text" class="form-control" id="fAristaFin" placeholder="Fin"></div>
+                                <div class="col-3">
+                                    <select class="form-select" id="fAristaDireccion">
+                                        <option value="forward">Inicio -&gt; Fin</option>
+                                        <option value="reverse">Fin -&gt; Inicio</option>
+                                    </select>
+                                </div>
+                                <div class="col-3"><input type="number" class="form-control" id="fAristaPeso" placeholder="Peso"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnFAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnFEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnFOperar">Aplicar algoritmo</button>
+                        <button class="btn btn-warning" id="btnFLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnFCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnFGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputFloyd" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeFloyd" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4"><div class="ecuacion-box" id="fNotacion"></div></div>
+                    <div class="col-lg-8"><div class="ecuacion-box" id="fResultado"></div></div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo dirigido</label>
+                        <div class="grafo-canvas" id="fGrafoOriginal"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Matriz inicial, J=1..J=n</label>
+                        <div class="ecuacion-box h-100" id="fMatrices"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+<script src="../../d3/d3.v7.js"></script>
+<script src="FuncionOrdinal.js"></script>
+<script src="Bellman.js"></script>
+<script src="Dijkstra.js"></script>
+<script src="Floyd.js"></script>
 </body>
 </html>

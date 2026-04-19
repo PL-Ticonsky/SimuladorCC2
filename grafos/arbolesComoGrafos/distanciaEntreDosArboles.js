@@ -8,6 +8,15 @@
 		return edges.reduce(function (acc, e) { return acc + Number(e.peso || 0); }, 0);
 	}
 
+	function formatRepeatedWeights(edges) {
+		const seen = {};
+		return edges.map(function (e) {
+			const key = String(e.peso);
+			seen[key] = (seen[key] || 0) + 1;
+			return seen[key] === 1 ? key : (key + '<sup>(' + seen[key] + ')</sup>');
+		}).join(', ');
+	}
+
 	function uniqueUnionWeighted(e1, e2, U) {
 		const map = new Map();
 		e1.concat(e2).forEach(function (e) {
@@ -133,10 +142,10 @@
 
 			U.setNotation('dResultado',
 				'<strong>Unión:</strong> ' +
-				(uni.length ? uni.map(function (e) { return String(e.peso); }).join(', ') : 'vacia') +
+				(uni.length ? formatRepeatedWeights(uni) : 'vacia') +
 				'<br><strong>Peso(Unión):</strong> ' + wU +
 				'<br><strong>Intersección:</strong> ' +
-				(inter.length ? inter.map(function (e) { return String(e.peso); }).join(', ') : 'vacia') +
+				(inter.length ? formatRepeatedWeights(inter) : 'vacia') +
 				'<br><strong>Peso(Intersección):</strong> ' + wI +
 				'<br><strong>Distancia:</strong> d(T1,T2)=(' + wU + '-' + wI + ')/2=' + d
 			);

@@ -76,11 +76,20 @@
 		const weightOnly = !!opts.weightOnly;
 		const sSub = opts.sSub || base;
 		const aSub = opts.aSub || base;
+		function formatRepeated(items) {
+			const seen = {};
+			return items.map(function (it) {
+				const key = String(it);
+				seen[key] = (seen[key] || 0) + 1;
+				return seen[key] === 1 ? key : (key + '<sup>(' + seen[key] + ')</sup>');
+			}).join(', ');
+		}
 		const s = vertices.join(', ');
-		const a = edges.map(function (e) {
+		const rawA = edges.map(function (e) {
 			if (!withWeight) return e.inicio + '-' + e.fin;
 			return weightOnly ? String(e.peso) : (e.inicio + '-' + e.fin + '#' + e.peso);
-		}).join(', ');
+		});
+		const a = formatRepeated(rawA);
 		return base + '={S<sub>' + sSub + '</sub>,A<sub>' + aSub + '</sub>}<br>' +
 			'S<sub>' + sSub + '</sub>={' + s + '}<br>' +
 			'A<sub>' + aSub + '</sub>={' + a + '}';

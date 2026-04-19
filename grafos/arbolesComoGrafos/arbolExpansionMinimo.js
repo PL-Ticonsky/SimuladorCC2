@@ -32,8 +32,16 @@
 
 	function refresh() {
 		const U = window.ArbolesUtils;
+		function formatRepeated(items) {
+			const seen = {};
+			return items.map(function (it) {
+				const key = String(it);
+				seen[key] = (seen[key] || 0) + 1;
+				return seen[key] === 1 ? key : (key + '<sup>(' + seen[key] + ')</sup>');
+			}).join(', ');
+		}
 		const sSet = s.vertices.join(', ');
-		const aSet = s.aristas.map(function (e) { return String(e.peso); }).join(', ');
+		const aSet = formatRepeated(s.aristas.map(function (e) { return e.peso; }));
 		U.setNotation('mNotacionOriginal',
 			'G={S,A}<br>' +
 			'S={' + sSet + '}<br>' +
@@ -163,7 +171,14 @@
 			U.setNotation('mNotacionComplemento',
 				'<span class="overline">T</span>={S<sub>T</sub>,A<sub><span class="overline">T</span></sub>}' +
 				'<br>S<sub>T</sub>={' + s.vertices.join(', ') + '}' +
-				'<br>A<sub><span class="overline">T</span></sub>={' + (comp.length ? comp.map(function (e) { return String(e.peso); }).join(', ') : '') + '}' +
+				'<br>A<sub><span class="overline">T</span></sub>={' + (comp.length ? (function () {
+					const seen = {};
+					return comp.map(function (e) {
+						const key = String(e.peso);
+						seen[key] = (seen[key] || 0) + 1;
+						return seen[key] === 1 ? key : (key + '<sup>(' + seen[key] + ')</sup>');
+					}).join(', ');
+				})() : '') + '}' +
 				'<br><strong>Nulidad (# cuerdas):</strong> ' + nulidad
 			);
 
