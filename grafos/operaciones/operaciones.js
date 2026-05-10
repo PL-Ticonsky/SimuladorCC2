@@ -18,6 +18,19 @@ const state = {
     }
 };
 
+const posicionesRender = {};
+
+function nextVertexPosition(index) {
+    const col = index % 5;
+    const row = Math.floor(index / 5);
+    return { x: 80 + col * 95, y: 80 + row * 78 };
+}
+
+function obtenerMapaPosiciones(containerId) {
+    if (!posicionesRender[containerId]) posicionesRender[containerId] = new Map();
+    return posicionesRender[containerId];
+}
+
 function normalizarTexto(v) {
     return (v || '').trim();
 }
@@ -673,14 +686,31 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         .attr('viewBox', `0 0 ${width} ${height}`)
         .attr('preserveAspectRatio', 'xMidYMid meet');
 
-    const nodes = grafo.vertices.map((v) => ({ id: v }));
+    const posMap = obtenerMapaPosiciones(containerId);
+    const keep = new Set(grafo.vertices);
+    posMap.forEach((_, key) => {
+        if (!keep.has(key)) posMap.delete(key);
+    });
+
+    const nodes = grafo.vertices.map((v, idx) => {
+        let pos = posMap.get(v);
+        if (!pos) {
+            pos = nextVertexPosition(idx);
+            posMap.set(v, pos);
+        }
+        return { id: v, x: pos.x, y: pos.y };
+    });
+
+    const byId = {};
+    nodes.forEach((n) => { byId[n.id] = n; });
+
     const links = grafo.aristas.map((a) => ({
-        source: a.inicio,
-        target: a.fin,
+        source: byId[a.inicio],
+        target: byId[a.fin],
         nombre: a.nombre,
         esConexionSuma: !!a.esConexionSuma,
         grupoSuma: a.grupoSuma || ''
-    }));
+    })).filter((l) => l.source && l.target);
 
     const PALETA_SUMA = [
         '#1F4E79', '#8E24AA', '#0B8043', '#C62828', '#EF6C00',
@@ -696,10 +726,9 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         return mapaColoresSuma.get(key);
     }
 
-    // Agrupa aristas paralelas por par no dirigido para separarlas visualmente.
     const gruposParalelos = new Map();
     links.forEach((l) => {
-        const k = claveArista(String(l.source), String(l.target));
+        const k = claveArista(String(l.source.id), String(l.target.id));
         if (!gruposParalelos.has(k)) gruposParalelos.set(k, []);
         gruposParalelos.get(k).push(l);
     });
@@ -708,11 +737,10 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         if (n % 2 === 1) {
             const centro = (n - 1) / 2;
             grupo.forEach((l, idx) => {
-                l.parallelIndex = idx - centro; // ..., -1, 0, 1, ...
+                l.parallelIndex = idx - centro;
                 l.parallelCount = n;
             });
         } else {
-            // Para pares evita índices ±0.5; usa ..., -2, -1, 1, 2, ...
             grupo.forEach((l, idx) => {
                 const paso = idx < n / 2 ? idx - n / 2 : idx - n / 2 + 1;
                 l.parallelIndex = paso;
@@ -720,12 +748,6 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
             });
         }
     });
-
-    const sim = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(links).id((d) => d.id).distance(90))
-        .force('charge', d3.forceManyBody().strength(-220))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collide', d3.forceCollide().radius(24));
 
     const link = svg.append('g')
         .selectAll('path')
@@ -752,22 +774,15 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         .append('circle')
         .attr('class', 'node-circle')
         .attr('r', radioNodo)
-        .call(d3.drag()
-            .on('start', (event, d) => {
-                if (!event.active) sim.alphaTarget(0.3).restart();
-                d.fx = limitar(d.x ?? width / 2, minX, maxX);
-                d.fy = limitar(d.y ?? height / 2, minY, maxY);
-            })
-            .on('drag', (event, d) => {
-                d.fx = limitar(event.x, minX, maxX);
-                d.fy = limitar(event.y, minY, maxY);
-            })
-            .on('end', (event, d) => {
-                if (!event.active) sim.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            })
-        );
+        .call(d3.drag().on('drag', (event, d) => {
+            d.x = limitar(event.x, minX, maxX);
+            d.y = limitar(event.y, minY, maxY);
+            const pos = posMap.get(d.id) || {};
+            pos.x = d.x;
+            pos.y = d.y;
+            posMap.set(d.id, pos);
+            update();
+        }));
 
     const nodeLabel = svg.append('g')
         .selectAll('text')
@@ -782,8 +797,6 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
     function obtenerGeometriaArista(d) {
         let s = d.source;
         let t = d.target;
-        // Normaliza orientación para que aristas paralelas del mismo par
-        // no se dibujen invertidas una sobre otra cuando cambia source/target.
         if (String(s.id) > String(t.id)) {
             const tmp = s;
             s = t;
@@ -795,7 +808,6 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         const x2 = t.x;
         const y2 = t.y;
 
-        // Lazo: se dibuja como una curva sobre el mismo vertice.
         if (s.id === t.id) {
             const idxAbs = Math.abs(d.parallelIndex);
             const radioBase = 20;
@@ -822,20 +834,18 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         const cy = (y1 + y2) / 2 + ny * offset;
         const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
 
-        // Punto medio de curva cuadratica (t=0.5) para ubicar etiqueta.
         const lx = 0.25 * x1 + 0.5 * cx + 0.25 * x2;
         const ly = 0.25 * y1 + 0.5 * cy + 0.25 * y2;
         return { path, lx, ly };
     }
 
-    sim.on('tick', () => {
+    function update() {
         nodes.forEach((d) => {
             d.x = limitar(d.x ?? width / 2, minX, maxX);
             d.y = limitar(d.y ?? height / 2, minY, maxY);
         });
 
-        link
-            .attr('d', (d) => obtenerGeometriaArista(d).path);
+        link.attr('d', (d) => obtenerGeometriaArista(d).path);
 
         node
             .attr('cx', (d) => d.x)
@@ -848,7 +858,9 @@ function renderGrafoD3(containerId, grafo, opciones = {}) {
         edgeLabel
             .attr('x', (d) => obtenerGeometriaArista(d).lx)
             .attr('y', (d) => obtenerGeometriaArista(d).ly - 4);
-    });
+    }
+
+    update();
 }
 
 function limpiarResultadoUnGrafo() {

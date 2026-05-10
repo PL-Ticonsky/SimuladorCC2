@@ -7,6 +7,19 @@
 		return [norm(a), norm(b)].sort().join('::');
 	}
 
+	const posicionesRender = {};
+
+	function nextVertexPosition(index) {
+		const col = index % 5;
+		const row = Math.floor(index / 5);
+		return { x: 80 + col * 95, y: 80 + row * 78 };
+	}
+
+	function obtenerMapaPosiciones(containerId) {
+		if (!posicionesRender[containerId]) posicionesRender[containerId] = new Map();
+		return posicionesRender[containerId];
+	}
+
 	function showMsg(id, text, type) {
 		const box = document.getElementById(id);
 		if (!box) return;
@@ -139,20 +152,31 @@
 			.attr('viewBox', '0 0 ' + width + ' ' + height)
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
-		const nodes = vertices.map(function (v) { return { id: v }; });
-		const links = edges.map(function (a) {
-			return {
-				source: a.inicio,
-				target: a.fin,
-				peso: a.peso
-			};
+		const posMap = obtenerMapaPosiciones(containerId);
+		const keep = new Set(vertices);
+		posMap.forEach(function (_, key) {
+			if (!keep.has(key)) posMap.delete(key);
 		});
 
-		const sim = d3.forceSimulation(nodes)
-			.force('link', d3.forceLink(links).id(function (d) { return d.id; }).distance(90))
-			.force('charge', d3.forceManyBody().strength(-220))
-			.force('center', d3.forceCenter(width / 2, height / 2))
-			.force('collide', d3.forceCollide().radius(24));
+		const nodes = vertices.map(function (v, idx) {
+			let pos = posMap.get(v);
+			if (!pos) {
+				pos = nextVertexPosition(idx);
+				posMap.set(v, pos);
+			}
+			return { id: v, x: pos.x, y: pos.y };
+		});
+
+		const byId = {};
+		nodes.forEach(function (n) { byId[n.id] = n; });
+
+		const links = edges.map(function (a) {
+			return {
+				source: byId[a.inicio],
+				target: byId[a.fin],
+				peso: a.peso
+			};
+		}).filter(function (l) { return l.source && l.target; });
 
 		const link = svg.append('g')
 			.selectAll('line')
@@ -186,22 +210,15 @@
 				return cls;
 			})
 			.attr('r', radioNodo)
-			.call(d3.drag()
-				.on('start', function (event, d) {
-					if (!event.active) sim.alphaTarget(0.3).restart();
-					d.fx = limitar(d.x || width / 2, minX, maxX);
-					d.fy = limitar(d.y || height / 2, minY, maxY);
-				})
-				.on('drag', function (event, d) {
-					d.fx = limitar(event.x, minX, maxX);
-					d.fy = limitar(event.y, minY, maxY);
-				})
-				.on('end', function (event, d) {
-					if (!event.active) sim.alphaTarget(0);
-					d.fx = null;
-					d.fy = null;
-				})
-			);
+			.call(d3.drag().on('drag', function (event, d) {
+				d.x = limitar(event.x, minX, maxX);
+				d.y = limitar(event.y, minY, maxY);
+				const pos = posMap.get(d.id) || {};
+				pos.x = d.x;
+				pos.y = d.y;
+				posMap.set(d.id, pos);
+				update();
+			}));
 
 		const nodeLabel = svg.append('g')
 			.selectAll('text')
@@ -213,7 +230,12 @@
 			.attr('dy', 5)
 			.text(function (d) { return d.id; });
 
-		sim.on('tick', function () {
+		function update() {
+			nodes.forEach(function (d) {
+				d.x = limitar(d.x || width / 2, minX, maxX);
+				d.y = limitar(d.y || height / 2, minY, maxY);
+			});
+
 			link
 				.attr('x1', function (d) { return limitar(d.source.x, minX, maxX); })
 				.attr('y1', function (d) { return limitar(d.source.y, minY, maxY); })
@@ -225,13 +247,15 @@
 				.attr('y', function (d) { return (d.source.y + d.target.y) / 2 - 6; });
 
 			node
-				.attr('cx', function (d) { return d.x = limitar(d.x, minX, maxX); })
-				.attr('cy', function (d) { return d.y = limitar(d.y, minY, maxY); });
+				.attr('cx', function (d) { return d.x; })
+				.attr('cy', function (d) { return d.y; });
 
 			nodeLabel
 				.attr('x', function (d) { return d.x; })
 				.attr('y', function (d) { return d.y; });
-		});
+		}
+
+		update();
 	}
 
 	function downloadJson(filename, payload) {
@@ -483,4 +507,3 @@
 		readJsonFile: readJsonFile
 	};
 })();
-
