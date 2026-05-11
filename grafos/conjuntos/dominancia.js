@@ -115,9 +115,27 @@
 		return { vertices: vertices, aristas: edges };
 	}
 
+	function nextVertexPosition(vertices) {
+		const idx = vertices.length;
+		const col = idx % 5;
+		const row = Math.floor(idx / 5);
+		return { x: 80 + col * 95, y: 80 + row * 78 };
+	}
+
+	function buildAdjacency(vertices, edges) {
+		const adj = {};
+		vertices.forEach(function (v) { adj[v.id] = new Set(); });
+		edges.forEach(function (e) {
+			if (!adj[e.inicio] || !adj[e.fin]) return;
+			adj[e.inicio].add(e.fin);
+			adj[e.fin].add(e.inicio);
+		});
+		return adj;
+	}
+
 	function graphNotation(vertices, edges) {
 		const s = vertices.map(function (v) { return v.id; }).join(', ');
-		const a = edges.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+		const a = edges.map(function (e) { return e.nombre; }).join(', ');
 		return 'G={S,A}<br>S={' + s + '}<br>A={' + a + '}';
 	}
 
@@ -151,11 +169,19 @@
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
 		const links = edges.map(function (e) {
-			return { source: byId[e.inicio], target: byId[e.fin] };
+			return { source: byId[e.inicio], target: byId[e.fin], nombre: e.nombre };
 		}).filter(function (e) { return !!e.source && !!e.target; });
 
 		const line = svg.append('g').selectAll('line').data(links).enter().append('line')
 			.attr('class', 'link-line');
+
+		const edgeLabel = svg.append('g').selectAll('text.edge-label').data(links).enter().append('text')
+			.attr('class', 'edge-label')
+			.attr('text-anchor', 'middle')
+			.attr('dy', -3)
+			.attr('font-size', '12px')
+			.attr('fill', '#666')
+			.text(function(d) { return d.nombre; });
 
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
 			.attr('class', 'node-circle')
@@ -198,6 +224,10 @@
 					const len = Math.sqrt(dx * dx + dy * dy) || 1;
 					return clamp(d.target.y - (dy / len) * (r + 1), minY, maxY);
 				});
+
+			edgeLabel
+				.attr('x', function (d) { return (d.source.x + d.target.x) / 2; })
+				.attr('y', function (d) { return (d.source.y + d.target.y) / 2; });
 
 			node
 				.attr('cx', function (d) { return d.x = clamp(d.x || width / 2, minX, maxX); })

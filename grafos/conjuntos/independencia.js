@@ -135,7 +135,7 @@
 
 	function graphNotation(vertices, edges) {
 		const s = vertices.map(function (v) { return v.id; }).join(', ');
-		const a = edges.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+		const a = edges.map(function (e) { return e.nombre; }).join(', ');
 		return 'G={S,A}<br>S={' + s + '}<br>A={' + a + '}';
 	}
 
@@ -169,11 +169,19 @@
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
 		const links = edges.map(function (e) {
-			return { source: byId[e.inicio], target: byId[e.fin] };
+			return { source: byId[e.inicio], target: byId[e.fin], nombre: e.nombre };
 		}).filter(function (e) { return !!e.source && !!e.target; });
 
 		const line = svg.append('g').selectAll('line').data(links).enter().append('line')
 			.attr('class', 'link-line');
+
+		const edgeLabel = svg.append('g').selectAll('text.edge-label').data(links).enter().append('text')
+			.attr('class', 'edge-label')
+			.attr('text-anchor', 'middle')
+			.attr('dy', -3)
+			.attr('font-size', '12px')
+			.attr('fill', '#666')
+			.text(function(d) { return d.nombre; });
 
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
 			.attr('class', 'node-circle')
@@ -217,6 +225,10 @@
 					return clamp(d.target.y - (dy / len) * (r + 1), minY, maxY);
 				});
 
+			edgeLabel
+				.attr('x', function (d) { return (d.source.x + d.target.x) / 2; })
+				.attr('y', function (d) { return (d.source.y + d.target.y) / 2; });
+
 			node
 				.attr('cx', function (d) { return d.x = clamp(d.x || width / 2, minX, maxX); })
 				.attr('cy', function (d) { return d.y = clamp(d.y || height / 2, minY, maxY); });
@@ -242,7 +254,7 @@
 		}
 		function bt(idx) {
 			if (idx >= ids.length) {
-				out.push(current.slice());
+				if (current.length > 0) out.push(current.slice());
 				return;
 			}
 			bt(idx + 1);
@@ -269,7 +281,7 @@
 		}
 		function bt(idx) {
 			if (idx >= edges.length) {
-				out.push(current.slice());
+				if (current.length > 0) out.push(current.slice());
 				return;
 			}
 			bt(idx + 1);
@@ -350,14 +362,14 @@
 			'<br><strong>Conjuntos independientes de mayor tamaño:</strong><br>' + formatSet('CindMax', maxSets, function (s) { return s.join(', '); }),
 			'<br><strong>Conjuntos independientes maximales:</strong><br>' + formatSet('Cmaxi', maximalSets, function (s) { return s.join(', '); }),
 			'<br><strong>Conjuntos independientes (aristas):</strong><br>' + formatSet('Cind', edgeSets, function (s) {
-				return s.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+				return s.map(function (e) { return e.nombre; }).join(', ');
 			}),
 			'<br><strong>Número de independencia (aristas):</strong> ' + maxEdgeSize +
 			'<br><strong>Conjuntos independientes de mayor tamaño (aristas):</strong><br>' + formatSet('CindMax', maxEdgeSets, function (s) {
-				return s.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+				return s.map(function (e) { return e.nombre; }).join(', ');
 			}),
 			'<br><strong>Conjuntos independientes maximales (aristas):</strong><br>' + formatSet('Cmaxi', maximalEdgeSets, function (s) {
-				return s.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+				return s.map(function (e) { return e.nombre; }).join(', ');
 			})
 		].join('');
 

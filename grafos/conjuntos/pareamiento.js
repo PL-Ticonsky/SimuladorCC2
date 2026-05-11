@@ -3,11 +3,6 @@
 		vertices: [],
 		aristas: [],
 		matchings: [],
-		maxMatchings: [],
-		maximalMatchings: [],
-		selectedMatchingIndex: 0,
-		steps: [],
-		stepIndex: 0,
 		optimalMatching: []
 	};
 
@@ -134,12 +129,12 @@
 
 	function graphNotation(vertices, edges) {
 		const s = vertices.map(function (v) { return v.id; }).join(', ');
-		const a = edges.map(function (e) { return e.inicio + '-' + e.fin; }).join(', ');
+		const a = edges.map(function (e) { return e.nombre; }).join(', ');
 		return 'G={S,A}<br>S={' + s + '}<br>A={' + a + '}';
 	}
 
 	function formatEdgeCompact(edge) {
-		return edge.inicio + edge.fin;
+		return edge.nombre;
 	}
 
 	function formatSet(prefix, sets, formatter) {
@@ -164,7 +159,7 @@
 		}
 		function bt(idx) {
 			if (idx >= edges.length) {
-				out.push(current.slice());
+				if (current.length > 0) out.push(current.slice());
 				return;
 			}
 			bt(idx + 1);
@@ -275,9 +270,7 @@
 		vertices.forEach(function (v) { byId[v.id] = v; });
 
 		const selected = (viewState && viewState.selected) ? viewState.selected : new Set();
-		const blocked = (viewState && viewState.blocked) ? viewState.blocked : new Set();
 		const saturated = (viewState && viewState.saturated) ? viewState.saturated : new Set();
-		const invert = viewState && viewState.invert;
 
 		const svg = d3.select(box).append('svg')
 			.attr('class', 'grafo-svg')
@@ -285,23 +278,23 @@
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
 		const links = edges.map(function (e) {
-			return { source: byId[e.inicio], target: byId[e.fin], key: edgeKeyUnd(e.inicio, e.fin) };
+			return { source: byId[e.inicio], target: byId[e.fin], key: edgeKeyUnd(e.inicio, e.fin), nombre: e.nombre };
 		}).filter(function (e) { return !!e.source && !!e.target; });
 
 		const line = svg.append('g').selectAll('line').data(links).enter().append('line')
 			.attr('class', function (d) {
 				let classes = 'link-line';
-				const isSelected = selected.has(d.key);
-				const isBlocked = blocked.has(d.key);
-				if (invert) {
-					if (isSelected) classes += ' blocked';
-					else if (isBlocked) classes += ' matching';
-				} else {
-					if (isSelected) classes += ' matching';
-					else if (isBlocked) classes += ' blocked';
-				}
+				if (selected.has(d.key)) classes += ' matching';
 				return classes;
 			});
+
+		const edgeLabel = svg.append('g').selectAll('text.edge-label').data(links).enter().append('text')
+			.attr('class', 'edge-label')
+			.attr('text-anchor', 'middle')
+			.attr('dy', -3)
+			.attr('font-size', '12px')
+			.attr('fill', '#666')
+			.text(function(d) { return d.nombre; });
 
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
 			.attr('class', function (d) {
@@ -349,6 +342,10 @@
 					return clamp(d.target.y - (dy / len) * (r + 1), minY, maxY);
 				});
 
+			edgeLabel
+				.attr('x', function (d) { return (d.source.x + d.target.x) / 2; })
+				.attr('y', function (d) { return (d.source.y + d.target.y) / 2; });
+
 			node
 				.attr('cx', function (d) { return d.x = clamp(d.x || width / 2, minX, maxX); })
 				.attr('cy', function (d) { return d.y = clamp(d.y || height / 2, minY, maxY); });
@@ -362,38 +359,12 @@
 	}
 
 	function updateSelector() {
-		const selector = document.getElementById('pMatchingSelector');
-		if (!selector) return;
-		selector.innerHTML = '';
-		const opt = document.createElement('option');
-		opt.value = '0';
-		opt.textContent = 'Pareamiento óptimo';
-		selector.appendChild(opt);
-		selector.disabled = true;
-	}
-
-	function updateStepControls() {
-		const prevBtn = document.getElementById('btnPPrev');
-		const nextBtn = document.getElementById('btnPNext');
-		const resetBtn = document.getElementById('btnPReset');
-		const hasSteps = state.steps.length > 1;
-		if (prevBtn) prevBtn.disabled = !hasSteps || state.stepIndex <= 0;
-		if (nextBtn) nextBtn.disabled = !hasSteps || state.stepIndex >= state.steps.length - 1;
-		if (resetBtn) resetBtn.disabled = !hasSteps;
+		// Función simplificada - solo muestra óptimo
+		return;
 	}
 
 	function renderCurrentStep() {
-		const step = state.steps[state.stepIndex] || { selected: new Set(), blocked: new Set(), invert: false, text: '' };
-		setHtml('pPasoInfo', step.text || '');
-		const matching = state.optimalMatching || [];
-		const saturated = saturatedVerticesFor(matching);
-		renderGraph('pGrafo', state.vertices, state.aristas, {
-			selected: step.selected,
-			blocked: step.blocked,
-			invert: step.invert,
-			saturated: saturated
-		});
-		updateStepControls();
+		// Función simplificada - solo muestra el óptimo
 	}
 
 	function refresh() {
@@ -401,16 +372,12 @@
 		if (!document.getElementById('pResultado').innerHTML) {
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 		}
-		if (!state.steps.length) {
-			renderGraph('pGrafo', state.vertices, state.aristas, {
-				selected: new Set(),
-				blocked: new Set(),
-				invert: false,
-				saturated: new Set()
-			});
-		} else {
-			renderCurrentStep();
-		}
+		const matching = state.optimalMatching || [];
+		const saturated = saturatedVerticesFor(matching);
+		renderGraph('pGrafo', state.vertices, state.aristas, {
+			selected: new Set(matching.map(function (e) { return edgeKeyUnd(e.inicio, e.fin); })),
+			saturated: saturated
+		});
 	}
 
 	function apply() {
@@ -420,22 +387,20 @@
 		}
 		state.matchings = enumerateMatchings(state.aristas);
 		const maxSize = state.matchings.reduce(function (acc, s) { return Math.max(acc, s.length); }, 0);
-		state.maxMatchings = state.matchings.filter(function (s) { return s.length === maxSize; });
-		state.maximalMatchings = state.matchings.filter(function (s) { return isMaximalMatching(s, state.aristas); });
+		const maxMatchings = state.matchings.filter(function (s) { return s.length === maxSize; });
+		const maximalMatchings = state.matchings.filter(function (s) { return isMaximalMatching(s, state.aristas); });
 
 		let optimalIndex = 0;
 		let isPerfect = false;
-		for (let i = 0; i < state.maxMatchings.length; i += 1) {
-			const saturated = saturatedVerticesFor(state.maxMatchings[i]);
+		for (let i = 0; i < maxMatchings.length; i += 1) {
+			const saturated = saturatedVerticesFor(maxMatchings[i]);
 			if (saturated.size === state.vertices.length && state.vertices.length > 0) {
 				optimalIndex = i;
 				isPerfect = true;
 				break;
 			}
 		}
-		state.selectedMatchingIndex = optimalIndex;
-		state.optimalMatching = state.maxMatchings[optimalIndex] || [];
-		updateSelector();
+		state.optimalMatching = maxMatchings[optimalIndex] || [];
 
 		const optimalMatching = state.optimalMatching;
 		const saturatedOptimal = Array.from(saturatedVerticesFor(optimalMatching));
@@ -443,22 +408,20 @@
 			'<strong>Pareamientos posibles:</strong><br>' + formatSet('M', state.matchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
-			'<br><strong>Numero de pareamiento (maximo):</strong> ' + maxSize +
-			'<br><strong>Pareamientos maximos:</strong><br>' + formatSet('Mmax', state.maxMatchings, function (s) {
+			'<br><strong>Tamaño máximo de pareamiento:</strong> ' + maxSize +
+			'<br><strong>Pareamientos máximos:</strong><br>' + formatSet('M<sub>max</sub>', maxMatchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
-			'<br><strong>Pareamientos maximales:</strong><br>' + formatSet('Mmaxi', state.maximalMatchings, function (s) {
+			'<br><strong>Pareamientos maximales:</strong><br>' + formatSet('M<sub>maxi</sub>', maximalMatchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
-			'<br><strong>Pareamiento optimo:</strong> {' + optimalMatching.map(formatEdgeCompact).join(', ') + '}' + (isPerfect ? ' (perfecto)' : ''),
-			'<br><strong>Vertices saturados (pareamiento optimo):</strong> {' + saturatedOptimal.join(', ') + '}'
+			'<br><strong>Pareamiento óptimo:</strong> {' + optimalMatching.map(formatEdgeCompact).join(', ') + '}' + (isPerfect ? ' <strong>(perfecto)</strong>' : ''),
+			'<br><strong>Vértices saturados:</strong> {' + saturatedOptimal.join(', ') + '}'
 		].join('');
 		setHtml('pResultado', result);
 
-		state.steps = buildSteps(optimalMatching, state.aristas);
-		state.stepIndex = 0;
-		renderCurrentStep();
-		showMsg('Calculo completado.', 'success');
+		refresh();
+		showMsg('Cálculo completado.', 'success');
 	}
 
 	function init() {
@@ -472,7 +435,7 @@
 			const p = nextVertexPosition(state.vertices);
 			state.vertices.push({ id: id, x: p.x, y: p.y });
 			document.getElementById('pVerticeNombre').value = '';
-			state.steps = [];
+			state.optimalMatching = [];
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 			refresh();
 		});
@@ -485,7 +448,7 @@
 			if (before === state.vertices.length) return showMsg('No existe el vertice a eliminar.', 'warning');
 			state.aristas = state.aristas.filter(function (e) { return e.inicio !== id && e.fin !== id; });
 			document.getElementById('pVerticeNombre').value = '';
-			state.steps = [];
+			state.optimalMatching = [];
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 			refresh();
 		});
@@ -510,7 +473,7 @@
 			document.getElementById('pAristaNombre').value = '';
 			document.getElementById('pAristaInicio').value = '';
 			document.getElementById('pAristaFin').value = '';
-			state.steps = [];
+			state.optimalMatching = [];
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 			refresh();
 		});
@@ -530,7 +493,7 @@
 			document.getElementById('pAristaNombre').value = '';
 			document.getElementById('pAristaInicio').value = '';
 			document.getElementById('pAristaFin').value = '';
-			state.steps = [];
+			state.optimalMatching = [];
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 			refresh();
 		});
@@ -542,13 +505,8 @@
 			state.vertices = [];
 			state.aristas = [];
 			state.matchings = [];
-			state.maxMatchings = [];
-			state.maximalMatchings = [];
-			state.steps = [];
-			state.stepIndex = 0;
 			state.optimalMatching = [];
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
-			setHtml('pPasoInfo', '');
 			refresh();
 		});
 
@@ -576,15 +534,8 @@
 					state.vertices = graph.vertices;
 					state.aristas = graph.aristas;
 					state.matchings = [];
-					state.maxMatchings = [];
-					state.maximalMatchings = [];
-					state.steps = [];
-					state.stepIndex = 0;
-					state.selectedMatchingIndex = 0;
 					state.optimalMatching = [];
-					updateSelector();
 					setHtml('pResultado', 'Datos cargados. Pulse <strong>Calcular</strong>.');
-					setHtml('pPasoInfo', '');
 					refresh();
 					showMsg('Estructura cargada correctamente.', 'success');
 				}, function (err) {
@@ -597,24 +548,21 @@
 		const prevBtn = document.getElementById('btnPPrev');
 		if (prevBtn) {
 			prevBtn.addEventListener('click', function () {
-				if (state.stepIndex > 0) state.stepIndex -= 1;
-				renderCurrentStep();
+				// Botón de paso anterior deshabilitado
 			});
 		}
 
 		const nextBtn = document.getElementById('btnPNext');
 		if (nextBtn) {
 			nextBtn.addEventListener('click', function () {
-				if (state.stepIndex < state.steps.length - 1) state.stepIndex += 1;
-				renderCurrentStep();
+				// Botón de paso siguiente deshabilitado
 			});
 		}
 
 		const resetBtn = document.getElementById('btnPReset');
 		if (resetBtn) {
 			resetBtn.addEventListener('click', function () {
-				state.stepIndex = 0;
-				renderCurrentStep();
+				// Botón de reinicio deshabilitado
 			});
 		}
 

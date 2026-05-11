@@ -45,7 +45,7 @@
             <section class="panel-section">
                 <div class="panel-header">
                     <div>
-                        <h3 class="panel-title">Independencia (Grafo no dirigido)</h3>
+                        <h3 class="panel-title">Independencia</h3>
                         <p class="panel-subtitle">Conjuntos independientes de vértices y aristas.</p>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <h6 class="subpanel-title">Aristas</h6>
                             <div class="row g-2 mb-2">
                                 <div class="col-4"><input type="text" class="form-control" id="iAristaNombre" placeholder="Nombre"></div>
                                 <div class="col-4"><input type="text" class="form-control" id="iAristaInicio" placeholder="Vértice 1"></div>
@@ -93,7 +93,7 @@
 
                 <div class="row g-3">
                     <div class="col-lg-6">
-                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <label class="form-label fw-semibold">Grafo</label>
                         <div class="grafo-canvas" id="iGrafo"></div>
                     </div>
                     <div class="col-lg-6">
@@ -111,7 +111,7 @@
             <section class="panel-section">
                 <div class="panel-header">
                     <div>
-                        <h3 class="panel-title">Dominancia (Grafo no dirigido)</h3>
+                        <h3 class="panel-title">Dominancia</h3>
                         <p class="panel-subtitle">Conjuntos dominantes y variantes.</p>
                     </div>
                 </div>
@@ -129,7 +129,7 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <h6 class="subpanel-title">Aristas</h6>
                             <div class="row g-2 mb-2">
                                 <div class="col-4"><input type="text" class="form-control" id="domAristaNombre" placeholder="Nombre"></div>
                                 <div class="col-4"><input type="text" class="form-control" id="domAristaInicio" placeholder="Vértice 1"></div>
@@ -159,7 +159,7 @@
 
                 <div class="row g-3">
                     <div class="col-lg-6">
-                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <label class="form-label fw-semibold">Grafo</label>
                         <div class="grafo-canvas" id="domGrafo"></div>
                     </div>
                     <div class="col-lg-6">
@@ -177,7 +177,7 @@
             <section class="panel-section">
                 <div class="panel-header">
                     <div>
-                        <h3 class="panel-title">Pareamiento (Grafo no dirigido)</h3>
+                        <h3 class="panel-title">Pareamiento</h3>
                         <p class="panel-subtitle">Pareamientos maximos, maximales y procedimiento visual.</p>
                     </div>
                 </div>
@@ -195,7 +195,7 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="subpanel">
-                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <h6 class="subpanel-title">Aristas</h6>
                             <div class="row g-2 mb-2">
                                 <div class="col-4"><input type="text" class="form-control" id="pAristaNombre" placeholder="Nombre"></div>
                                 <div class="col-4"><input type="text" class="form-control" id="pAristaInicio" placeholder="Vertice 1"></div>
@@ -225,7 +225,7 @@
 
                 <div class="row g-3">
                     <div class="col-lg-6">
-                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <label class="form-label fw-semibold">Grafo</label>
                         <div class="grafo-canvas" id="pGrafo"></div>
                     </div>
                     <div class="col-lg-6">
@@ -233,22 +233,6 @@
                         <div class="result-panel">
                             <div class="ecuacion-box mb-2" id="pNotacion"></div>
                             <div class="ecuacion-box" id="pResultado"></div>
-                        </div>
-                        <div class="mt-3">
-                            <label class="form-label fw-semibold">Procedimiento del pareamiento</label>
-                            <div class="subpanel">
-                                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                                    <label class="form-label m-0" for="pMatchingSelector">Pareamiento a visualizar</label>
-                                    <select class="form-select form-select-sm" id="pMatchingSelector" style="max-width: 240px;"></select>
-                                </div>
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    <button class="btn btn-outline-secondary btn-sm" id="btnPPrev">Anterior</button>
-                                    <button class="btn btn-outline-secondary btn-sm" id="btnPNext">Siguiente</button>
-                                    <button class="btn btn-outline-secondary btn-sm" id="btnPReset">Reiniciar</button>
-                                </div>
-                                <div class="ecuacion-box" id="pPasoInfo"></div>
-                                <div class="text-muted small mt-2">Azul: arista en pareamiento. Rojo: arista adyacente bloqueada. Vertices verdes: saturados.</div>
-                            </div>
                         </div>
                     </div>
                 </div>
