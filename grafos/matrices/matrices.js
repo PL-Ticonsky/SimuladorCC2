@@ -6,7 +6,7 @@
 	};
 
 	const MODE_DESCRIPTION = {
-		distancias: 'Calcula Floyd-Warshall, tabla de caminos mínimos y propiedades métricas (diámetro, radio, centro/bicentro, mediana y cintura).',
+		distancias: 'Calcula Floyd, tabla de caminos mínimos y propiedades métricas (diámetro, radio, centro/bicentro, mediana y cintura).',
 		circuitos: 'Enumera circuitos simples, elimina duplicados/contenidos y construye la matriz binaria de circuitos por arista.',
 		circuitosFundamentales: 'Obtiene árbol de expansión, cuerdas, nulidad y genera la matriz de circuitos fundamentales.',
 		cortes: 'Enumera conjuntos de corte minimales y construye la matriz binaria de conjuntos de corte.',

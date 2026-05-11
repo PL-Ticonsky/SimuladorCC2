@@ -622,10 +622,7 @@
 		const ids = state.vertices.map(function (v) { return v.id; });
 		const adj = buildAdjacency(state.vertices, state.aristas);
 		const chi = computeChromaticNumber(ids, adj);
-		const extra = Math.max(0, Math.min(2, ids.length - chi));
-		const kRandom = chi + (extra > 0 ? Math.floor(Math.random() * (extra + 1)) : 0);
-		let assign = randomValidVertexColoring(ids, adj, kRandom);
-		if (!assign) assign = randomValidVertexColoring(ids, adj, chi);
+		let assign = randomValidVertexColoring(ids, adj, chi);
 		if (!assign) {
 			return showMsg('No fue posible generar una coloración válida.', 'danger');
 		}
@@ -655,7 +652,7 @@
 			'<strong>Polinomio cromático P(&lambda;):</strong> ' + polyFactorized +
 			'<br><strong>Número cromático X(G):</strong> ' + chi +
 			'<br><strong>Índice cromático X\'(G):</strong> ' + chiPrime +
-			'<br><strong>Coloración aplicada (aleatoria):</strong> ' + usedColors + ' color(es).'
+			'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).'
 		);
 
 		renderGraph('cGrafoResultado', state.vertices, state.aristas, { nodeColorMap: nodeColorMap });
@@ -769,5 +766,4 @@
 
 	document.addEventListener('DOMContentLoaded', init);
 })();
-
 
