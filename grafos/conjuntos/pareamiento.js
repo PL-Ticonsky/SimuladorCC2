@@ -3,7 +3,8 @@
 		vertices: [],
 		aristas: [],
 		matchings: [],
-		optimalMatching: []
+		optimalMatching: [],
+		animationTimer: null
 	};
 
 	function norm(v) {
@@ -369,9 +370,15 @@
 
 	function refresh() {
 		setHtml('pNotacion', graphNotation(state.vertices, state.aristas));
-		if (!document.getElementById('pResultado').innerHTML) {
+		if (!document.getElementById('pResultado').innerHTML || document.getElementById('pResultado').innerHTML.includes('Pulse <strong>Calcular')) {
 			setHtml('pResultado', 'Pulse <strong>Calcular</strong>.');
 		}
+		
+		if (state.animationTimer) {
+			clearTimeout(state.animationTimer);
+			state.animationTimer = null;
+		}
+
 		const matching = state.optimalMatching || [];
 		const saturated = saturatedVerticesFor(matching);
 		renderGraph('pGrafo', state.vertices, state.aristas, {
@@ -416,11 +423,36 @@
 				return s.map(formatEdgeCompact).join(', ');
 			}),
 			'<br><strong>Pareamiento óptimo:</strong> {' + optimalMatching.map(formatEdgeCompact).join(', ') + '}' + (isPerfect ? ' <strong>(perfecto)</strong>' : ''),
-			'<br><strong>Vértices saturados:</strong> {' + saturatedOptimal.join(', ') + '}'
+			'<br><strong>Vértices saturados:</strong> {' + saturatedOptimal.join(', ') + '}',
+			'<br><br><div class="text-success"><small><strong>Nota:</strong> Animando paso a paso. Los vértices saturados se muestran en verde.</small></div>'
 		].join('');
 		setHtml('pResultado', result);
 
-		refresh();
+		if (state.animationTimer) clearTimeout(state.animationTimer);
+		let step = 0;
+		const currentSelected = new Set();
+		const currentSaturated = new Set();
+
+		function nextAnimation() {
+			renderGraph('pGrafo', state.vertices, state.aristas, {
+				selected: new Set(currentSelected),
+				saturated: new Set(currentSaturated)
+			});
+			if (step < optimalMatching.length) {
+				const e = optimalMatching[step];
+				currentSelected.add(edgeKeyUnd(e.inicio, e.fin));
+				currentSaturated.add(e.inicio);
+				currentSaturated.add(e.fin);
+				step += 1;
+				state.animationTimer = setTimeout(nextAnimation, 2000);
+			} else {
+				state.animationTimer = null;
+				const finalResult = result.replace('Animando paso a paso. ', 'Animación finalizada. ');
+				setHtml('pResultado', finalResult);
+			}
+		}
+
+		nextAnimation();
 		showMsg('Cálculo completado.', 'success');
 	}
 
@@ -581,4 +613,3 @@
 
 	document.addEventListener('DOMContentLoaded', init);
 })();
-
