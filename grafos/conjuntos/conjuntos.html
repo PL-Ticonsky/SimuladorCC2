@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjuntos - Simulador CC2</title>
+    <link rel="stylesheet" href="../../bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="../../css/global.css">
+    <link rel="stylesheet" href="conjuntos.css">
+</head>
+<body>
+<header class="header-section mb-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="text-white">
+                <h1 class="header-title mb-1">Ciencias de la Computación 2</h1>
+            </div>
+            <a href="../grafos.html" class="btn btn-outline-light">Volver atrás</a>
+        </div>
+    </div>
+</header>
+
+<div class="container pb-4">
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-independencia" data-bs-toggle="pill" data-bs-target="#panel-independencia" type="button" role="tab">Independencia</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-dominancia" data-bs-toggle="pill" data-bs-target="#panel-dominancia" type="button" role="tab">Dominancia</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-pareamiento" data-bs-toggle="pill" data-bs-target="#panel-pareamiento" type="button" role="tab">Pareamiento</button>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="tab-content">
+        <div class="text-center py-5" id="panel-bienvenida-conjuntos">
+            <h4 class="text-muted mb-3">Seleccione un tema</h4>
+            <p class="text-muted">Trabaje con grafos no dirigidos y analice independencia, dominancia o pareamiento.</p>
+        </div>
+
+        <div class="tab-pane fade" id="panel-independencia" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Independencia (Grafo no dirigido)</h3>
+                        <p class="panel-subtitle">Conjuntos independientes de vértices y aristas.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="iVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnIAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnIEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><input type="text" class="form-control" id="iAristaNombre" placeholder="Nombre"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="iAristaInicio" placeholder="Vértice 1"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="iAristaFin" placeholder="Vértice 2"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnIAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnIEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnIOperar">Calcular</button>
+                        <button class="btn btn-warning" id="btnILimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnICargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnIGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputIndependencia" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeIndependencia" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <div class="grafo-canvas" id="iGrafo"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Resultados</label>
+                        <div class="result-panel">
+                            <div class="ecuacion-box mb-2" id="iNotacion"></div>
+                            <div class="ecuacion-box" id="iResultado"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panel-dominancia" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Dominancia (Grafo no dirigido)</h3>
+                        <p class="panel-subtitle">Conjuntos dominantes y variantes.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vértices</h6>
+                            <input type="text" class="form-control mb-2" id="domVerticeNombre" placeholder="Nombre del vértice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDomAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnDomEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><input type="text" class="form-control" id="domAristaNombre" placeholder="Nombre"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="domAristaInicio" placeholder="Vértice 1"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="domAristaFin" placeholder="Vértice 2"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnDomAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnDomEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnDomOperar">Calcular</button>
+                        <button class="btn btn-warning" id="btnDomLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnDomCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnDomGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputDominancia" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajeDominancia" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <div class="grafo-canvas" id="domGrafo"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Resultados</label>
+                        <div class="result-panel">
+                            <div class="ecuacion-box mb-2" id="domNotacion"></div>
+                            <div class="ecuacion-box" id="domResultado"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="tab-pane fade" id="panel-pareamiento" role="tabpanel">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Pareamiento (Grafo no dirigido)</h3>
+                        <p class="panel-subtitle">Pareamientos maximos, maximales y procedimiento visual.</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Vertices</h6>
+                            <input type="text" class="form-control mb-2" id="pVerticeNombre" placeholder="Nombre del vertice">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnPAgregarVertice">Agregar</button>
+                                <button class="btn btn-danger flex-fill" id="btnPEliminarVertice">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="subpanel">
+                            <h6 class="subpanel-title">Aristas (no dirigidas)</h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4"><input type="text" class="form-control" id="pAristaNombre" placeholder="Nombre"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="pAristaInicio" placeholder="Vertice 1"></div>
+                                <div class="col-4"><input type="text" class="form-control" id="pAristaFin" placeholder="Vertice 2"></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success flex-fill" id="btnPAgregarArista">Agregar arista</button>
+                                <button class="btn btn-danger flex-fill" id="btnPEliminarArista">Eliminar arista</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary" id="btnPOperar">Calcular</button>
+                        <button class="btn btn-warning" id="btnPLimpiar">Limpiar</button>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-secondary" id="btnPCargar">Cargar</button>
+                        <button class="btn btn-outline-secondary" id="btnPGuardar">Guardar</button>
+                    </div>
+                    <input type="file" id="fileInputPareamiento" accept="application/json" class="d-none">
+                </div>
+
+                <div id="mensajePareamiento" class="alert d-none mb-3" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Grafo no dirigido</label>
+                        <div class="grafo-canvas" id="pGrafo"></div>
+                    </div>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Resultados</label>
+                        <div class="result-panel">
+                            <div class="ecuacion-box mb-2" id="pNotacion"></div>
+                            <div class="ecuacion-box" id="pResultado"></div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Procedimiento del pareamiento</label>
+                            <div class="subpanel">
+                                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                    <label class="form-label m-0" for="pMatchingSelector">Pareamiento a visualizar</label>
+                                    <select class="form-select form-select-sm" id="pMatchingSelector" style="max-width: 240px;"></select>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm" id="btnPPrev">Anterior</button>
+                                    <button class="btn btn-outline-secondary btn-sm" id="btnPNext">Siguiente</button>
+                                    <button class="btn btn-outline-secondary btn-sm" id="btnPReset">Reiniciar</button>
+                                </div>
+                                <div class="ecuacion-box" id="pPasoInfo"></div>
+                                <div class="text-muted small mt-2">Azul: arista en pareamiento. Rojo: arista adyacente bloqueada. Vertices verdes: saturados.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script src="../../bootstrap/js/bootstrap.bundle.js"></script>
+<script src="../../d3/d3.v7.js"></script>
+<script src="independencia.js"></script>
+<script src="dominancia.js"></script>
+<script src="pareamiento.js"></script>
+</body>
+</html>
+

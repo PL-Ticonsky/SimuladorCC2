@@ -1,4 +1,4 @@
-/* Coloreado de grafos */
+/* Estilos para la seccion de conjuntos */
 
 .subpanel {
 	background: #ffffff;
@@ -19,7 +19,7 @@
 	border: 1px solid #d6dce5;
 	border-radius: 8px;
 	padding: 10px;
-	min-height: 80px;
+	min-height: 92px;
 	color: #44546a;
 	font-size: 0.9rem;
 	overflow: auto;
@@ -29,7 +29,7 @@
 	border: 1px solid #d6dce5;
 	border-radius: 10px;
 	background: #ffffff;
-	min-height: 320px;
+	min-height: 340px;
 	position: relative;
 	overflow: hidden;
 }
@@ -48,7 +48,7 @@
 
 .grafo-svg {
 	width: 100%;
-	height: 320px;
+	height: 340px;
 }
 
 .link-line {
@@ -57,15 +57,33 @@
 	fill: none;
 }
 
+.link-line.matching {
+	stroke: #2d8cff;
+	stroke-width: 3;
+}
+
+.link-line.blocked {
+	stroke: #d9534f;
+	stroke-width: 2.6;
+	stroke-dasharray: 6 4;
+	opacity: 0.9;
+}
+
 .node-circle {
+	fill: #5b9bd5;
 	stroke: #44546a;
 	stroke-width: 1.5;
 	cursor: grab;
-	fill: #5b9bd5;
 }
 
 .node-circle:active {
 	cursor: grabbing;
+}
+
+.node-circle.saturated {
+	fill: #70ad47;
+	stroke: #3f6a29;
+	stroke-width: 2;
 }
 
 .node-label {
@@ -75,9 +93,11 @@
 	user-select: none;
 }
 
-.edge-label {
-	font-size: 0.72rem;
-	fill: #6b7787;
-	font-weight: 700;
-	user-select: none;
+.result-panel {
+	background: #ffffff;
+	border: 1px solid #d6dce5;
+	border-radius: 10px;
+	padding: 12px;
+	max-height: 340px;
+	overflow: auto;
 }

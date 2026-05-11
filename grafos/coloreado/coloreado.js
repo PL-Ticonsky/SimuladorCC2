@@ -8,6 +8,7 @@
 		'#5b9bd5', '#ed7d31', '#70ad47', '#ffc000', '#4472c4', '#a5a5a5',
 		'#c55a11', '#9e480e', '#264478', '#43682b', '#7030a0', '#00b0f0'
 	];
+	const COLOR_INITIALS = ['C', 'N', 'V', 'A', 'A', 'G', 'C', 'C', 'A', 'V', 'M', 'C'];
 
 	function norm(v) {
 		return (v || '').toString().trim();
@@ -647,12 +648,28 @@
 		}).join(' · ');
 		const chiPrime = computeChromaticIndex(ids, state.aristas);
 		const usedColors = new Set(Object.keys(assign).map(function (k) { return assign[k]; })).size;
+		const classByColor = {};
+		Object.keys(assign).forEach(function (id) {
+			const c = assign[id];
+			if (!classByColor[c]) classByColor[c] = [];
+			classByColor[c].push(id);
+		});
+		const colorKeys = Object.keys(classByColor).map(Number).sort(function (a, b) { return a - b; });
+		function classLabel(idx) {
+			return COLOR_INITIALS[idx] || ('C' + (idx + 1));
+		}
+		const clasesHtml = colorKeys.map(function (k, i) {
+			const label = classLabel(i);
+			const items = classByColor[k].slice().sort().join(', ');
+			return 'Clase ' + label + ' = {' + items + '}';
+		}).join('<br>');
 
 		setHtml('cResultado',
 			'<strong>Polinomio cromático P(&lambda;):</strong> ' + polyFactorized +
 			'<br><strong>Número cromático X(G):</strong> ' + chi +
 			'<br><strong>Índice cromático X\'(G):</strong> ' + chiPrime +
-			'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).'
+			'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).' +
+			'<br><strong>Clases cromáticas:</strong><br>' + (clasesHtml || 'Sin clases')
 		);
 
 		renderGraph('cGrafoResultado', state.vertices, state.aristas, { nodeColorMap: nodeColorMap });
@@ -766,4 +783,3 @@
 
 	document.addEventListener('DOMContentLoaded', init);
 })();
-
