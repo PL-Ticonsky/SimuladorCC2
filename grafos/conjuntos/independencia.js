@@ -1,5 +1,6 @@
 (function () {
-	const state = { vertices: [], aristas: [] };
+	// state will be redefined below to allow window.highlightInd to access it
+	let state = { vertices: [], aristas: [] };
 
 	function norm(v) {
 		return (v || '').toString().trim();
@@ -29,6 +30,34 @@
 		const el = document.getElementById(id);
 		if (el) el.innerHTML = html;
 	}
+
+	window.highlightInd = function(type, idx) {
+		if (window._indLastResult) {
+			const res = window._indLastResult;
+			let activeNodes = new Set();
+			let activeEdges = new Set();
+			if (res[type] && res[type][idx]) {
+				const set = res[type][idx];
+				if (type.startsWith('edge')) {
+					set.forEach(function(e) { activeEdges.add(edgeKeyUnd(e.inicio, e.fin)); });
+				} else {
+					set.forEach(function(v) { activeNodes.add(v); });
+				}
+			}
+			renderGraph('iGrafo', state.vertices, state.aristas, { activeNodes: activeNodes, activeEdges: activeEdges });
+
+			// Resaltar el item seleccionado en el panel de resultados
+			document.querySelectorAll('#iResultado .clickable-set').forEach(function(el) {
+				el.classList.remove('selected-set');
+			});
+			const clicked = document.querySelectorAll('#iResultado .clickable-set')[
+				Array.from(document.querySelectorAll('#iResultado .clickable-set')).findIndex(function(el) {
+					return el.getAttribute('onclick') === "highlightInd('" + type + "', " + idx + ")";
+				})
+			];
+			if (clicked) clicked.classList.add('selected-set');
+		}
+	};
 
 	function downloadJson(filename, payload) {
 		const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -139,7 +168,11 @@
 		return 'G={S,A}<br>S={' + s + '}<br>A={' + a + '}';
 	}
 
-	function renderGraph(containerId, vertices, edges) {
+	function renderGraph(containerId, vertices, edges, opts) {
+		opts = opts || {};
+		const activeNodes = opts.activeNodes || new Set();
+		const activeEdges = opts.activeEdges || new Set();
+
 		const box = document.getElementById(containerId);
 		if (!box) return;
 		box.innerHTML = '';
@@ -169,11 +202,13 @@
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
 		const links = edges.map(function (e) {
-			return { source: byId[e.inicio], target: byId[e.fin], nombre: e.nombre };
+			return { source: byId[e.inicio], target: byId[e.fin], nombre: e.nombre, key: edgeKeyUnd(e.inicio, e.fin) };
 		}).filter(function (e) { return !!e.source && !!e.target; });
 
 		const line = svg.append('g').selectAll('line').data(links).enter().append('line')
-			.attr('class', 'link-line');
+			.attr('class', function(d) {
+				return activeEdges.has(d.key) ? 'link-line active' : 'link-line';
+			});
 
 		const edgeLabel = svg.append('g').selectAll('text.edge-label').data(links).enter().append('text')
 			.attr('class', 'edge-label')
@@ -184,7 +219,9 @@
 			.text(function(d) { return d.nombre; });
 
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
-			.attr('class', 'node-circle')
+			.attr('class', function(d) {
+				return activeNodes.has(d.id) ? 'node-circle active' : 'node-circle';
+			})
 			.attr('r', r)
 			.call(d3.drag().on('drag', function (event, d) {
 				d.x = clamp(event.x, minX, maxX);
@@ -325,6 +362,13 @@
 		return true;
 	}
 
+	function formatSetClickable(prefix, type, sets, formatter) {
+		if (!sets.length) return '<span class="text-muted">Sin conjuntos.</span>';
+		return sets.map(function (set, idx) {
+			return `<span class="clickable-set" onclick="highlightInd('${type}', ${idx})">${prefix + (idx + 1)} = {${formatter(set)}}</span>`;
+		}).join('<br>');
+	}
+
 	function formatSet(prefix, sets, formatter) {
 		if (!sets.length) return '<span class="text-muted">Sin conjuntos.</span>';
 		return sets.map(function (set, idx) {
@@ -352,28 +396,39 @@
 		const maximalSets = indSets.filter(function (s) { return isMaximalIndependent(s, state.vertices, adj); });
 
 		const edgeSets = enumerateIndependentEdgeSets(state.aristas);
-		const maxEdgeSize = edgeSets.reduce(function (acc, s) { return Math.max(acc, s.length); }, 0);
+		const maxEdgeSize = [...edgeSets].reduce(function (acc, s) { return Math.max(acc, s.length); }, 0);
 		const maxEdgeSets = edgeSets.filter(function (s) { return s.length === maxEdgeSize; });
 		const maximalEdgeSets = edgeSets.filter(function (s) { return isMaximalEdgeIndependent(s, state.aristas); });
 
+		window._indLastResult = {
+			nodes_ind: indSets,
+			nodes_max: maxSets,
+			nodes_maxi: maximalSets,
+			edges_ind: edgeSets,
+			edges_max: maxEdgeSets,
+			edges_maxi: maximalEdgeSets
+		};
+
 		const result = [
-			'<strong>Conjuntos independientes (vértices):</strong><br>' + formatSet('Cind', indSets, function (s) { return s.join(', '); }),
+			'<strong>Conjuntos independientes (vértices):</strong><br>' + formatSetClickable('Cind', 'nodes_ind', indSets, function (s) { return s.join(', '); }),
 			'<br><strong>Número de independencia:</strong> ' + maxSize +
-			'<br><strong>Conjuntos independientes de mayor tamaño:</strong><br>' + formatSet('CindMax', maxSets, function (s) { return s.join(', '); }),
-			'<br><strong>Conjuntos independientes maximales:</strong><br>' + formatSet('Cmaxi', maximalSets, function (s) { return s.join(', '); }),
-			'<br><strong>Conjuntos independientes (aristas):</strong><br>' + formatSet('Cind', edgeSets, function (s) {
-				return s.map(function (e) { return e.nombre; }).join(', ');
+			'<br><strong>Conjuntos independientes de mayor tamaño:</strong><br>' + formatSetClickable('CindMax', 'nodes_max', maxSets, function (s) { return s.join(', '); }),
+			'<br><strong>Conjuntos independientes maximales:</strong><br>' + formatSetClickable('Cmaxi', 'nodes_maxi', maximalSets, function (s) { return s.join(', '); }),
+			'<hr>',
+			'<strong>Conjuntos independientes (aristas / pareamientos):</strong><br>' + formatSetClickable('Mind', 'edges_ind', edgeSets, function (s) {
+				return s.map(function (e) { return '(' + e.inicio + ',' + e.fin + ')'; }).join(', ');
 			}),
-			'<br><strong>Número de independencia (aristas):</strong> ' + maxEdgeSize +
-			'<br><strong>Conjuntos independientes de mayor tamaño (aristas):</strong><br>' + formatSet('CindMax', maxEdgeSets, function (s) {
-				return s.map(function (e) { return e.nombre; }).join(', ');
+			'<br><strong>Número de pareamiento:</strong> ' + maxEdgeSize +
+			'<br><strong>Pareamientos máximos:</strong><br>' + formatSetClickable('Mmax', 'edges_max', maxEdgeSets, function (s) {
+				return s.map(function (e) { return '(' + e.inicio + ',' + e.fin + ')'; }).join(', ');
 			}),
-			'<br><strong>Conjuntos independientes maximales (aristas):</strong><br>' + formatSet('Cmaxi', maximalEdgeSets, function (s) {
-				return s.map(function (e) { return e.nombre; }).join(', ');
+			'<br><strong>Pareamientos maximales:</strong><br>' + formatSetClickable('Mmaxi', 'edges_maxi', maximalEdgeSets, function (s) {
+				return s.map(function (e) { return '(' + e.inicio + ',' + e.fin + ')'; }).join(', ');
 			})
 		].join('');
 
 		setHtml('iResultado', result);
+		renderGraph('iGrafo', state.vertices, state.aristas);
 		showMsg('Cálculo completado.', 'success');
 	}
 
