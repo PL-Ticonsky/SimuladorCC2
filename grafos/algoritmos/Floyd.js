@@ -139,13 +139,23 @@
 			}
 
 			U.setHtml('fResultado',
-				'Encuentra los caminos más cortos entre todos los pares de vértices de un grafo ponderado usando la ecuación Dᵢⱼ + Dⱼₖ < Dᵢₖ.'
+				'Encuentra los caminos más cortos entre todos los pares de vértices de un grafo ponderado usando la ecuación Dᵢⱼ + Dⱼₖ &lt; Dᵢₖ. ' +
+				(ord.hasCycle ? '<strong>(con circuitos)</strong>' : '')
 			);
 
 			U.setHtml('fMatrices', matrices.map(function (m) {
 				return matrixToHtml(m.name, m.values, ordLabels);
 			}).join(''));
-			U.showMsg('mensajeFloyd', 'Floyd aplicado correctamente.', 'success');
+			
+			const nodeTextMap = {};
+			ord.order.forEach(function (o) { nodeTextMap[o.id] = String(o.ordinal); });
+			U.renderGraph('fGrafoResultado', state.vertices, state.aristas, { nodeTextMap: nodeTextMap, activeNodes: ord.order.map(function (x) { return x.id; }) });
+            
+			if (ord.hasCycle) {
+				U.showMsg('mensajeFloyd', 'Se etiquetaron aleatoriamente debido a que el grafo presenta circuitos.', 'warning');
+			} else {
+				U.showMsg('mensajeFloyd', 'Floyd aplicado correctamente.', 'success');
+			}
 		});
 
 		document.getElementById('btnFLimpiar').addEventListener('click', function () {
@@ -154,6 +164,7 @@
 			state.aristas = [];
 			U.setHtml('fResultado', 'Pulse <strong>Aplicar algoritmo</strong>.');
 			U.setHtml('fMatrices', 'Matrices pendientes de cálculo.');
+			U.renderGraph('fGrafoResultado', [], [], {});
 			refresh();
 		});
 
@@ -182,6 +193,7 @@
 					state.aristas = graph.aristas;
 					U.setHtml('fResultado', 'Datos cargados. Pulse <strong>Aplicar algoritmo</strong>.');
 					U.setHtml('fMatrices', 'Matrices pendientes de cálculo.');
+					U.renderGraph('fGrafoResultado', [], [], {});
 					refresh();
 					U.showMsg('mensajeFloyd', 'Estructura cargada correctamente.', 'success');
 				}, function (err) {

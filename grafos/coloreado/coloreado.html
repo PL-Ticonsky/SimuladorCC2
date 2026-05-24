@@ -21,74 +21,93 @@
 </header>
 
 <div class="container pb-4">
-    <section class="panel-section">
-        <div class="panel-header">
-            <div>
-                <h3 class="panel-title">Coloreado de grafos</h3>
-                <p class="panel-subtitle">Colorea vértices con el mínimo de colores y muestra P(&lambda;), X(G), X'(G).</p>
-            </div>
+    <nav class="mb-4">
+        <ul class="nav nav-pills nav-pills-custom justify-content-center flex-nowrap overflow-auto" id="coloreadoTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-vertices" data-bs-toggle="pill" data-target-mode="vertices" type="button" role="tab" aria-selected="false">Vértices</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-aristas" data-bs-toggle="pill" data-target-mode="aristas" type="button" role="tab" aria-selected="false">Aristas</button>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="tab-content">
+        <div class="text-center py-5" id="panel-bienvenida-coloreado">
+            <h4 class="text-muted mb-3">Seleccione una opción</h4>
+            <p class="text-muted">Elija si desea realizar un coloreado de vértices o de aristas.</p>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-lg-6">
-                <div class="subpanel">
-                    <h6 class="subpanel-title">Vértices</h6>
-                    <input type="text" class="form-control mb-2" id="cVerticeNombre" placeholder="Nombre del vértice">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success flex-fill" id="btnCAgregarVertice">Agregar</button>
-                        <button class="btn btn-danger flex-fill" id="btnCEliminarVertice">Eliminar</button>
+        <section id="panel-coloreado-principal" class="panel-section d-none">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Coloreado de grafos</h3>
+                    <p class="panel-subtitle" id="subtitle-coloreado">Colorea vértices con el mínimo de colores.</p>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <div class="subpanel">
+                        <h6 class="subpanel-title">Vértices</h6>
+                        <input type="text" class="form-control mb-2" id="cVerticeNombre" placeholder="Nombre del vértice">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success flex-fill" id="btnCAgregarVertice">Agregar</button>
+                            <button class="btn btn-danger flex-fill" id="btnCEliminarVertice">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="subpanel">
+                        <h6 class="subpanel-title">Aristas del grafo</h6>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6"><input type="text" class="form-control" id="cAristaInicio" placeholder="Inicio"></div>
+                            <div class="col-6"><input type="text" class="form-control" id="cAristaFin" placeholder="Fin"></div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success flex-fill" id="btnCAgregarArista">Agregar arista</button>
+                            <button class="btn btn-danger flex-fill" id="btnCEliminarArista">Eliminar arista</button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="subpanel">
-                    <h6 class="subpanel-title">Aristas del grafo</h6>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6"><input type="text" class="form-control" id="cAristaInicio" placeholder="Inicio"></div>
-                        <div class="col-6"><input type="text" class="form-control" id="cAristaFin" placeholder="Fin"></div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success flex-fill" id="btnCAgregarArista">Agregar arista</button>
-                        <button class="btn btn-danger flex-fill" id="btnCEliminarArista">Eliminar arista</button>
-                    </div>
+
+            <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-primary" id="btnCOperar">Calcular</button>
+                    <button class="btn btn-warning" id="btnCLimpiar">Limpiar</button>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-secondary" id="btnCCargar">Cargar</button>
+                    <button class="btn btn-outline-secondary" id="btnCGuardar">Guardar</button>
+                </div>
+                <input type="file" id="fileInputColoreado" accept="application/json" class="d-none">
+            </div>
+
+            <div id="mensajeColoreado" class="alert d-none mb-3" role="alert"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-lg-4"><div class="ecuacion-box" id="cNotacion"></div></div>
+                <div class="col-lg-8"><div class="ecuacion-box" id="cResultado"></div></div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <label class="form-label fw-semibold">Grafo original</label>
+                    <div class="grafo-canvas" id="cGrafoOriginal"></div>
+                </div>
+                <div class="col-lg-6">
+                    <label class="form-label fw-semibold">Resultado coloreado</label>
+                    <div class="grafo-canvas" id="cGrafoResultado"></div>
                 </div>
             </div>
-        </div>
-
-        <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
-            <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-primary" id="btnCOperar">Calcular</button>
-                <button class="btn btn-warning" id="btnCLimpiar">Limpiar</button>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-outline-secondary" id="btnCCargar">Cargar</button>
-                <button class="btn btn-outline-secondary" id="btnCGuardar">Guardar</button>
-            </div>
-            <input type="file" id="fileInputColoreado" accept="application/json" class="d-none">
-        </div>
-
-        <div id="mensajeColoreado" class="alert d-none mb-3" role="alert"></div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-lg-4"><div class="ecuacion-box" id="cNotacion"></div></div>
-            <div class="col-lg-8"><div class="ecuacion-box" id="cResultado"></div></div>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-lg-6">
-                <label class="form-label fw-semibold">Grafo original</label>
-                <div class="grafo-canvas" id="cGrafoOriginal"></div>
-            </div>
-            <div class="col-lg-6">
-                <label class="form-label fw-semibold">Resultado coloreado</label>
-                <div class="grafo-canvas" id="cGrafoResultado"></div>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 </div>
 
 <script src="../../bootstrap/js/bootstrap.bundle.js"></script>
 <script src="../../d3/d3.v7.js"></script>
-<script src="coloreado.js"></script>
+<script src="vertices.js"></script>
+<script src="aristas.js"></script>
 </body>
 </html>

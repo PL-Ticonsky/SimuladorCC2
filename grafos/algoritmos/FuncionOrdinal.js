@@ -186,19 +186,12 @@
 		});
 
 		const unassigned = new Set(vertices.map(function (v) { return v.id; }));
-		const order = [];
+		let order = [];
 		let usedFallback = false;
 		while (unassigned.size) {
 			if (!pending.length) {
 				usedFallback = true;
-				const fallback = Array.from(unassigned).sort(function (a, b) {
-					const va = byId[a];
-					const vb = byId[b];
-					if (va.y !== vb.y) return va.y - vb.y;
-					if (va.x !== vb.x) return va.x - vb.x;
-					return a.localeCompare(b);
-				})[0];
-				pending.push(fallback);
+				break;
 			}
 			pending.sort(function (a, b) {
 				const va = byId[a];
@@ -216,6 +209,29 @@
 				inDegree[v] -= 1;
 				if (inDegree[v] === 0 && pending.indexOf(v) === -1) pending.push(v);
 			});
+		}
+
+		if (usedFallback) {
+			order = vertices.map(function (v) { return v.id; }).sort(function (a, b) { return a.localeCompare(b); });
+			let seedStr = order.join(',') + '|' + edges.map(function(e){return e.inicio+'->'+e.fin;}).sort().join(',');
+			let hash = 0;
+			for (let i = 0; i < seedStr.length; i++) {
+				hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+				hash |= 0;
+			}
+			hash = Math.abs(hash);
+			
+			function prng() {
+				hash = (hash * 9301 + 49297) % 233280;
+				return hash / 233280;
+			}
+			
+			for (let i = order.length - 1; i > 0; i--) {
+				const j = Math.floor(prng() * (i + 1));
+				const temp = order[i];
+				order[i] = order[j];
+				order[j] = temp;
+			}
 		}
 
 		const map = {};
@@ -490,9 +506,16 @@
 			const ord = computeOrdinal(state.vertices, state.aristas);
 			const nodeTextMap = {};
 			ord.order.forEach(function (o) { nodeTextMap[o.id] = String(o.ordinal); });
-			setHtml('oResultado', '<strong>Algoritmo aplicado correctamente.</strong>');
+			
+			if (ord.hasCycle) {
+				setHtml('oResultado', '<strong>Algoritmo aplicado (con circuitos).</strong>');
+				showMsg('mensajeOrdinal', 'Se etiquetaron aleatoriamente debido a que el grafo presenta circuitos.', 'warning');
+			} else {
+				setHtml('oResultado', '<strong>Algoritmo aplicado correctamente.</strong>');
+				showMsg('mensajeOrdinal', 'Función Ordinal aplicada correctamente.', 'success');
+			}
+			
 			renderGraph('oGrafoResultado', state.vertices, state.aristas, { nodeTextMap: nodeTextMap, activeNodes: ord.order.map(function (x) { return x.id; }) });
-			showMsg('mensajeOrdinal', 'Función Ordinal aplicada correctamente.', 'success');
 		});
 
 		document.getElementById('btnOLimpiar').addEventListener('click', function () {
