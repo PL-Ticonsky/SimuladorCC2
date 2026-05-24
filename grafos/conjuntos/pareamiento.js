@@ -36,6 +36,30 @@
 		if (el) el.innerHTML = html;
 	}
 
+	window.highlightPar = function(type, idx) {
+		if (window._parLastResult) {
+			const res = window._parLastResult;
+			if (res[type] && res[type][idx]) {
+				const matching = res[type][idx];
+				const saturated = saturatedVerticesFor(matching);
+				renderGraph('pGrafo', state.vertices, state.aristas, {
+					selected: new Set(matching.map(function(e) { return edgeKeyUnd(e.inicio, e.fin); })),
+					saturated: saturated
+				});
+
+				// Resaltar el item seleccionado en el panel de resultados
+				document.querySelectorAll('#pResultado .clickable-set').forEach(function(el) {
+					el.classList.remove('selected-set');
+				});
+				const allClickable = Array.from(document.querySelectorAll('#pResultado .clickable-set'));
+				const clicked = allClickable.find(function(el) {
+					return el.getAttribute('onclick') === "highlightPar('" + type + "', " + idx + ")";
+				});
+				if (clicked) clicked.classList.add('selected-set');
+			}
+		}
+	};
+
 	function downloadJson(filename, payload) {
 		const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
@@ -218,32 +242,14 @@
 	}
 
 	function buildSteps(matching, edges) {
-		const ordered = matching.slice().sort(function (a, b) {
-			return edgeKeyUnd(a.inicio, a.fin).localeCompare(edgeKeyUnd(b.inicio, b.fin));
-		});
-		const steps = [];
-		steps.push({
-			selected: new Set(),
-			blocked: new Set(),
-			invert: false,
-			text: 'Paso 0: estado inicial sin pareamientos resaltados.'
-		});
-		for (let i = 0; i < ordered.length; i += 1) {
-			const edge = ordered[i];
-			const selected = new Set([edgeKeyUnd(edge.inicio, edge.fin)]);
-			const blocked = buildBlockedEdges(edges, [edge]);
-			const selectedText = formatEdgeCompact(edge);
-			const blockedText = edges.filter(function (e) {
-				return blocked.has(edgeKeyUnd(e.inicio, e.fin));
-			}).map(formatEdgeCompact).join(', ');
-			steps.push({
-				selected: selected,
-				blocked: blocked,
-				invert: i % 2 === 1,
-				text: 'Paso ' + (i + 1) + ': pareamiento seleccionado {' + selectedText + '}. Aristas adyacentes bloqueadas {' + (blockedText || 'ninguna') + '}. ' + (i % 2 === 1 ? 'Colores invertidos.' : 'Colores normales.')
-			});
-		}
-		return steps;
+		return [];
+	}
+
+	function formatSetClickable(prefix, type, sets, formatter) {
+		if (!sets.length) return '<span class="text-muted">Sin conjuntos.</span>';
+		return sets.map(function (set, idx) {
+			return `<span class="clickable-set" onclick="highlightPar('${type}', ${idx})">${prefix + '<sub>' + (idx + 1) + '</sub>'} = {${formatter(set)}}</span>`;
+		}).join('<br>');
 	}
 
 	function renderGraph(containerId, vertices, edges, viewState) {
@@ -390,69 +396,44 @@
 	function apply() {
 		hideMsg();
 		if (!state.vertices.length) {
-			return showMsg('Ingrese al menos un vertice.', 'warning');
+			return showMsg('Ingrese al menos un vértice.', 'warning');
 		}
-		state.matchings = enumerateMatchings(state.aristas);
-		const maxSize = state.matchings.reduce(function (acc, s) { return Math.max(acc, s.length); }, 0);
-		const maxMatchings = state.matchings.filter(function (s) { return s.length === maxSize; });
-		const maximalMatchings = state.matchings.filter(function (s) { return isMaximalMatching(s, state.aristas); });
+		const edgeSets = enumerateMatchings(state.aristas);
+		state.matchings = edgeSets;
+		const maxSize = edgeSets.reduce(function (acc, s) { return Math.max(acc, s.length); }, 0);
+		const maxMatchings = edgeSets.filter(function (s) { return s.length === maxSize; });
+		const maximalMatchings = edgeSets.filter(function (s) { return isMaximalMatching(s, state.aristas); });
+		const perfectMatchings = maxMatchings.filter(function (s) { return s.length * 2 === state.vertices.length; });
 
-		let optimalIndex = 0;
-		let isPerfect = false;
-		for (let i = 0; i < maxMatchings.length; i += 1) {
-			const saturated = saturatedVerticesFor(maxMatchings[i]);
-			if (saturated.size === state.vertices.length && state.vertices.length > 0) {
-				optimalIndex = i;
-				isPerfect = true;
-				break;
-			}
-		}
-		state.optimalMatching = maxMatchings[optimalIndex] || [];
+		state.optimalMatching = maxMatchings.length ? maxMatchings[0] : [];
+
+		window._parLastResult = {
+			edges_all: state.matchings,
+			edges_max: maxMatchings,
+			edges_maxi: maximalMatchings,
+			edges_perf: perfectMatchings
+		};
 
 		const optimalMatching = state.optimalMatching;
 		const saturatedOptimal = Array.from(saturatedVerticesFor(optimalMatching));
 		const result = [
-			'<strong>Pareamientos posibles:</strong><br>' + formatSet('M', state.matchings, function (s) {
+			'<strong>Pareamientos posibles:</strong><br>' + formatSetClickable('M', 'edges_all', state.matchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
 			'<br><strong>Tamaño máximo de pareamiento:</strong> ' + maxSize +
-			'<br><strong>Pareamientos máximos:</strong><br>' + formatSet('M<sub>max</sub>', maxMatchings, function (s) {
+			'<br><strong>Pareamientos máximos:</strong><br>' + formatSetClickable('M<sub>max</sub>', 'edges_max', maxMatchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
-			'<br><strong>Pareamientos maximales:</strong><br>' + formatSet('M<sub>maxi</sub>', maximalMatchings, function (s) {
+			'<br><strong>Pareamientos maximales:</strong><br>' + formatSetClickable('M<sub>maxi</sub>', 'edges_maxi', maximalMatchings, function (s) {
 				return s.map(formatEdgeCompact).join(', ');
 			}),
-			'<br><strong>Pareamiento óptimo:</strong> {' + optimalMatching.map(formatEdgeCompact).join(', ') + '}' + (isPerfect ? ' <strong>(perfecto)</strong>' : ''),
-			'<br><strong>Vértices saturados:</strong> {' + saturatedOptimal.join(', ') + '}',
-			'<br><br><div class="text-success"><small><strong>Nota:</strong> Animando paso a paso. Los vértices saturados se muestran en verde.</small></div>'
+			'<br><strong>Pareamientos perfectos:</strong><br>' + formatSetClickable('M<sub>perf</sub>', 'edges_perf', perfectMatchings, function (s) {
+				return s.map(formatEdgeCompact).join(', ');
+			})
 		].join('');
+
 		setHtml('pResultado', result);
-
-		if (state.animationTimer) clearTimeout(state.animationTimer);
-		let step = 0;
-		const currentSelected = new Set();
-		const currentSaturated = new Set();
-
-		function nextAnimation() {
-			renderGraph('pGrafo', state.vertices, state.aristas, {
-				selected: new Set(currentSelected),
-				saturated: new Set(currentSaturated)
-			});
-			if (step < optimalMatching.length) {
-				const e = optimalMatching[step];
-				currentSelected.add(edgeKeyUnd(e.inicio, e.fin));
-				currentSaturated.add(e.inicio);
-				currentSaturated.add(e.fin);
-				step += 1;
-				state.animationTimer = setTimeout(nextAnimation, 2000);
-			} else {
-				state.animationTimer = null;
-				const finalResult = result.replace('Animando paso a paso. ', 'Animación finalizada. ');
-				setHtml('pResultado', finalResult);
-			}
-		}
-
-		nextAnimation();
+		refresh();
 		showMsg('Cálculo completado.', 'success');
 	}
 
