@@ -58,7 +58,12 @@
 }
 
 .link-line.matching {
-	stroke: #2d8cff;
+	stroke: #dc2626;
+	stroke-width: 3;
+}
+
+.link-line.active {
+	stroke: #dc2626;
 	stroke-width: 3;
 }
 
@@ -78,6 +83,12 @@
 
 .node-circle:active {
 	cursor: grabbing;
+}
+
+.node-circle.active {
+	fill: #70ad47;
+	stroke: #3f6a29;
+	stroke-width: 2;
 }
 
 .node-circle.saturated {
@@ -100,4 +111,75 @@
 	padding: 12px;
 	max-height: 340px;
 	overflow: auto;
+}
+
+.clickable-set {
+	cursor: pointer;
+	color: #0d6efd;
+	text-decoration: underline;
+}
+.clickable-set:hover {
+	color: #0a58ca;
+}
+
+/* Estilo para el conjunto seleccionado actualmente en el panel de resultados */
+.selected-set {
+	background: #e8f4e8;
+	border-radius: 4px;
+	padding: 1px 5px;
+	font-weight: 700;
+	color: #3f6a29;
+	outline: 2px solid #70ad47;
+	outline-offset: 1px;
+}
+
+/* Leyenda del grafo */
+.grafo-leyenda {
+	display: flex;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin-top: 6px;
+	font-size: 0.78rem;
+	color: #44546a;
+	align-items: center;
+}
+
+.leyenda-item {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.leyenda-dot {
+	width: 13px;
+	height: 13px;
+	border-radius: 50%;
+	display: inline-block;
+	border: 1.5px solid #44546a;
+	flex-shrink: 0;
+}
+
+.leyenda-dot.normal { background: #5b9bd5; }
+.leyenda-dot.active { background: #70ad47; border-color: #3f6a29; }
+
+.leyenda-line {
+	width: 22px;
+	height: 3px;
+	display: inline-block;
+	flex-shrink: 0;
+	border-radius: 2px;
+}
+
+.leyenda-line.normal { background: #8497b0; }
+.leyenda-line.active { background: #dc2626; }
+.leyenda-line.matching { background: #dc2626; }
+
+/* Hint visual en el panel de resultados cuando hay conjuntos calculados */
+.result-panel .ecuacion-box:has(.clickable-set)::before {
+	content: "↓ Haga clic en un conjunto para visualizarlo en el grafo";
+	display: block;
+	font-size: 0.72rem;
+	color: #8497b0;
+	margin-bottom: 6px;
+	font-style: italic;
 }
