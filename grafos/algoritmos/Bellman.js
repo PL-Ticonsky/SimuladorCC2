@@ -125,7 +125,7 @@
 				pred[v] = candidates[0].from;
 			});
 
-			U.setHtml('bResultado', '<strong>Algoritmo aplicado correctamente.</strong>');
+			U.setHtml('bResultado', '<strong>Algoritmo aplicado ' + (ord.hasCycle ? '(con circuitos)' : 'correctamente') + '.</strong>');
 
 			const resultEdges = [];
 			const pathNodes = new Set();
@@ -154,7 +154,11 @@
 				nodeTextMap: nodeTextMap,
 				activeNodes: Array.from(pathNodes)
 			});
-			U.showMsg('mensajeBellman', 'Bellman aplicado correctamente.', 'success');
+			if (ord.hasCycle) {
+				U.showMsg('mensajeBellman', 'Se etiquetaron aleatoriamente debido a que el grafo presenta circuitos.', 'warning');
+			} else {
+				U.showMsg('mensajeBellman', 'Bellman aplicado correctamente.', 'success');
+			}
 		});
 
 		document.getElementById('btnBLimpiar').addEventListener('click', function () {

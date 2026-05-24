@@ -144,7 +144,7 @@
 				active = next;
 			}
 
-			U.setHtml('dResultado', '<strong>Algoritmo aplicado correctamente.</strong>');
+			U.setHtml('dResultado', '<strong>Algoritmo aplicado ' + (ord.hasCycle ? '(con circuitos)' : 'correctamente') + '.</strong>');
 
 			const resultEdges = [];
 			const pathNodes = new Set();
@@ -179,7 +179,11 @@
 				nodeSubTextMap: nodeSubTextMap,
 				nodeTextMap: nodeTextMap
 			});
-			U.showMsg('mensajeDijkstra', 'Dijkstra aplicado correctamente.', 'success');
+			if (ord.hasCycle) {
+				U.showMsg('mensajeDijkstra', 'Se etiquetaron aleatoriamente debido a que el grafo presenta circuitos.', 'warning');
+			} else {
+				U.showMsg('mensajeDijkstra', 'Dijkstra aplicado correctamente.', 'success');
+			}
 		});
 
 		document.getElementById('btnDLimpiar').addEventListener('click', function () {

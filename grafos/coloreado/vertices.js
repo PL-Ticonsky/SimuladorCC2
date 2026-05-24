@@ -1,14 +1,18 @@
+/**
+ * vertices.js - Orquestador principal de UI, renderizado D3 y coloreado de vértices
+ */
 (function () {
 	const state = {
 		vertices: [],
-		aristas: []
+		aristas: [],
+		mode: 'vertices'
 	};
 
 	const COLOR_PALETTE = [
-		'#5b9bd5', '#ed7d31', '#70ad47', '#ffc000', '#4472c4', '#a5a5a5',
-		'#c55a11', '#9e480e', '#264478', '#43682b', '#7030a0', '#00b0f0'
+		'#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4',
+		'#f032e6', '#bfef45', '#fabed4', '#469990', '#9a6324', '#800000'
 	];
-	const COLOR_INITIALS = ['C', 'N', 'V', 'A', 'A', 'G', 'C', 'C', 'A', 'V', 'M', 'C'];
+	const COLOR_INITIALS = ['R', 'V', 'A', 'Az', 'N', 'P', 'M', 'O', 'Rs', 'T', 'Mr', 'C'];
 
 	function norm(v) {
 		return (v || '').toString().trim();
@@ -203,7 +207,6 @@
 			}
 			return false;
 		}
-
 		return bt(0);
 	}
 
@@ -226,7 +229,6 @@
 		for (let attempt = 0; attempt < 100; attempt += 1) {
 			const order = shuffled(orderBase);
 			const assign = {};
-			let solved = true;
 
 			function bt(idx) {
 				if (idx >= order.length) return true;
@@ -245,65 +247,9 @@
 				}
 				return false;
 			}
-
-			solved = bt(0);
-			if (solved) return assign;
+			if (bt(0)) return assign;
 		}
-
 		return null;
-	}
-
-	function computeChromaticIndex(vertices, edges) {
-		if (!edges.length) return 0;
-		const degree = {};
-		vertices.forEach(function (v) { degree[v] = 0; });
-		edges.forEach(function (e) {
-			degree[e.inicio] = (degree[e.inicio] || 0) + 1;
-			degree[e.fin] = (degree[e.fin] || 0) + 1;
-		});
-		let delta = 0;
-		Object.keys(degree).forEach(function (k) {
-			delta = Math.max(delta, degree[k]);
-		});
-
-		const edgeAdj = edges.map(function () { return new Set(); });
-		for (let i = 0; i < edges.length; i += 1) {
-			for (let j = i + 1; j < edges.length; j += 1) {
-				const a = edges[i];
-				const b = edges[j];
-				if (a.inicio === b.inicio || a.inicio === b.fin || a.fin === b.inicio || a.fin === b.fin) {
-					edgeAdj[i].add(j);
-					edgeAdj[j].add(i);
-				}
-			}
-		}
-
-		const order = Array.from({ length: edges.length }, function (_, i) { return i; }).sort(function (a, b) {
-			return edgeAdj[b].size - edgeAdj[a].size;
-		});
-
-		function canEdgeColor(k) {
-			const color = {};
-			function bt(idx) {
-				if (idx >= order.length) return true;
-				const eIdx = order[idx];
-				for (let c = 0; c < k; c += 1) {
-					let ok = true;
-					edgeAdj[eIdx].forEach(function (nb) {
-						if (color[nb] === c) ok = false;
-					});
-					if (!ok) continue;
-					color[eIdx] = c;
-					if (bt(idx + 1)) return true;
-					delete color[eIdx];
-				}
-				return false;
-			}
-			return bt(0);
-		}
-
-		if (canEdgeColor(delta)) return delta;
-		return delta + 1;
 	}
 
 	function normalizePolyGraph(vertices, edges) {
@@ -389,35 +335,7 @@
 			memo.set(key, out);
 			return out;
 		}
-
 		return solve(g.vertices, g.edges);
-	}
-
-	function formatPoly(poly) {
-		const degrees = Object.keys(poly).map(Number).sort(function (a, b) { return b - a; });
-		if (!degrees.length) return '0';
-		let out = '';
-		degrees.forEach(function (deg, idx) {
-			const coef = poly[deg];
-			if (!coef || coef === 0n) return;
-			const sign = coef < 0n ? '-' : '+';
-			const absCoef = coef < 0n ? -coef : coef;
-			let term;
-			if (deg === 0) term = absCoef.toString();
-			else if (deg === 1) term = (absCoef === 1n ? '&lambda;' : absCoef.toString() + '&lambda;');
-			else term = (absCoef === 1n ? '&lambda;<sup>' + deg + '</sup>' : absCoef.toString() + '&lambda;<sup>' + deg + '</sup>');
-			if (idx === 0) out += (sign === '-' ? '-' : '') + term;
-			else out += ' ' + sign + ' ' + term;
-		});
-		return out || '0';
-	}
-
-	function clonePoly(poly) {
-		const out = {};
-		Object.keys(poly).forEach(function (k) {
-			out[k] = poly[k];
-		});
-		return out;
 	}
 
 	function polyDegree(poly) {
@@ -443,65 +361,6 @@
 			acc = (acc * xBig) + desc[i];
 		}
 		return acc;
-	}
-
-	function polyDivideByLinear(poly, rootInt) {
-		const r = BigInt(rootInt);
-		const desc = polyDenseDesc(poly);
-		if (desc.length <= 1) return { quotient: { 0: 0n }, remainder: desc[0] || 0n };
-
-		const b = [desc[0]];
-		for (let i = 1; i < desc.length; i += 1) {
-			b[i] = desc[i] + (r * b[i - 1]);
-		}
-		const remainder = b[b.length - 1];
-		const qDesc = b.slice(0, -1);
-		const q = {};
-		const qDeg = qDesc.length - 1;
-		for (let i = 0; i < qDesc.length; i += 1) {
-			const deg = qDeg - i;
-			if (qDesc[i] !== 0n) q[deg] = qDesc[i];
-		}
-		if (!Object.keys(q).length) q[0] = 0n;
-		return { quotient: q, remainder: remainder };
-	}
-
-	function formatLinearFactor(rootInt) {
-		if (rootInt === 0) return '&lambda;';
-		if (rootInt > 0) return '(&lambda;-' + rootInt + ')';
-		return '(&lambda;+' + Math.abs(rootInt) + ')';
-	}
-
-	function formatPolyFactorized(poly) {
-		let work = clonePoly(poly);
-		const factors = [];
-
-		while (polyDegree(work) > 0) {
-			const deg = polyDegree(work);
-			let foundRoot = false;
-			for (let r = 0; r <= deg; r += 1) {
-				if (polyEvalAt(work, BigInt(r)) !== 0n) continue;
-				const div = polyDivideByLinear(work, r);
-				if (div.remainder !== 0n) continue;
-				factors.push(formatLinearFactor(r));
-				work = div.quotient;
-				foundRoot = true;
-				break;
-			}
-			if (!foundRoot) break;
-		}
-
-		const remDeg = polyDegree(work);
-		if (!factors.length) return '(' + formatPoly(poly) + ')';
-
-		if (remDeg > 0) {
-			factors.push('(' + formatPoly(work) + ')');
-		} else if (remDeg === 0) {
-			const c = work[0] || 0n;
-			if (c !== 1n) factors.unshift(String(c));
-		}
-
-		return factors.join('');
 	}
 
 	function renderGraph(containerId, vertices, edges, opts) {
@@ -546,6 +405,8 @@
 			.text('');
 
 		const colorMap = opts.nodeColorMap || {};
+		const edgeColorMap = opts.edgeColorMap || {};
+
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
 			.attr('class', 'node-circle')
 			.attr('r', r)
@@ -587,6 +448,12 @@
 					const dy = d.target.y - d.source.y;
 					const len = Math.sqrt(dx * dx + dy * dy) || 1;
 					return clamp(d.target.y - (dy / len) * (r + 1), minY, maxY);
+				})
+				.style('stroke', function (d, i) {
+					return edgeColorMap[i] || '#8497b0';
+				})
+				.style('stroke-width', function (d, i) {
+					return edgeColorMap[i] ? 4 : 2;
 				});
 
 			node
@@ -602,7 +469,6 @@
 				.attr('x', function (d) { return d.x; })
 				.attr('y', function (d) { return d.y; });
 		}
-
 		update();
 	}
 
@@ -620,63 +486,143 @@
 			return showMsg('Ingrese al menos un vértice para calcular.', 'warning');
 		}
 
-		const ids = state.vertices.map(function (v) { return v.id; });
-		const adj = buildAdjacency(state.vertices, state.aristas);
-		const chi = computeChromaticNumber(ids, adj);
-		let assign = randomValidVertexColoring(ids, adj, chi);
-		if (!assign) {
-			return showMsg('No fue posible generar una coloración válida.', 'danger');
-		}
+		if (state.mode === 'vertices') {
+			const ids = state.vertices.map(function (v) { return v.id; });
+			const adj = buildAdjacency(state.vertices, state.aristas);
+			const chi = computeChromaticNumber(ids, adj);
+			let assign = randomValidVertexColoring(ids, adj, chi);
+			if (!assign) {
+				return showMsg('No fue posible generar una coloración válida.', 'danger');
+			}
 
-		const nodeColorMap = {};
-		Object.keys(assign).forEach(function (id) {
-			nodeColorMap[id] = COLOR_PALETTE[assign[id] % COLOR_PALETTE.length];
-		});
-
-		const components = getConnectedComponents(state.vertices, state.aristas);
-		const polyFactors = components.map(function (comp) {
-			const cSet = new Set(comp);
-			const cEdges = state.aristas.filter(function (e) {
-				return cSet.has(e.inicio) && cSet.has(e.fin);
-			}).map(function (e) {
-				return { u: e.inicio, v: e.fin };
+			const nodeColorMap = {};
+			Object.keys(assign).forEach(function (id) {
+				nodeColorMap[id] = COLOR_PALETTE[assign[id] % COLOR_PALETTE.length];
 			});
-			return chromaticPolynomial(comp, cEdges);
-		});
-		const polyFactorized = polyFactors.map(function (p) {
-			return formatPolyFactorized(p);
-		}).join(' · ');
-		const chiPrime = computeChromaticIndex(ids, state.aristas);
-		const usedColors = new Set(Object.keys(assign).map(function (k) { return assign[k]; })).size;
-		const classByColor = {};
-		Object.keys(assign).forEach(function (id) {
-			const c = assign[id];
-			if (!classByColor[c]) classByColor[c] = [];
-			classByColor[c].push(id);
-		});
-		const colorKeys = Object.keys(classByColor).map(Number).sort(function (a, b) { return a - b; });
-		function classLabel(idx) {
-			return COLOR_INITIALS[idx] || ('C' + (idx + 1));
+
+			const components = getConnectedComponents(state.vertices, state.aristas);
+			const polyFactors = components.map(function (comp) {
+				const cSet = new Set(comp);
+				const cEdges = state.aristas.filter(function (e) {
+					return cSet.has(e.inicio) && cSet.has(e.fin);
+				}).map(function (e) {
+					return { u: e.inicio, v: e.fin };
+				});
+				return chromaticPolynomial(comp, cEdges);
+			});
+
+			let combinations = 1n;
+			polyFactors.forEach(function (p) {
+				combinations *= polyEvalAt(p, BigInt(chi));
+			});
+
+			const usedColors = new Set(Object.keys(assign).map(function (k) { return assign[k]; })).size;
+			const classByColor = {};
+			Object.keys(assign).forEach(function (id) {
+				const c = assign[id];
+				if (!classByColor[c]) classByColor[c] = [];
+				classByColor[c].push(id);
+			});
+			const colorKeys = Object.keys(classByColor).map(Number).sort(function (a, b) { return a - b; });
+			function classLabel(idx) {
+				return COLOR_INITIALS[idx] || ('C' + (idx + 1));
+			}
+			const clasesHtml = colorKeys.map(function (k, i) {
+				const label = classLabel(i);
+				const items = classByColor[k].slice().sort().join(', ');
+				return label + ' = {' + items + '}';
+			}).join('<br>');
+
+			setHtml('cResultado',
+				'<strong>Polinomio cromático:</strong> ' + combinations + ' combinación(es).' +
+				'<br><strong>Número cromático X(G):</strong> ' + chi +
+				'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).' +
+				'<br><strong>Particiones cromáticas (Vértices):</strong><br>' + (clasesHtml || '')
+			);
+
+			renderGraph('cGrafoResultado', state.vertices, state.aristas, { nodeColorMap: nodeColorMap });
+			showMsg('Coloreado de vértices aplicado.', 'success');
+		} else {
+			// MODO ARISTAS: Consumimos la lógica externa de aristas.js de forma segura
+			if (!window.GraphEdgeColoring || !window.GraphEdgeColoring.computeChromaticIndex) {
+				return showMsg('Error: El motor de coloreado de aristas no se ha encontrado cargado.', 'danger');
+			}
+
+			const ids = state.vertices.map(function (v) { return v.id; });
+			const edgeResult = window.GraphEdgeColoring.computeChromaticIndex(ids, state.aristas);
+			const chiPrime = edgeResult.chiPrime;
+			const assign = edgeResult.assign;
+
+			if (!assign && state.aristas.length > 0) {
+				return showMsg('No fue posible generar una coloración válida para aristas.', 'danger');
+			}
+
+			const edgeColorMap = {};
+			const usedColorsSet = new Set();
+			if (assign) {
+				Object.keys(assign).forEach(function (eIdx) {
+					edgeColorMap[eIdx] = COLOR_PALETTE[assign[eIdx] % COLOR_PALETTE.length];
+					usedColorsSet.add(assign[eIdx]);
+				});
+			}
+
+			const usedColors = usedColorsSet.size;
+			const classByColor = {};
+			if (assign) {
+				Object.keys(assign).forEach(function (eIdx) {
+					const c = assign[eIdx];
+					if (!classByColor[c]) classByColor[c] = [];
+					const edge = state.aristas[eIdx];
+					classByColor[c].push('(' + edge.inicio + '-' + edge.fin + ')');
+				});
+			}
+
+			function classLabel(idx) {
+				return COLOR_INITIALS[idx] || ('C' + (idx + 1));
+			}
+
+			const colorKeys = Object.keys(classByColor).map(Number).sort(function (a, b) { return a - b; });
+			const clasesHtml = colorKeys.map(function (k, i) {
+				const label = classLabel(i);
+				const items = classByColor[k].join(', ');
+				return label + ' = {' + items + '}';
+			}).join('<br>');
+
+			setHtml('cResultado',
+				'<strong>Índice cromático X\'(G):</strong> ' + chiPrime +
+				'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).' +
+				'<br><strong>Particiones cromáticas (Aristas):</strong><br>' + (clasesHtml || '')
+			);
+
+			renderGraph('cGrafoResultado', state.vertices, state.aristas, { edgeColorMap: edgeColorMap });
+			showMsg('Coloreado de aristas aplicado.', 'success');
 		}
-		const clasesHtml = colorKeys.map(function (k, i) {
-			const label = classLabel(i);
-			const items = classByColor[k].slice().sort().join(', ');
-			return 'Clase ' + label + ' = {' + items + '}';
-		}).join('<br>');
-
-		setHtml('cResultado',
-			'<strong>Polinomio cromático P(&lambda;):</strong> ' + polyFactorized +
-			'<br><strong>Número cromático X(G):</strong> ' + chi +
-			'<br><strong>Índice cromático X\'(G):</strong> ' + chiPrime +
-			'<br><strong>Coloración aplicada (mínima):</strong> ' + usedColors + ' color(es).' +
-			'<br><strong>Clases cromáticas:</strong><br>' + (clasesHtml || 'Sin clases')
-		);
-
-		renderGraph('cGrafoResultado', state.vertices, state.aristas, { nodeColorMap: nodeColorMap });
-		showMsg('Coloreado aplicado correctamente.', 'success');
 	}
 
 	function init() {
+		if (document.getElementById('coloreadoTabs')) {
+			const tabs = document.querySelectorAll('#coloreadoTabs .nav-link');
+			tabs.forEach(function (tab) {
+				tab.addEventListener('click', function (e) {
+					tabs.forEach(function (t) { t.classList.remove('active'); });
+					e.target.classList.add('active');
+					state.mode = e.target.getAttribute('data-target-mode');
+
+					document.getElementById('panel-bienvenida-coloreado').classList.add('d-none');
+					document.getElementById('panel-coloreado-principal').classList.remove('d-none');
+
+					if (state.mode === 'vertices') {
+						setHtml('subtitle-coloreado', 'Colorea vértices con el mínimo de colores.');
+					} else {
+						setHtml('subtitle-coloreado', 'Colorea aristas con el mínimo de colores.');
+					}
+
+					setHtml('cResultado', 'Modo cambiado. Pulse <strong>Calcular</strong>.');
+					renderGraph('cGrafoResultado', state.vertices, state.aristas, {});
+				});
+			});
+		}
+
 		if (!document.getElementById('btnCAgregarVertice')) return;
 
 		document.getElementById('btnCAgregarVertice').addEventListener('click', function () {
