@@ -1,5 +1,5 @@
 (function () {
-	const state = { vertices: [], aristas: [] };
+	let state = { vertices: [], aristas: [] };
 
 	function norm(v) {
 		return (v || '').toString().trim();
@@ -29,6 +29,36 @@
 		const el = document.getElementById(id);
 		if (el) el.innerHTML = html;
 	}
+
+	window.highlightDom = function(type, idx) {
+		if (window._domLastResult) {
+			const res = window._domLastResult;
+			let activeNodes = new Set();
+			if (res[type]) {
+				// nodes_maxset es un array plano de strings; el resto son arrays de arrays
+				let currentSet;
+				if (type === 'nodes_maxset') {
+					currentSet = res[type]; // ya es array de strings
+				} else {
+					currentSet = res[type][idx];
+				}
+				if (currentSet) {
+					currentSet.forEach(function(v) { activeNodes.add(v); });
+				}
+			}
+			renderGraph('domGrafo', state.vertices, state.aristas, { activeNodes: activeNodes });
+
+			// Resaltar el item seleccionado en el panel de resultados
+			document.querySelectorAll('#domResultado .clickable-set').forEach(function(el) {
+				el.classList.remove('selected-set');
+			});
+			const allClickable = Array.from(document.querySelectorAll('#domResultado .clickable-set'));
+			const clicked = allClickable.find(function(el) {
+				return el.getAttribute('onclick') === "highlightDom('" + type + "', " + idx + ")";
+			});
+			if (clicked) clicked.classList.add('selected-set');
+		}
+	};
 
 	function downloadJson(filename, payload) {
 		const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -139,7 +169,10 @@
 		return 'G={S,A}<br>S={' + s + '}<br>A={' + a + '}';
 	}
 
-	function renderGraph(containerId, vertices, edges) {
+	function renderGraph(containerId, vertices, edges, opts) {
+		opts = opts || {};
+		const activeNodes = opts.activeNodes || new Set();
+
 		const box = document.getElementById(containerId);
 		if (!box) return;
 		box.innerHTML = '';
@@ -184,7 +217,9 @@
 			.text(function(d) { return d.nombre; });
 
 		const node = svg.append('g').selectAll('circle').data(vertices).enter().append('circle')
-			.attr('class', 'node-circle')
+			.attr('class', function(d) {
+				return activeNodes.has(d.id) ? 'node-circle active' : 'node-circle';
+			})
 			.attr('r', r)
 			.call(d3.drag().on('drag', function (event, d) {
 				d.x = clamp(event.x, minX, maxX);
@@ -299,11 +334,16 @@
 		return visited.size === set.length;
 	}
 
-	function formatSet(prefix, sets, formatter) {
+	function formatSetClickable(prefix, type, sets, formatter) {
 		if (!sets.length) return '<span class="text-muted">Sin conjuntos.</span>';
 		return sets.map(function (set, idx) {
-			return prefix + (idx + 1) + ' = {' + formatter(set) + '}';
+			return `<span class="clickable-set" onclick="highlightDom('${type}', ${idx})">${prefix + (idx + 1)} = {${formatter(set)}}</span>`;
 		}).join('<br>');
+	}
+
+	function formatSet(name, list, mapFn) {
+		if (list.length === 0) return name + ' = &empty;';
+		return name + ' = {' + list.map(mapFn).join(', ') + '}';
 	}
 
 	function refresh() {
@@ -328,16 +368,25 @@
 		const connectedDominating = dominating.filter(function (s) { return isConnectedSubset(s, adj); });
 		const maxSet = state.vertices.map(function (v) { return v.id; }).sort();
 
+		window._domLastResult = {
+			nodes_dom: dominating,
+			nodes_minsets: minSets,
+			nodes_inddom: independentDominating,
+			nodes_condom: connectedDominating,
+			nodes_maxset: maxSet
+		};
+
 		const result = [
-			'<strong>Conjuntos dominantes:</strong><br>' + formatSet('C<sub>d</sub>', dominating, function (s) { return s.join(', '); }),
+			'<strong>Conjuntos dominantes:</strong><br>' + formatSetClickable('C<sub>d</sub>', 'nodes_dom', dominating, function (s) { return s.join(', '); }),
 			'<br><strong>Número de dominación:</strong> ' + (Number.isFinite(minSize) ? minSize : '0') +
-			'<br><strong>Conjuntos dominantes mínimos:</strong><br>' + formatSet('C<sub>dmin</sub>', minSets, function (s) { return s.join(', '); }),
-			'<br><strong>Conjuntos dominantes independientes:</strong><br>' + formatSet('C<sub>dind</sub>', independentDominating, function (s) { return s.join(', '); }),
-			'<br><strong>Conjuntos dominantes conexos:</strong><br>' + formatSet('C<sub>dcon</sub>', connectedDominating, function (s) { return s.join(', '); }),
-			'<br><strong>Conjunto dominante máximo:</strong><br>' + 'C<sub>dmax</sub> = {' + maxSet.join(', ') + '}'
+			'<br><strong>Conjuntos dominantes mínimos:</strong><br>' + formatSetClickable('C<sub>dmin</sub>', 'nodes_minsets', minSets, function (s) { return s.join(', '); }),
+			'<br><strong>Conjuntos dominantes independientes:</strong><br>' + formatSetClickable('C<sub>dind</sub>', 'nodes_inddom', independentDominating, function (s) { return s.join(', '); }),
+			'<br><strong>Conjuntos dominantes conexos:</strong><br>' + formatSetClickable('C<sub>dcon</sub>', 'nodes_condom', connectedDominating, function (s) { return s.join(', '); }),
+			'<br><strong>Conjunto dominante máximo:</strong><br>' + `<span class="clickable-set" onclick="highlightDom('nodes_maxset', 0)">C<sub>dmax</sub> = {${maxSet.join(', ')}}</span>`
 		].join('');
 
 		setHtml('domResultado', result);
+		renderGraph('domGrafo', state.vertices, state.aristas);
 		showMsg('Cálculo completado.', 'success');
 	}
 
