@@ -22,6 +22,9 @@
     /* Gradiente sobrio */
     --primary-gradient: linear-gradient(135deg, #5B9BD5 0%, #44546A 100%);
 
+    /* No gradiente sobrio */
+    --primary-no-gradient: rgb(80, 120, 160);
+
     /* Sombras suaves */
     --card-shadow: 0 2px 8px rgba(68, 84, 106, 0.08);
     --card-hover-shadow: 0 4px 16px rgba(68, 84, 106, 0.12);
@@ -39,7 +42,7 @@ body {
    Header
    ============================================ */
 .header-section {
-    background: var(--primary-gradient);
+    background: var(--primary-no-gradient);
     padding: 2rem 0;
     box-shadow: 0 2px 8px rgba(68, 84, 106, 0.15);
 }
@@ -184,7 +187,8 @@ body {
    ============================================ */
 .card-algoritmo {
     height: 200px;
-    background: white;
+    /* Un solo color plano para toda la tarjeta (Punto medio exacto) */
+    background: var(--primary-no-gradient);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -192,60 +196,50 @@ body {
     justify-content: center;
     font-weight: 600;
     font-size: 1.1rem;
-    color: var(--gray-dark);
-    border: 1px solid var(--gray-light);
-    transition: all 0.3s ease;
+
+    /* Texto blanco para que resalte en el proyector */
+    color: white !important;
+
+    /* Sin bordes */
+    border: none;
+
+    /* Transición suave solo para el movimiento físico */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    box-shadow: var(--card-shadow);
 }
 
-.card-algoritmo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary-color);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
-
+/* Efecto Hover: Solo se levanta y proyecta sombra, el color NO cambia */
 .card-algoritmo:hover {
     transform: translateY(-5px);
-    box-shadow: var(--card-hover-shadow);
-    border-color: var(--primary-light);
+    box-shadow: 0 8px 24px rgba(68, 84, 106, 0.3);
 }
 
-.card-algoritmo:hover::before {
-    transform: scaleX(1);
-}
-
+/* Contenedor del Icono */
 .card-algoritmo .card-icon {
     width: 60px;
     height: 60px;
-    background: var(--primary-pale);
+    /* Fondo translúcido plano */
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 15px;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
 }
 
+/* El icono solo se escala un poco al pasar el mouse */
 .card-algoritmo:hover .card-icon {
-    background: var(--primary-color);
     transform: scale(1.05);
 }
 
+/* Icono blanco */
 .card-algoritmo .card-icon i {
     font-size: 1.5rem;
-    color: var(--primary-color);
-    transition: color 0.3s ease;
-}
-
-.card-algoritmo:hover .card-icon i {
     color: white;
 }
 
