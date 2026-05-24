@@ -2,7 +2,8 @@
 	const state = {
 		vertices: [],
 		aristas: [],
-		mode: 'distancias'
+		mode: 'distancias',
+		isDirected: true
 	};
 
 	const MODE_DESCRIPTION = {
@@ -279,6 +280,7 @@
 		const maxX = width - r - 6;
 		const maxY = height - r - 6;
 		const markerId = 'arrow-m-' + containerId.replace(/[^a-zA-Z0-9_-]/g, '_');
+		const directed = !!opts.directed;
 
 		const byId = {};
 		vertices.forEach(function (v) { byId[v.id] = v; });
@@ -290,7 +292,20 @@
 			.attr('viewBox', '0 0 ' + width + ' ' + height)
 			.attr('preserveAspectRatio', 'xMidYMid meet');
 
-		// Visualizacion no dirigida: sin marcadores de flecha.
+		if (directed) {
+			const defs = svg.append('defs');
+			defs.append('marker')
+				.attr('id', markerId)
+				.attr('viewBox', '0 0 10 10')
+				.attr('refX', 8)
+				.attr('refY', 5)
+				.attr('markerWidth', 6)
+				.attr('markerHeight', 6)
+				.attr('orient', 'auto-start-reverse')
+				.append('path')
+				.attr('d', 'M0,0 L10,5 L0,10 z')
+				.attr('fill', '#8497b0');
+		}
 
 		const links = edges.map(function (e) {
 			return { inicio: e.inicio, fin: e.fin, etiqueta: e.etiqueta, peso: e.peso, source: byId[e.inicio], target: byId[e.fin] };
@@ -299,7 +314,8 @@
 		});
 
 		const line = svg.append('g').selectAll('line').data(links).enter().append('line')
-			.attr('class', function (d) { return edgeSet.has(edgeKeyUnd(d.inicio, d.fin)) ? 'link-line result' : 'link-line'; });
+			.attr('class', function (d) { return edgeSet.has(edgeKeyUnd(d.inicio, d.fin)) ? 'link-line result' : 'link-line'; })
+			.attr('marker-end', directed ? ('url(#' + markerId + ')') : null);
 
 		const edgeLabel = svg.append('g').selectAll('text').data(links).enter().append('text')
 			.attr('class', 'edge-label')
@@ -337,31 +353,24 @@
 		}
 
 		function update() {
+			function edgeInfo(d) {
+				const dx = d.target.x - d.source.x;
+				const dy = d.target.y - d.source.y;
+				const len = Math.sqrt(dx * dx + dy * dy) || 1;
+				const ux = dx / len;
+				const uy = dy / len;
+				const startX = clamp(d.source.x + ux * (r - 1), minX, maxX);
+				const startY = clamp(d.source.y + uy * (r - 1), minY, maxY);
+				const endX = clamp(d.target.x - ux * (r + (directed ? 8 : 1)), minX, maxX);
+				const endY = clamp(d.target.y - uy * (r + (directed ? 8 : 1)), minY, maxY);
+				return { startX: startX, startY: startY, endX: endX, endY: endY };
+			}
+
 			line
-				.attr('x1', function (d) {
-					const dx = d.target.x - d.source.x;
-					const dy = d.target.y - d.source.y;
-					const len = Math.sqrt(dx * dx + dy * dy) || 1;
-					return clamp(d.source.x + (dx / len) * (r - 1), minX, maxX);
-				})
-				.attr('y1', function (d) {
-					const dx = d.target.x - d.source.x;
-					const dy = d.target.y - d.source.y;
-					const len = Math.sqrt(dx * dx + dy * dy) || 1;
-					return clamp(d.source.y + (dy / len) * (r - 1), minY, maxY);
-				})
-				.attr('x2', function (d) {
-					const dx = d.target.x - d.source.x;
-					const dy = d.target.y - d.source.y;
-					const len = Math.sqrt(dx * dx + dy * dy) || 1;
-					return clamp(d.target.x - (dx / len) * (r + 1), minX, maxX);
-				})
-				.attr('y2', function (d) {
-					const dx = d.target.x - d.source.x;
-					const dy = d.target.y - d.source.y;
-					const len = Math.sqrt(dx * dx + dy * dy) || 1;
-					return clamp(d.target.y - (dy / len) * (r + 1), minY, maxY);
-				});
+				.attr('x1', function (d) { return edgeInfo(d).startX; })
+				.attr('y1', function (d) { return edgeInfo(d).startY; })
+				.attr('x2', function (d) { return edgeInfo(d).endX; })
+				.attr('y2', function (d) { return edgeInfo(d).endY; });
 
 			node
 				.attr('cx', function (d) { return d.x = clamp(d.x || width / 2, minX, maxX); })
@@ -407,7 +416,7 @@
 	function refresh() {
 		makeNotation();
 		setHtml('mModeDescription', MODE_DESCRIPTION[state.mode] || '');
-		renderGraph('mGrafoOriginal', state.vertices, state.aristas, {});
+		renderGraph('mGrafoOriginal', state.vertices, state.aristas, { directed: state.isDirected });
 		if (!document.getElementById('mResultado').innerHTML) setHtml('mResultado', 'Pulse <strong>Aplicar algoritmo</strong>.');
 		if (!document.getElementById('mTablaResultado').innerHTML) setHtml('mTablaResultado', 'Resultado pendiente de cálculo.');
 	}
@@ -432,9 +441,11 @@
 				d[i][j] = Number(e.peso);
 				next[i][j] = j;
 			}
-			if (e.peso < d[j][i]) {
-				d[j][i] = Number(e.peso);
-				next[j][i] = i;
+			if (!state.isDirected) {
+				if (e.peso < d[j][i]) {
+					d[j][i] = Number(e.peso);
+					next[j][i] = i;
+				}
 			}
 		});
 		for (let k = 0; k < n; k += 1) {
@@ -516,6 +527,8 @@
 		const radio = finiteEcc.length ? Math.min.apply(null, finiteEcc) : Number.POSITIVE_INFINITY;
 		const centroIdx = [];
 		ecc.forEach(function (v, i) { if (v === radio) centroIdx.push(i); });
+		const centroFinal = centroIdx.slice();
+		const centroLabel = centroFinal.length <= 2 ? (centroFinal.length === 2 ? 'Bicentro' : 'Centro') : 'Centro';
 		let medianaIdx = 0;
 		for (let i = 1; i < totals.length; i += 1) if (totals[i] < totals[medianaIdx]) medianaIdx = i;
 		const cintura = shortestCycleLengthUndirected();
@@ -548,7 +561,7 @@
 			'<ul class="metric-list">' +
 			'<li><strong>Diámetro:</strong> ' + formatInf(diametro) + '</li>' +
 			'<li><strong>Radio:</strong> ' + formatInf(radio) + '</li>' +
-			'<li><strong>Centro/Bicentro:</strong> {' + centroIdx.map(function (i) { return ids[i]; }).join(', ') + '}</li>' +
+			'<li><strong>' + centroLabel + ':</strong> {' + centroFinal.map(function (i) { return ids[i]; }).join(', ') + '}</li>' +
 			'<li><strong>Mediana:</strong> ' + ids[medianaIdx] + '</li>' +
 			'<li><strong>Cintura:</strong> ' + (cintura === null ? 'No existe circuito' : cintura + ' aristas') + '</li>' +
 			'</ul>';
@@ -557,7 +570,7 @@
 			resultadoHtml: resultado,
 			tablaHtml: '<div class="matrix-wrap"><table class="result-table"><thead>' + headTop + headSub + '</thead><tbody>' + rows.join('') + totalRow + eccRow + '</tbody></table></div>',
 			nodeTextMap: {},
-			activeNodes: centroIdx.map(function (i) { return ids[i]; })
+			activeNodes: centroFinal.map(function (i) { return ids[i]; })
 		};
 	}
 
@@ -569,6 +582,10 @@
 
 	function canonicalCycle(labels) {
 		const rotsA = rotations(labels);
+		if (state.isDirected) {
+			const all = rotsA.map(function (x) { return x.join('|'); }).sort();
+			return all[0];
+		}
 		const rotsB = rotations(labels.slice().reverse());
 		const all = rotsA.concat(rotsB).map(function (x) { return x.join('|'); }).sort();
 		return all[0];
@@ -579,7 +596,7 @@
 		state.vertices.forEach(function (v) { adj[v.id] = []; });
 		state.aristas.forEach(function (e) {
 			if (adj[e.inicio]) adj[e.inicio].push({ to: e.fin, edge: e });
-			if (adj[e.fin]) adj[e.fin].push({ to: e.inicio, edge: e });
+			if (!state.isDirected && adj[e.fin]) adj[e.fin].push({ to: e.inicio, edge: e });
 		});
 
 		const byCanon = new Map();
@@ -878,6 +895,7 @@
 			setHtml('mResultado', out.resultadoHtml || 'Algoritmo aplicado correctamente.');
 			setHtml('mTablaResultado', out.tablaHtml || 'Sin tabla para mostrar.');
 			renderGraph('mGrafoResultado', state.vertices, state.aristas, {
+				directed: state.isDirected,
 				resultEdges: out.resultEdges || [],
 				nodeTextMap: out.nodeTextMap || {},
 				nodeSubTextMap: out.nodeSubTextMap || {},
@@ -891,6 +909,29 @@
 
 	function init() {
 		if (!document.getElementById('btnMAgregarVertice')) return;
+
+		// Control de pestañas: Aristas Dirigidas / No Dirigidas
+		const tabDirigidas = document.getElementById('mTabDirigidas');
+		const tabNoDirigidas = document.getElementById('mTabNoDirigidas');
+		const direccionWrap = document.getElementById('mDireccionWrap');
+
+		if (tabDirigidas && tabNoDirigidas) {
+			tabDirigidas.addEventListener('click', function () {
+				tabDirigidas.classList.add('active');
+				tabNoDirigidas.classList.remove('active');
+				if (direccionWrap) direccionWrap.classList.remove('d-none');
+				state.isDirected = true;
+				refresh();
+			});
+
+			tabNoDirigidas.addEventListener('click', function () {
+				tabNoDirigidas.classList.add('active');
+				tabDirigidas.classList.remove('active');
+				if (direccionWrap) direccionWrap.classList.add('d-none');
+				state.isDirected = false;
+				refresh();
+			});
+		}
 
 		['tab-mdc', 'tab-mia'].forEach(function (id) {
 			const tab = document.getElementById(id);
@@ -932,8 +973,8 @@
 
 		document.getElementById('btnMAgregarArista').addEventListener('click', function () {
 			hideMsg('mensajeMatrices');
-			const inicio = norm(document.getElementById('mAristaInicio').value);
-			const fin = norm(document.getElementById('mAristaFin').value);
+			let inicio = norm(document.getElementById('mAristaInicio').value);
+			let fin = norm(document.getElementById('mAristaFin').value);
 			const peso = Number(document.getElementById('mAristaPeso').value);
 			let etiqueta = norm(document.getElementById('mAristaNombre').value);
 
@@ -943,7 +984,27 @@
 			if (!state.vertices.some(function (v) { return v.id === inicio; }) || !state.vertices.some(function (v) { return v.id === fin; })) {
 				return showMsg('mensajeMatrices', 'Ambos vértices deben existir.', 'warning');
 			}
-			if (state.aristas.some(function (e) { return edgeKeyUnd(e.inicio, e.fin) === edgeKeyUnd(inicio, fin); })) {
+
+			// Manejo de la dirección si el modo actual es dirigido
+			if (state.isDirected) {
+				const dirElem = document.getElementById('mAristaDireccion');
+				if (dirElem) {
+					const dir = dirElem.value;
+					if (dir === 'ba') {
+						const temp = inicio;
+						inicio = fin;
+						fin = temp;
+					}
+				}
+			}
+
+			if (state.aristas.some(function (e) {
+				// Permitir aristas en dirección opuesta si es dirigido, pero usar edgeKeyDir
+				if (state.isDirected) {
+					return edgeKeyDir(e.inicio, e.fin) === edgeKeyDir(inicio, fin);
+				}
+				return edgeKeyUnd(e.inicio, e.fin) === edgeKeyUnd(inicio, fin);
+			})) {
 				return showMsg('mensajeMatrices', 'La arista ya existe.', 'warning');
 			}
 			if (!etiqueta) etiqueta = autoEdgeLabel(state.aristas);
@@ -951,7 +1012,7 @@
 				return showMsg('mensajeMatrices', 'La etiqueta de arista ya existe.', 'warning');
 			}
 
-			state.aristas.push({ inicio: inicio, fin: fin, peso: peso, etiqueta: etiqueta });
+			state.aristas.push({ inicio: inicio, fin: fin, peso: peso, etiqueta: etiqueta, dirigida: state.isDirected });
 			document.getElementById('mAristaInicio').value = '';
 			document.getElementById('mAristaFin').value = '';
 			document.getElementById('mAristaPeso').value = '';
@@ -965,7 +1026,10 @@
 			const fin = norm(document.getElementById('mAristaFin').value);
 
 			const before = state.aristas.length;
-			state.aristas = state.aristas.filter(function (e) { return edgeKeyUnd(e.inicio, e.fin) !== edgeKeyUnd(inicio, fin); });
+			state.aristas = state.aristas.filter(function (e) {
+				if (state.isDirected) return edgeKeyDir(e.inicio, e.fin) !== edgeKeyDir(inicio, fin);
+				return edgeKeyUnd(e.inicio, e.fin) !== edgeKeyUnd(inicio, fin);
+			});
 			if (before === state.aristas.length) return showMsg('mensajeMatrices', 'No se encontró la arista.', 'warning');
 			document.getElementById('mAristaInicio').value = '';
 			document.getElementById('mAristaFin').value = '';
@@ -990,6 +1054,7 @@
 			downloadJson('matrices_grafo.json', {
 				tipo: 'matrices_grafo',
 				mode: state.mode,
+				isDirected: state.isDirected,
 				vertices: state.vertices,
 				aristas: state.aristas
 			});
@@ -1010,6 +1075,23 @@
 					const graph = loadGraphFromData(data);
 					state.vertices = graph.vertices;
 					state.aristas = graph.aristas;
+
+					// Restaurar el estado de dirección
+					state.isDirected = data.isDirected !== undefined ? data.isDirected : true;
+					const mTabDirigidas = document.getElementById('mTabDirigidas');
+					const mTabNoDirigidas = document.getElementById('mTabNoDirigidas');
+					const mDireccionWrap = document.getElementById('mDireccionWrap');
+
+					if (state.isDirected) {
+						if (mTabDirigidas) mTabDirigidas.classList.add('active');
+						if (mTabNoDirigidas) mTabNoDirigidas.classList.remove('active');
+						if (mDireccionWrap) mDireccionWrap.classList.remove('d-none');
+					} else {
+						if (mTabNoDirigidas) mTabNoDirigidas.classList.add('active');
+						if (mTabDirigidas) mTabDirigidas.classList.remove('active');
+						if (mDireccionWrap) mDireccionWrap.classList.add('d-none');
+					}
+
 					if (MODE_DESCRIPTION[data.mode]) {
 						state.mode = data.mode;
 						document.getElementById('matrixMode').value = data.mode;
@@ -1032,5 +1114,3 @@
 
 	document.addEventListener('DOMContentLoaded', init);
 })();
-
-
