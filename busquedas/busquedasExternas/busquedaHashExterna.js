@@ -4,7 +4,6 @@
  */
 
 let hxeTabla = [];
-let hxeMatriz = [];
 let hxeLista = [];
 
 let hxeTamano = 27;
@@ -14,19 +13,21 @@ let hxeInicializada = false;
 let hxeAnimando = false;
 let hxeTimeouts = [];
 
+let hxeOverflow = [];
+let hxeOverflowTamano = 0;
+let hxeOverflowIndices = [];
+
 const hxeDescripcionesHash = {
     modulo: '<strong>Funcion:</strong> Calcula el hash como <code>H(k) = (k mod n) + 1</code>.',
     cuadrado: '<strong>Funcion:</strong> Eleva la clave al cuadrado y extrae digitos centrales + 1.',
     truncamiento: '<strong>Funcion:</strong> Toma digitos impares de la clave y calcula la posicion + 1.',
-    plegamiento: '<strong>Funcion:</strong> Divide la clave en grupos y suma segmentos para obtener la posicion + 1.'
+    plegamiento: '<strong>Funcion:</strong> Divide la clave en grupos y suma segmentos para obtener la posicion + 1.',
+    conversionBase: '<strong>Funcion:</strong> Calcula la suma de cada digito multiplicado por <code>base^(n-1-i)</code>, luego aplica <code>modulo N</code> para obtener la posicion.'
 };
 
 const hxeDescripcionesColision = {
-    lineal: 'Si hay colision, avanza secuencialmente: <code>D + i, i = 1...n</code>.',
-    cuadratica: 'Resuelve colisiones con incrementos cuadrados: <code>D + i^2, i = 1...n</code>.',
-    dobleHash: 'Vuelve a aplicar la misma funcion hash para calcular el siguiente salto.',
-    anidados: 'Cada posicion es un arreglo fijo (fila) para almacenar colisiones.',
-    enlazada: 'Cada posicion es una lista dinamica de claves enlazadas logicamente.'
+    enlazada: 'Cada posicion tiene una lista dinamica de claves enlazadas. Los sinonimos se encadenan en esa lista. Esto equivale al encadenamiento separado de busquedas externas.',
+    overflow: 'Los registros que colisionan se almacenan en una zona de desbordamiento separada (aprox. 10% del tamano total). La busqueda en esa zona es secuencial.'
 };
 
 function limpiarTimeoutsHashExterna() {
@@ -110,6 +111,18 @@ function calcularHashExterna(clave, metodo, tamano) {
             hashBase0 = suma % tamano;
             break;
         }
+        case 'conversionBase': {
+            const baseEl = document.getElementById('baseConversionHash');
+            const base = parseInt((baseEl && baseEl.value) || '7', 10) || 7;
+            const digits = k.toString();
+            const n = digits.length;
+            let acum = 0;
+            for (let i = 0; i < n; i++) {
+                acum += parseInt(digits[i], 10) * Math.pow(base, n - 1 - i);
+            }
+            hashBase0 = acum % tamano;
+            break;
+        }
         default:
             hashBase0 = k % tamano;
     }
@@ -121,6 +134,13 @@ function actualizarDescripcionHashExterna() {
     const metodo = obtenerMetodoHashExterna();
     const colision = obtenerMetodoColisionHashExterna();
     const box = document.getElementById('descripcionHashExt');
+
+    // Mostrar u ocultar el input de base según método seleccionado
+    const contenedorBase = document.getElementById('contenedorBaseConversion');
+    if (contenedorBase) {
+        contenedorBase.style.display = (metodo === 'conversionBase') ? 'block' : 'none';
+    }
+
     if (!box) return;
 
     if (!metodo && !colision) {
@@ -160,10 +180,12 @@ function inicializarEstructuraHashExterna() {
     recalcularBloquesHashExterna();
 
     hxeTabla = new Array(hxeTamano).fill(null);
-    hxeMatriz = [];
-    for (let i = 0; i < hxeTamano; i++) hxeMatriz[i] = new Array(hxeTamano).fill(null);
     hxeLista = [];
     for (let j = 0; j < hxeTamano; j++) hxeLista[j] = [];
+
+    hxeOverflowTamano = Math.max(1, Math.ceil(hxeTamano * 0.10));
+    hxeOverflow = new Array(hxeOverflowTamano).fill(null);
+    hxeOverflowIndices = new Array(hxeOverflowTamano).fill(null);
 
     hxeInicializada = true;
     renderizarHashExterna();
@@ -175,15 +197,13 @@ function inicializarEstructuraHashExterna() {
 }
 
 function contarElementosHashExterna(metodoColision) {
-    if (metodoColision === 'anidados') {
-        let total = 0;
-        for (let i = 0; i < hxeMatriz.length; i++) {
-            for (let j = 0; j < hxeCantidadBloques; j++) if (hxeMatriz[i][j] !== null) total++;
-        }
-        return total;
-    }
     if (metodoColision === 'enlazada') {
         return hxeLista.reduce(function (acc, l) { return acc + l.length; }, 0);
+    }
+    if (metodoColision === 'overflow') {
+        const enTabla = hxeTabla.filter(function (x) { return x !== null; }).length;
+        const enOverflow = hxeOverflow.filter(function (x) { return x !== null; }).length;
+        return enTabla + enOverflow;
     }
     return hxeTabla.filter(function (x) { return x !== null; }).length;
 }
@@ -210,42 +230,6 @@ function renderizarHashExternaAbierta() {
         }
 
         html += '</div></div>';
-    }
-
-    html += '</div></div>';
-    return html;
-}
-
-function renderizarHashExternaAnidados() {
-    let html = '<div class="hashx-scroll-inner"><div class="hashx-matriz-bloques">';
-
-    // Matriz visual NxN: cada columna replica exactamente la estructura base.
-    for (let colBloque = 0; colBloque < hxeCantidadBloques; colBloque++) {
-        html += '<div class="hashx-columna-bloques">';
-
-        for (let b = 0; b < hxeCantidadBloques; b++) {
-            html += '<div class="bloque-card hashx-bloque-pegado">';
-            html += '<div class="bloque-header">Bloque ' + (b + 1) + '</div>';
-            html += '<div class="bloque-body">';
-
-            for (let i = 0; i < hxeTamanoBloque; i++) {
-                const fila = b * hxeTamanoBloque + i;
-                const utilizable = fila < hxeTamano;
-                const val = utilizable ? hxeMatriz[fila][colBloque] : null;
-                const contenido = val === null ? '' : String(val);
-                const vacio = !contenido;
-                const dataIdx = colBloque === 0 ? ' data-index="' + fila + '"' : '';
-
-                html += '<div class="bloque-celda hashx-celda ' + (vacio ? 'bloque-vacio ' : '') + (!utilizable ? 'bloque-no-utilizable' : '') + '" data-estr="anidados" data-row="' + fila + '" data-col="' + colBloque + '"' + dataIdx + '>';
-                html += '<span class="bloque-celda-index">' + (fila + 1) + '</span>';
-                html += '<span class="bloque-celda-valor hashx-valor">' + contenido + '</span>';
-                html += '</div>';
-            }
-
-            html += '</div></div>';
-        }
-
-        html += '</div>';
     }
 
     html += '</div></div>';
@@ -317,6 +301,57 @@ function renderizarHashExternaEnlazada() {
     return html;
 }
 
+function renderizarHashExternaOverflow() {
+    // --- Zona principal (idéntica a abierta) ---
+    let html = '<div class="hashx-scroll-inner"><div class="hashx-bloques-grid">';
+
+    for (let b = 0; b < hxeCantidadBloques; b++) {
+        html += '<div class="bloque-card" data-bloque="' + b + '">';
+        html += '<div class="bloque-header">Bloque ' + (b + 1) + '</div>';
+        html += '<div class="bloque-body">';
+
+        for (let i = 0; i < hxeTamanoBloque; i++) {
+            const globalIdx = b * hxeTamanoBloque + i;
+            const utilizable = globalIdx < hxeTamano;
+            const val = utilizable ? hxeTabla[globalIdx] : null;
+            const contenido = val === null ? '' : String(val);
+            const vacio = !contenido;
+
+            html += '<div class="bloque-celda hashx-celda ' + (vacio ? 'bloque-vacio ' : '') + (!utilizable ? 'bloque-no-utilizable' : '') + '" data-index="' + globalIdx + '">';
+            html += '<span class="bloque-celda-index">' + (globalIdx + 1) + '</span>';
+            html += '<span class="bloque-celda-valor hashx-valor">' + contenido + '</span>';
+            html += '</div>';
+        }
+
+        html += '</div></div>';
+    }
+
+    html += '</div>';
+
+    // --- Zona de desbordamiento ---
+    html += '<div class="hashx-overflow-section">';
+    html += '<div class="hashx-overflow-header">Zona de Desbordamiento (' + hxeOverflowTamano + ' posiciones)</div>';
+    html += '<div class="hashx-overflow-grid">';
+
+    for (let o = 0; o < hxeOverflowTamano; o++) {
+        const valOvf = hxeOverflow[o];
+        const origenOvf = hxeOverflowIndices[o];
+        const vacio = valOvf === null;
+        const extraClass = vacio ? 'bloque-vacio' : 'hashx-celda-overflow';
+
+        html += '<div class="bloque-card bloque-celda hashx-celda ' + extraClass + '" data-overflow="' + o + '">';
+        html += '<span class="bloque-celda-index">' + (o + 1) + '</span>';
+        html += '<span class="bloque-celda-valor hashx-valor">' + (vacio ? '' : String(valOvf)) + '</span>';
+        if (!vacio) {
+            html += '<span class="bloque-celda-origen">(pos. ' + (origenOvf + 1) + ')</span>';
+        }
+        html += '</div>';
+    }
+
+    html += '</div></div></div>';
+    return html;
+}
+
 function renderizarHashExterna() {
     const container = document.getElementById('visualizacionHashExterna');
     if (!container) return;
@@ -328,10 +363,10 @@ function renderizarHashExterna() {
 
     const metodoColision = obtenerMetodoColisionHashExterna();
     let html;
-    if (metodoColision === 'anidados') {
-        html = renderizarHashExternaAnidados();
-    } else if (metodoColision === 'enlazada') {
+    if (metodoColision === 'enlazada') {
         html = renderizarHashExternaEnlazada();
+    } else if (metodoColision === 'overflow') {
+        html = renderizarHashExternaOverflow();
     } else {
         html = renderizarHashExternaAbierta();
     }
@@ -384,14 +419,11 @@ function obtenerClaveValidaHashExterna(accion) {
 }
 
 function existeClaveGlobalHashExterna(clave, metodoColision) {
-    if (metodoColision === 'anidados') {
-        for (let i = 0; i < hxeMatriz.length; i++) {
-            for (let j = 0; j < hxeMatriz[i].length; j++) if (hxeMatriz[i][j] === clave) return true;
-        }
-        return false;
-    }
     if (metodoColision === 'enlazada') {
         return hxeLista.some(function (l) { return l.indexOf(clave) !== -1; });
+    }
+    if (metodoColision === 'overflow') {
+        return hxeTabla.indexOf(clave) !== -1 || hxeOverflow.indexOf(clave) !== -1;
     }
     return hxeTabla.indexOf(clave) !== -1;
 }
@@ -404,9 +436,6 @@ function limpiarResaltadosHashExterna() {
 }
 
 function obtenerNodoColisionHashExterna(metodoColision, fila, posicionNodo) {
-    if (metodoColision === 'anidados') {
-        return document.querySelector('#visualizacionHashExterna .hashx-celda[data-estr="anidados"][data-row="' + fila + '"][data-col="' + posicionNodo + '"]');
-    }
     if (metodoColision === 'enlazada') {
         return document.querySelector('#visualizacionHashExterna .hashx-celda[data-estr="enlazada"][data-row="' + fila + '"][data-level="' + posicionNodo + '"]');
     }
@@ -470,18 +499,6 @@ function animarRutaHashExterna(indices, clasePaso, callback) {
     }, t));
 }
 
-function siguientePosicionHashExterna(posicionArray, hashInicial, intentos, metodoColision, metodoHash) {
-    if (metodoColision === 'lineal') {
-        return ((hashInicial - 1) + intentos) % hxeTamano;
-    }
-    if (metodoColision === 'cuadratica') {
-        return ((hashInicial - 1) + intentos * intentos) % hxeTamano;
-    }
-    const valorParaHash = String(posicionArray + 2);
-    const nuevoHash = calcularHashExterna(valorParaHash, metodoHash, hxeTamano);
-    return nuevoHash - 1;
-}
-
 function insertarHashExterna() {
     if (hxeAnimando) limpiarTimeoutsHashExterna();
     const ctx = obtenerClaveValidaHashExterna('insertar');
@@ -496,36 +513,6 @@ function insertarHashExterna() {
     renderizarHashExterna();
 
     const fila = ctx.hashInicial - 1;
-
-    if (ctx.metodoColision === 'anidados') {
-        let col = -1;
-        for (let j = 0; j < hxeCantidadBloques; j++) {
-            if (hxeMatriz[fila][j] === null) {
-                col = j;
-                break;
-            }
-        }
-        if (col === -1) {
-            mostrarMensajeHashExterna('Fila ' + ctx.hashInicial + ' llena, no se puede insertar', 'danger');
-            hxeAnimando = false;
-            return;
-        }
-
-        const recorridoInsercion = [];
-        for (let j = 0; j < col; j++) recorridoInsercion.push(j);
-
-        animarRutaHashExterna([fila], 'celda-buscando', function () {
-            animarRecorridoColisionHashExterna('anidados', fila, recorridoInsercion, 'celda-buscando', function () {
-                hxeMatriz[fila][col] = ctx.clave;
-                renderizarHashExterna();
-                const celda = obtenerNodoColisionHashExterna('anidados', fila, col);
-                if (celda) celda.classList.add('celda-insertada');
-                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> insertada en posicion ' + ctx.hashInicial + ', nodo ' + (col + 1), 'success');
-                hxeAnimando = false;
-            });
-        });
-        return;
-    }
 
     if (ctx.metodoColision === 'enlazada') {
         const recorridoInsercion = [];
@@ -545,29 +532,51 @@ function insertarHashExterna() {
         return;
     }
 
-    const ruta = [];
-    let intentos = 0;
-    let posicion = fila;
-    while (intentos < hxeTamano) {
-        ruta.push(posicion);
-        if (hxeTabla[posicion] === null) break;
-        intentos += 1;
-        posicion = siguientePosicionHashExterna(posicion, ctx.hashInicial, intentos, ctx.metodoColision, ctx.metodoHash);
-    }
-
-    if (intentos >= hxeTamano && hxeTabla[posicion] !== null) {
-        mostrarMensajeHashExterna('Estructura llena, no se puede insertar', 'danger');
-        hxeAnimando = false;
+    if (ctx.metodoColision === 'overflow') {
+        if (hxeTabla[fila] === null) {
+            // Inserción directa en tabla principal
+            animarRutaHashExterna([fila], 'celda-buscando', function () {
+                hxeTabla[fila] = ctx.clave;
+                renderizarHashExterna();
+                const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
+                if (celda) celda.classList.add('celda-insertada');
+                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> insertada en posicion ' + ctx.hashInicial, 'success');
+                hxeAnimando = false;
+            });
+        } else {
+            // Colisión: buscar espacio en zona de desbordamiento
+            const posOvf = hxeOverflow.indexOf(null);
+            if (posOvf === -1) {
+                mostrarMensajeHashExterna('Area de desbordamiento llena, no se puede insertar', 'danger');
+                hxeAnimando = false;
+                return;
+            }
+            animarRutaHashExterna([fila], 'celda-colision', function () {
+                hxeOverflow[posOvf] = ctx.clave;
+                hxeOverflowIndices[posOvf] = fila;
+                renderizarHashExterna();
+                const celdaPrincipal = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
+                if (celdaPrincipal) celdaPrincipal.classList.add('celda-buscando');
+                const celdaOvf = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + posOvf + '"]');
+                if (celdaOvf) celdaOvf.classList.add('celda-insertada');
+                mostrarMensajeHashExterna('Colision en posicion ' + ctx.hashInicial + '. Clave <strong>"' + ctx.clave + '"</strong> almacenada en zona de desbordamiento (pos. ' + (posOvf + 1) + ')', 'success');
+                hxeAnimando = false;
+            });
+        }
         return;
     }
 
-    animarRutaHashExterna(ruta, 'celda-buscando', function () {
-        hxeTabla[posicion] = ctx.clave;
-        renderizarHashExterna();
-        const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + posicion + '"]');
-        if (celda) celda.classList.add('celda-insertada');
-        const msgColision = intentos > 0 ? ' (' + intentos + ' colisiones resueltas)' : '';
-        mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> insertada en posicion ' + (posicion + 1) + msgColision, 'success');
+    // Fallback tabla abierta (no debería ocurrir con los métodos actuales)
+    animarRutaHashExterna([fila], 'celda-buscando', function () {
+        if (hxeTabla[fila] === null) {
+            hxeTabla[fila] = ctx.clave;
+            renderizarHashExterna();
+            const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
+            if (celda) celda.classList.add('celda-insertada');
+            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> insertada en posicion ' + ctx.hashInicial, 'success');
+        } else {
+            mostrarMensajeHashExterna('Posicion ocupada, seleccione un metodo de colision', 'warning');
+        }
         hxeAnimando = false;
     });
 }
@@ -581,41 +590,6 @@ function buscarHashExterna() {
     renderizarHashExterna();
 
     const fila = ctx.hashInicial - 1;
-
-    if (ctx.metodoColision === 'anidados') {
-        animarRutaHashExterna([fila], 'celda-buscando', function () {
-            const row = hxeMatriz[fila];
-            let pos = -1;
-            let pasos = 0;
-            let ultimoOcupado = -1;
-            for (let j = 0; j < hxeCantidadBloques; j++) {
-                if (row[j] !== null) {
-                    pasos += 1;
-                    ultimoOcupado = j;
-                }
-                if (row[j] === ctx.clave) {
-                    pos = j;
-                    break;
-                }
-            }
-
-            const recorrido = [];
-            const limite = pos !== -1 ? pos : ultimoOcupado;
-            for (let j = 0; j <= limite && limite >= 0; j++) recorrido.push(j);
-
-            animarRecorridoColisionHashExterna('anidados', fila, recorrido, 'celda-buscando', function () {
-                if (pos !== -1) {
-                    const celda = obtenerNodoColisionHashExterna('anidados', fila, pos);
-                    if (celda) celda.classList.add('celda-encontrada');
-                    mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> encontrada en posicion ' + ctx.hashInicial + ', nodo ' + (pos + 1) + ' (' + pasos + ' pasos)', 'success');
-                } else {
-                    mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
-                }
-                hxeAnimando = false;
-            });
-        });
-        return;
-    }
 
     if (ctx.metodoColision === 'enlazada') {
         animarRutaHashExterna([fila], 'celda-buscando', function () {
@@ -639,31 +613,75 @@ function buscarHashExterna() {
         return;
     }
 
-    const ruta = [];
-    let pasos = 0;
-    let intentos = 0;
-    let posicion = fila;
-    let encontrada = -1;
-
-    while (intentos < hxeTamano) {
-        ruta.push(posicion);
-        pasos += 1;
-        if (hxeTabla[posicion] === null) break;
-        if (hxeTabla[posicion] === ctx.clave) {
-            encontrada = posicion;
-            break;
+    if (ctx.metodoColision === 'overflow') {
+        // Paso 1: revisar slot principal
+        if (hxeTabla[fila] === ctx.clave) {
+            animarRutaHashExterna([fila], 'celda-buscando', function () {
+                const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
+                if (celda) celda.classList.add('celda-encontrada');
+                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> encontrada en posicion ' + ctx.hashInicial + ' (tabla principal)', 'success');
+                hxeAnimando = false;
+            });
+            return;
         }
-        intentos += 1;
-        posicion = siguientePosicionHashExterna(posicion, ctx.hashInicial, intentos, ctx.metodoColision, ctx.metodoHash);
+
+        // Paso 2: recorrer overflow completo secuencialmente
+        // (sin importar si el slot principal está vacío u ocupado por otra clave)
+        limpiarResaltadosHashExterna();
+        const delay = 280;
+        let t = 0;
+        let encontradaOvf = -1;
+
+        // Pre-calcular índice encontrado para poder detener la animación en él
+        for (let o = 0; o < hxeOverflowTamano; o++) {
+            if (hxeOverflow[o] !== null && hxeOverflowIndices[o] === fila && hxeOverflow[o] === ctx.clave) {
+                encontradaOvf = o;
+                break;
+            }
+        }
+
+        const limiteAnim = encontradaOvf !== -1 ? encontradaOvf : hxeOverflowTamano - 1;
+
+        for (let o = 0; o <= limiteAnim; o++) {
+            (function (ovfPos) {
+                hxeTimeouts.push(setTimeout(function () {
+                    // Quitar buscando del anterior
+                    if (ovfPos > 0) {
+                        const prev = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + (ovfPos - 1) + '"]');
+                        if (prev) prev.classList.remove('celda-buscando');
+                    }
+                    const actual = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + ovfPos + '"]');
+                    if (actual) actual.classList.add('celda-buscando');
+                }, t));
+            })(o);
+            t += delay;
+        }
+
+        hxeTimeouts.push(setTimeout(function () {
+            // Limpiar el último buscando
+            const last = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + limiteAnim + '"]');
+            if (last) last.classList.remove('celda-buscando');
+
+            if (encontradaOvf !== -1) {
+                const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + encontradaOvf + '"]');
+                if (celda) celda.classList.add('celda-encontrada');
+                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> encontrada en zona de desbordamiento pos. ' + (encontradaOvf + 1) + ' (' + (limiteAnim + 1) + ' pasos)', 'success');
+            } else {
+                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
+            }
+            hxeAnimando = false;
+        }, t));
+        return;
     }
 
-    animarRutaHashExterna(ruta, 'celda-buscando', function () {
-        if (encontrada !== -1) {
-            const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + encontrada + '"]');
+    // Fallback tabla abierta
+    animarRutaHashExterna([fila], 'celda-buscando', function () {
+        if (hxeTabla[fila] === ctx.clave) {
+            const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
             if (celda) celda.classList.add('celda-encontrada');
-            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> encontrada en posicion ' + (encontrada + 1) + ' (' + pasos + ' pasos)', 'success');
+            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> encontrada en posicion ' + ctx.hashInicial, 'success');
         } else {
-            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada (' + pasos + ' pasos)', 'danger');
+            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
         }
         hxeAnimando = false;
     });
@@ -680,48 +698,6 @@ function eliminarHashExterna() {
     renderizarHashExterna();
 
     const fila = ctx.hashInicial - 1;
-
-    if (ctx.metodoColision === 'anidados') {
-        animarRutaHashExterna([fila], 'celda-buscando', function () {
-            let col = -1;
-            let pasos = 0;
-            let ultimoOcupado = -1;
-            for (let j = 0; j < hxeCantidadBloques; j++) {
-                if (hxeMatriz[fila][j] !== null) {
-                    pasos += 1;
-                    ultimoOcupado = j;
-                }
-                if (hxeMatriz[fila][j] === ctx.clave) {
-                    col = j;
-                    break;
-                }
-            }
-
-            const recorrido = [];
-            const limite = col !== -1 ? col : ultimoOcupado;
-            for (let j = 0; j <= limite && limite >= 0; j++) recorrido.push(j);
-
-            animarRecorridoColisionHashExterna('anidados', fila, recorrido, 'celda-buscando', function () {
-            if (col === -1) {
-                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
-                hxeAnimando = false;
-                return;
-            }
-            const celda = obtenerNodoColisionHashExterna('anidados', fila, col);
-            if (celda) celda.classList.add('celda-eliminando');
-            hxeTimeouts.push(setTimeout(function () {
-                // En arreglos anidados la estructura es estatica: se libera la celda sin compactar.
-                hxeMatriz[fila][col] = null;
-                renderizarHashExterna();
-                const input = document.getElementById('claveHashExt');
-                if (input) input.value = '';
-                mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> eliminada de posicion ' + ctx.hashInicial + ', nodo ' + (col + 1), 'success');
-                hxeAnimando = false;
-            }, 450));
-            });
-        });
-        return;
-    }
 
     if (ctx.metodoColision === 'enlazada') {
         animarRutaHashExterna([fila], 'celda-buscando', function () {
@@ -751,38 +727,53 @@ function eliminarHashExterna() {
         return;
     }
 
-    const ruta = [];
-    let intentos = 0;
-    let posicion = fila;
-    let encontrada = -1;
-    while (intentos < hxeTamano) {
-        ruta.push(posicion);
-        if (hxeTabla[posicion] === null) break;
-        if (hxeTabla[posicion] === ctx.clave) {
-            encontrada = posicion;
-            break;
-        }
-        intentos += 1;
-        posicion = siguientePosicionHashExterna(posicion, ctx.hashInicial, intentos, ctx.metodoColision, ctx.metodoHash);
+    if (ctx.metodoColision === 'overflow') {
+        animarRutaHashExterna([fila], 'celda-buscando', function () {
+            if (hxeTabla[fila] === ctx.clave) {
+                // Está en tabla principal
+                const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + fila + '"]');
+                if (celda) celda.classList.add('celda-eliminando');
+                hxeTimeouts.push(setTimeout(function () {
+                    hxeTabla[fila] = null;
+                    renderizarHashExterna();
+                    const input = document.getElementById('claveHashExt');
+                    if (input) input.value = '';
+                    mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> eliminada de posicion ' + ctx.hashInicial, 'success');
+                    hxeAnimando = false;
+                }, 450));
+            } else {
+                // Buscar en overflow
+                let ovfPos = -1;
+                for (let o = 0; o < hxeOverflowTamano; o++) {
+                    if (hxeOverflowIndices[o] === fila && hxeOverflow[o] === ctx.clave) {
+                        ovfPos = o;
+                        break;
+                    }
+                }
+                if (ovfPos === -1) {
+                    mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
+                    hxeAnimando = false;
+                    return;
+                }
+                const celdaOvf = document.querySelector('#visualizacionHashExterna .hashx-celda[data-overflow="' + ovfPos + '"]');
+                if (celdaOvf) celdaOvf.classList.add('celda-eliminando');
+                hxeTimeouts.push(setTimeout(function () {
+                    hxeOverflow[ovfPos] = null;
+                    hxeOverflowIndices[ovfPos] = null;
+                    renderizarHashExterna();
+                    const input = document.getElementById('claveHashExt');
+                    if (input) input.value = '';
+                    mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> eliminada de zona de desbordamiento pos. ' + (ovfPos + 1), 'success');
+                    hxeAnimando = false;
+                }, 450));
+            }
+        });
+        return;
     }
 
-    animarRutaHashExterna(ruta, 'celda-buscando', function () {
-        if (encontrada === -1) {
-            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> no encontrada', 'danger');
-            hxeAnimando = false;
-            return;
-        }
-        const celda = document.querySelector('#visualizacionHashExterna .hashx-celda[data-index="' + encontrada + '"]');
-        if (celda) celda.classList.add('celda-eliminando');
-        hxeTimeouts.push(setTimeout(function () {
-            hxeTabla[encontrada] = null;
-            renderizarHashExterna();
-            const input = document.getElementById('claveHashExt');
-            if (input) input.value = '';
-            mostrarMensajeHashExterna('Clave <strong>"' + ctx.clave + '"</strong> eliminada de posicion ' + (encontrada + 1), 'success');
-            hxeAnimando = false;
-        }, 450));
-    });
+    // Fallback
+    mostrarMensajeHashExterna('Metodo de colision no reconocido', 'warning');
+    hxeAnimando = false;
 }
 
 function limpiarHashExterna() {
@@ -794,10 +785,10 @@ function limpiarHashExterna() {
 
     limpiarTimeoutsHashExterna();
     hxeTabla = new Array(hxeTamano).fill(null);
-    hxeMatriz = [];
-    for (let i = 0; i < hxeTamano; i++) hxeMatriz[i] = new Array(hxeTamano).fill(null);
     hxeLista = [];
     for (let j = 0; j < hxeTamano; j++) hxeLista[j] = [];
+    hxeOverflow = new Array(hxeOverflowTamano).fill(null);
+    hxeOverflowIndices = new Array(hxeOverflowTamano).fill(null);
     renderizarHashExterna();
     const claveInput = document.getElementById('claveHashExt');
     if (claveInput) claveInput.value = '';
@@ -819,8 +810,10 @@ function guardarHashExterna() {
         metodoHash: obtenerMetodoHashExterna(),
         metodoColision: obtenerMetodoColisionHashExterna(),
         tabla: hxeTabla,
-        matriz: hxeMatriz,
-        lista: hxeLista
+        lista: hxeLista,
+        overflowTamano: hxeOverflowTamano,
+        overflow: hxeOverflow,
+        overflowIndices: hxeOverflowIndices
     };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -847,15 +840,15 @@ function procesarCargaHashExterna(texto) {
     hxeTamanoBloque = data.tamanoBloque || Math.max(1, Math.floor(Math.sqrt(hxeTamano)));
     hxeCantidadBloques = data.cantidadBloques || Math.ceil(hxeTamano / hxeTamanoBloque);
     hxeTabla = Array.isArray(data.tabla) ? data.tabla : new Array(hxeTamano).fill(null);
-    hxeMatriz = Array.isArray(data.matriz) ? data.matriz : [];
     hxeLista = Array.isArray(data.lista) ? data.lista : [];
 
-    if (!hxeMatriz.length) {
-        for (let i = 0; i < hxeTamano; i++) hxeMatriz[i] = new Array(hxeTamano).fill(null);
-    }
     if (!hxeLista.length) {
         for (let j = 0; j < hxeTamano; j++) hxeLista[j] = [];
     }
+
+    hxeOverflowTamano = data.overflowTamano || Math.max(1, Math.ceil(hxeTamano * 0.10));
+    hxeOverflow = Array.isArray(data.overflow) ? data.overflow : new Array(hxeOverflowTamano).fill(null);
+    hxeOverflowIndices = Array.isArray(data.overflowIndices) ? data.overflowIndices : new Array(hxeOverflowTamano).fill(null);
 
     const tamInput = document.getElementById('tamanoEstructuraHashExt');
     const tamClaveInput = document.getElementById('tamanoClaveHashExt');

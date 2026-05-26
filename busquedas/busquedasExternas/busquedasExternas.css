@@ -356,7 +356,18 @@
     box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
 }
 
+/* Garantiza verde sobre celdas hashx-celda (incluye zona de desbordamiento naranja) */
+.hashx-celda.celda-encontrada {
+    background: #28A745 !important;
+    border-color: #1E7E34 !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
 .bloque-celda.celda-encontrada .bloque-celda-valor {
+    color: #FFFFFF;
+}
+
+.hashx-celda.celda-encontrada .bloque-celda-origen {
     color: #FFFFFF;
 }
 
@@ -858,4 +869,44 @@
         padding: 8px 10px;
         font-size: 0.78rem;
     }
+}
+
+/* ============================================
+   Zona de Desbordamiento (Overflow)
+   ============================================ */
+.hashx-overflow-section {
+    margin-top: 1.5rem;
+    border-top: 2px dashed #fd7e14;
+    padding-top: 1rem;
+}
+
+.hashx-overflow-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fd7e14;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hashx-overflow-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.bloque-celda-origen {
+    font-size: 0.65rem;
+    color: #6c757d;
+    display: block;
+    line-height: 1.1;
+}
+
+.hashx-celda-overflow {
+    border: 1px solid #fd7e14 !important;
+    background-color: #fff8f0 !important;
+}
+
+.hashx-celda-overflow:not(.bloque-vacio):not(.celda-encontrada) {
+    background-color: #ffe8cc !important;
 }
