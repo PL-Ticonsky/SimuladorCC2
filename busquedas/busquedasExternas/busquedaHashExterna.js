@@ -18,16 +18,16 @@ let hxeOverflowTamano = 0;
 let hxeOverflowIndices = [];
 
 const hxeDescripcionesHash = {
-    modulo: '<strong>Funcion:</strong> Calcula el hash como <code>H(k) = (k mod n) + 1</code>.',
-    cuadrado: '<strong>Funcion:</strong> Eleva la clave al cuadrado y extrae digitos centrales + 1.',
-    truncamiento: '<strong>Funcion:</strong> Toma digitos impares de la clave y calcula la posicion + 1.',
-    plegamiento: '<strong>Funcion:</strong> Divide la clave en grupos y suma segmentos para obtener la posicion + 1.',
-    conversionBase: '<strong>Funcion:</strong> Calcula la suma de cada digito multiplicado por <code>base^(n-1-i)</code>, luego aplica <code>modulo N</code> para obtener la posicion.'
+    modulo: '<strong>Función:</strong> Calcula el hash como <code>H(k) = (k mod n) + 1</code>.',
+    cuadrado: '<strong>Función:</strong> Eleva la clave al cuadrado y extrae dígitos centrales + 1.',
+    truncamiento: '<strong>Función:</strong> Toma dígitos impares de la clave y calcula la posición + 1.',
+    plegamiento: '<strong>Función:</strong> Divide la clave en grupos y suma segmentos para obtener la posicion + 1.',
+    conversionBase: '<strong>Función:</strong> Calcula la suma de cada dígito multiplicado por <code>base^(n-1-i)</code>, luego aplica <code>modulo N</code> para obtener la posición.'
 };
 
 const hxeDescripcionesColision = {
-    enlazada: 'Cada posicion tiene una lista dinamica de claves enlazadas. Los sinonimos se encadenan en esa lista. Esto equivale al encadenamiento separado de busquedas externas.',
-    overflow: 'Los registros que colisionan se almacenan en una zona de desbordamiento separada (aprox. 10% del tamano total). La busqueda en esa zona es secuencial.'
+    enlazada: 'Cada posición tiene una lista dinámica de claves enlazadas. Las colisiones se encadenan en esa lista. Esto equivale al encadenamiento separado de búsquedas externas.',
+    overflow: 'Los registros que colisionan se almacenan en una zona de desbordamiento separada (aprox. 10% del tamaño total). La búsqueda en esa zona es secuencial.'
 };
 
 function limpiarTimeoutsHashExterna() {
@@ -144,18 +144,18 @@ function actualizarDescripcionHashExterna() {
     if (!box) return;
 
     if (!metodo && !colision) {
-        box.innerHTML = '<span class="text-muted">Seleccione una funcion hash y un metodo de colision para ver su descripcion.</span>';
+        box.innerHTML = '<span class="text-muted">Seleccione una función hash y un método de colisión para ver su descripción.</span>';
         return;
     }
 
     let html = '';
     html += metodo && hxeDescripcionesHash[metodo]
         ? hxeDescripcionesHash[metodo]
-        : '<span class="text-muted">Seleccione una funcion hash.</span>';
+        : '<span class="text-muted">Seleccione una función hash.</span>';
     html += '<hr class="my-2">';
     html += colision && hxeDescripcionesColision[colision]
-        ? '<small><strong>Colision:</strong> ' + hxeDescripcionesColision[colision] + '</small>'
-        : '<small class="text-muted">Seleccione un metodo de colision.</small>';
+        ? '<small><strong>Colisión:</strong> ' + hxeDescripcionesColision[colision] + '</small>'
+        : '<small class="text-muted">Seleccione un método de colisión.</small>';
     box.innerHTML = html;
 }
 
@@ -192,7 +192,7 @@ function inicializarEstructuraHashExterna() {
 
     const texto = metodoColision
         ? 'Estructura hash inicializada (' + hxeCantidadBloques + ' bloques de ' + hxeTamanoBloque + ')'
-        : 'Estructura inicializada; seleccione un metodo de colision para operar';
+        : 'Estructura inicializada; seleccione un método de colisión para operar';
     mostrarMensajeHashExterna(texto, 'success');
 }
 
