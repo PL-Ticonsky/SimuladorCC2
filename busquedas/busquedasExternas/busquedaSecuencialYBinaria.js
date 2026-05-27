@@ -214,20 +214,87 @@ function animarSecuencialPorBloquesExterna(tipo, resultado, callback) {
     });
 }
 
+function animarBinariaPorBloquesExterna(tipo, resultado, callback) {
+    var rutaFase1 = resultado.rutaFase1 || [];
+    var rutaFase2 = resultado.rutaFase2 || [];
+    animarRutaSBExterna(tipo, rutaFase1, 'celda-ultimo-comparando', function () {
+        animarRutaSBExterna(tipo, rutaFase2, 'celda-buscando', callback);
+    });
+}
+
 function resolverBinaria(clave) {
     const datos = sbxDatos.slice().sort(compararSBExterna);
-    const ruta = [];
-    let izq = 0;
-    let der = datos.length - 1;
+
+    // Construir índice de últimos elementos (máximos) de cada bloque
+    const cantidadBloques = sbxCantidadBloques;
+    const tamBloque = sbxTamanoBloque;
+
+    // Fase 1: búsqueda binaria sobre los últimos elementos de cada bloque
+    // para determinar el bloque candidato
+    const rutaFase1 = []; // índices globales de los últimos elementos visitados
+    let bloqueEncontrado = -1;
+
+    let bIzq = 0;
+    let bDer = cantidadBloques - 1;
+
+    while (bIzq <= bDer) {
+        const bMedio = bIzq + Math.floor((bDer - bIzq) / 2);
+
+        // Último elemento real del bloque bMedio
+        const idxUltimo = Math.min((bMedio + 1) * tamBloque, datos.length) - 1;
+        if (idxUltimo < 0) { bDer = bMedio - 1; continue; }
+
+        rutaFase1.push(idxUltimo);
+
+        const cmp = compararSBExterna(clave, datos[idxUltimo]);
+
+        if (cmp === 0) {
+            // Clave es exactamente el último del bloque
+            return {
+                encontrado: true,
+                indice: idxUltimo,
+                rutaFase1: rutaFase1,
+                rutaFase2: [],
+                ruta: rutaFase1,
+                pasos: rutaFase1.length
+            };
+        } else if (cmp < 0) {
+            // La clave es menor que el máximo del bloque → podría estar aquí
+            bloqueEncontrado = bMedio;
+            bDer = bMedio - 1;
+        } else {
+            // La clave supera el máximo de este bloque → buscar en bloques mayores
+            bIzq = bMedio + 1;
+        }
+    }
+
+    if (bloqueEncontrado === -1) {
+        // La clave supera al máximo del último bloque → no existe
+        return { encontrado: false, indice: -1, rutaFase1: rutaFase1, rutaFase2: [], ruta: rutaFase1, pasos: rutaFase1.length };
+    }
+
+    // Fase 2: búsqueda binaria dentro del bloque candidato
+    const inicioBloque = bloqueEncontrado * tamBloque;
+    const finBloque = Math.min(inicioBloque + tamBloque, datos.length) - 1;
+
+    const rutaFase2 = [];
+    let izq = inicioBloque;
+    let der = finBloque;
 
     while (izq <= der) {
-        // En rangos pares se fuerza la mitad izquierda (misma convención que internas).
         const medio = izq + Math.floor((der - izq) / 2);
-        ruta.push(medio);
+        rutaFase2.push(medio);
 
         const cmp = compararSBExterna(datos[medio], clave);
         if (cmp === 0) {
-            return { encontrado: true, indice: medio, ruta: ruta, pasos: ruta.length };
+            return {
+                encontrado: true,
+                indice: medio,
+                rutaFase1: rutaFase1,
+                rutaFase2: rutaFase2,
+                ruta: rutaFase1.concat(rutaFase2),
+                pasos: rutaFase1.length + rutaFase2.length
+            };
         }
         if (cmp < 0) {
             izq = medio + 1;
@@ -236,7 +303,14 @@ function resolverBinaria(clave) {
         }
     }
 
-    return { encontrado: false, indice: -1, ruta: ruta, pasos: ruta.length };
+    return {
+        encontrado: false,
+        indice: -1,
+        rutaFase1: rutaFase1,
+        rutaFase2: rutaFase2,
+        ruta: rutaFase1.concat(rutaFase2),
+        pasos: rutaFase1.length + rutaFase2.length
+    };
 }
 
 function crearEstructuraCompartidaSBExterna(origenTipo) {
@@ -344,7 +418,7 @@ function buscarCompartidoSBExterna(tipo) {
     const resultado = tipo === 'Secuencial' ? resolverSecuencialPorBloques(clave) : resolverBinaria(clave);
     const ejecutarAnimacion = tipo === 'Secuencial'
         ? function (cb) { animarSecuencialPorBloquesExterna(tipo, resultado, cb); }
-        : function (cb) { animarRutaSBExterna(tipo, resultado.ruta, 'celda-buscando', cb); };
+        : function (cb) { animarBinariaPorBloquesExterna(tipo, resultado, cb); };
 
     ejecutarAnimacion(function () {
         const containerId = tipo === 'Secuencial' ? '#visualizacionBloquesSecuencial' : '#visualizacionBloquesBinaria';
@@ -386,7 +460,7 @@ function eliminarCompartidoSBExterna(tipo) {
     const resultado = tipo === 'Secuencial' ? resolverSecuencialPorBloques(clave) : resolverBinaria(clave);
     const ejecutarAnimacion = tipo === 'Secuencial'
         ? function (cb) { animarSecuencialPorBloquesExterna(tipo, resultado, cb); }
-        : function (cb) { animarRutaSBExterna(tipo, resultado.ruta, 'celda-buscando', cb); };
+        : function (cb) { animarBinariaPorBloquesExterna(tipo, resultado, cb); };
 
     ejecutarAnimacion(function () {
         if (!resultado.encontrado) {
@@ -532,5 +606,3 @@ document.addEventListener('DOMContentLoaded', function () {
         digBin.addEventListener('input', function () { digSec.value = digBin.value; });
     }
 });
-
-
